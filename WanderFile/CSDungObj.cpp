@@ -102,7 +102,7 @@ bool CSDungObj::slideObject(CSPoint incomingVector)
         for(listIter = wallDoors->begin(); listIter != wallDoors->end(); listIter++)
         {
             //if it's a non-null door on the wall that was moved
-            if((*listIter)->getRegion() == _objectRegion)
+            if((*listIter)->getRegion() == _objectRegion && (*listIter)->getConnect() != nullptr)
                 if(!(*listIter)->getConnect()->slideObject(incomingVector))//we try to slide its connecting door. If we can't...
                 {
                     goodLoc = false;
