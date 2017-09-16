@@ -11,38 +11,42 @@
 
 CSDungObj::CSDungObj()
 {
-    
+    _parentObj = nullptr;
+    _childObj = nullptr;
+    _connect = nullptr;
+    _owner = nullptr;
 }
 
-CSDungObj::CSDungObj(char incomingChar, int incomingType, objReg incomingRegion, CSPoint incomingLoc, CSRoom *incomingOwner)//new objects (not doors)
+CSDungObj::CSDungObj(char incomingChar, objType incomingType, objReg incomingRegion, CSPoint incomingLoc, CSDungObj *incParent, CSDungObj *incConnect, CSRoom *incomingOwner)
 {
     _objectChar = incomingChar;
     _objectType = incomingType;
     _objectRegion = incomingRegion;
     _objectLoc = incomingLoc;
-    _connectTo = nullptr;
+    
+    setParent(incParent);
+    _childObj = nullptr;
+    setConnect(incConnect);
     _owner = incomingOwner;
+    
+    _wasMoved = false;
 }
 
-CSDungObj::CSDungObj(objReg incomingDoorWall, CSPoint incomingLoc, CSDungObj *incConnect, CSRoom *incomingOwner)//new doors
+
+#pragma mark -
+#pragma mark Setters
+
+void CSDungObj::setWasMoved(bool incomingState)
 {
-    _objectChar = OPEN_DOOR_CHAR;
-    _objectType = OBJ_TYPE_DOOR;
-    _objectRegion = incomingDoorWall;
-    _objectLoc = incomingLoc;
-    setConnectTo(incConnect);
-    _owner = incomingOwner;
+    _wasMoved = incomingState;
 }
-
-
-//setters
 
 void CSDungObj::setChar(char incomingChar)
 {
     _objectChar = incomingChar;
 }
 
-void CSDungObj::setType(int incomingType)
+void CSDungObj::setType(objType incomingType)
 {
     _objectType = incomingType;
 }
@@ -57,17 +61,34 @@ void CSDungObj::setLoc(CSPoint incomingLoc)
     _objectLoc = incomingLoc;
 }
 
-void CSDungObj::setConnectTo(CSDungObj *incConnect)
+void CSDungObj::setParent(CSDungObj *incomingParent)
 {
-    _connectTo = incConnect;
+    _parentObj = incomingParent;
     
-    if(incConnect != nullptr)
-        incConnect->setConnectFrom(this);
+    if(incomingParent != nullptr)
+        if(_parentObj->getChild() != this)
+            _parentObj->setChild(this);
 }
 
-void CSDungObj::setConnectFrom(CSDungObj *incConnect)
+void CSDungObj::setChild(CSDungObj *incomingChild)
 {
-    _connectFrom = incConnect;
+    _childObj = incomingChild;
+    
+    if(incomingChild != nullptr)
+        if(_childObj->getParent() != this)
+            _childObj->setParent(this);
+    
+    if(_objectType == OBJ_DOOR)
+        incomingChild = nullptr;
+}
+
+void CSDungObj::setConnect(CSDungObj *incConnect)
+{
+    _connect = incConnect;
+    
+    if(incConnect != nullptr)
+        if(_connect->getConnect() != this)
+            incConnect->setConnect(this);
 }
 
 void CSDungObj::setOwner(CSRoom *incomingOwner)
@@ -76,40 +97,91 @@ void CSDungObj::setOwner(CSRoom *incomingOwner)
 }
 
 
-//doers
+#pragma mark -
+#pragma mark Doers
 
-bool CSDungObj::slideObject(CSPoint incomingVector)
+void CSDungObj::slideObject(CSPoint incomingVector)
 {
-    bool                goodLoc = true, axis = getWallAxis(_objectRegion);
-    CSPoint             newLoc = (_objectLoc + incomingVector);
-    CSRect              newRoomRect;
-    list<CSDungObj*>    *wallDoors;
+    CSPoint newLoc = _objectLoc + incomingVector;
+    bool    slideUp = false;
     
+    //if we have a parent, pass this up the chain to them. If we don't set our loc, then go down the chain, and move our child on the same vector we were moved
+    if(_parentObj != nullptr)
+    {
+        if(!_parentObj->getWasMoved())
+            slideUp = true;
+    }
+    
+    if(slideUp)
+        _parentObj->slideObject(incomingVector);
+    else
+    {
+        _wasMoved = true;
+        setLoc(newLoc);
+        
+        if(_childObj != nullptr)
+            _childObj->slideObject(incomingVector);
+    }
+}
+
+bool CSDungObj::slideDoor(CSPoint incomingVector)
+{
+    bool    goodLoc = true;
+    axis    axis = getWallAxis(_objectRegion);
+    CSPoint newLoc = (_objectLoc + incomingVector);
+    CSRange wallMovementRange;
+    CSRect  newRoomRect;
+    CSDungObj   *objectToCheck;
+    
+    list<CSDungObj*>            *roomObjects;
     list<CSDungObj*>::iterator  listIter;
     
+    _wasMoved = true;
+    
     //if the door is attempting to be slid along the perp axis, away from the wall...
-    if(incomingVector.getAxisPoint(!axis) != 0)
+    if(incomingVector.getAxisPoint(getPerpAxis(axis)) != 0)
     {
+        //move the wall this door is on to the same spot
         newRoomRect = *_owner->getRect();
-        newRoomRect.setWallLoc(_objectRegion, newLoc.getAxisPoint(!axis));//move the wall this door is on to the same spot
-        if(newRoomRect.getDim(!axis) >= HALL_SIZE)//don't let the room be squished to nothing
+        newRoomRect.setWallLoc(_objectRegion, newLoc.getAxisPoint(getPerpAxis(axis)));
+        
+        //Before the wall can be slid, check if there are any doors on the tiles between the wall's current and future loc.
+        wallMovementRange.setRange(newRoomRect.getWallLocPoint(_objectRegion), _owner->getRect()->getWallLocPoint(_objectRegion));
+        roomObjects = _owner->getObjects();
+        for(listIter = roomObjects->begin(); listIter != roomObjects->end(); listIter++)
+        {
+            if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getRegion() == _objectRegion)
+                continue;
+            
+            //If there are, cancel the move
+            objectToCheck = (*listIter);
+            if(wallMovementRange.doesContain((*listIter)->getLoc()->getAxisPoint(getPerpAxis(axis))))
+                return false;
+        }
+        
+        //don't let the room be squished to nothing
+        if(newRoomRect.getDim(getPerpAxis(axis)) >= HALL_SIZE)
             _owner->getRect()->setPoints(newRoomRect.topLeft, newRoomRect.botRight);
         else
             return false;
         
-        //loop through all of the moved wall's connected doors, see if they can be slid
-        wallDoors = _owner->getObjects();
-        for(listIter = wallDoors->begin(); listIter != wallDoors->end(); listIter++)
-        {
-            //if it's a non-null door on the wall that was moved
-            if((*listIter)->getRegion() == _objectRegion && (*listIter)->getConnect() != nullptr)
-                if(!(*listIter)->getConnect()->slideObject(incomingVector))//we try to slide its connecting door. If we can't...
+        //loop through all of the moved wall's doors, see if they can be slid
+        for(listIter = roomObjects->begin(); listIter != roomObjects->end(); listIter++)
+            if((*listIter)->checkForRegion(_objectRegion) && !(*listIter)->getWasMoved())//if it's an object that should be moved, but hasn't yet been
+            {
+                if((*listIter)->getType() == OBJ_DOOR)
                 {
-                    goodLoc = false;
-                    break;
+                    goodLoc = (*listIter)->slideDoor(incomingVector);//we try to slide it. If we can't...
+                    if(!goodLoc)
+                        break;
                 }
-        }
+                else//if it's not a door (like it's anchored to the wall that's being moved, e.g.: a room num)
+                    (*listIter)->slideObject(incomingVector);
+            }
         
+        //reset all objects' _wasMoved to false;
+        for(listIter = roomObjects->begin(); listIter != roomObjects->end(); listIter++)
+            (*listIter)->setWasMoved(false);
     }//if we come out the other side of this if, then this slide worked so far
     
     //if the door is attempting to be slid along the para axis, within the wall...
@@ -118,32 +190,60 @@ bool CSDungObj::slideObject(CSPoint incomingVector)
     
     //if the intended location is within any free-wall range, we set ourselves to it and return that we were successful
     if(goodLoc)
-        _objectLoc = newLoc;
+        slideObject(incomingVector);
     
     return goodLoc;
 }
 
+bool CSDungObj::checkForRegion(objReg incomingReg)
+{
+    if(_objectRegion == REG_CORNER_TOP_LEFT)
+        switch(incomingReg)
+        {
+            case REG_CORNER_TOP_LEFT:
+            case REG_WALL_TOP:
+            case REG_WALL_LEFT:
+                return true;
+                break;
+            default:
+                return false;
+        }
+    else
+        if(_objectRegion == incomingReg)
+            return true;
+        else
+            return false;
+}
+
 void CSDungObj::deleteObject(void)
 {
-    if(_connectTo != nullptr)
-    {
-        _connectTo->setConnectFrom(nullptr);
-        if(_objectType == OBJ_TYPE_DOOR)
-            _connectTo->setConnectTo(nullptr);
-    }
+    if(_parentObj!= nullptr)
+        _parentObj->setChild(nullptr);
+    
+    if(_childObj!= nullptr)
+        _childObj->setParent(nullptr);
+    
+    if(_connect != nullptr)
+        _connect->setConnect(nullptr);
     
     delete this;
 }
 
 
-//getters
+#pragma mark -
+#pragma mark Getters
+
+bool CSDungObj::getWasMoved(void)
+{
+    return _wasMoved;
+}
 
 char CSDungObj::getChar(void)
 {
     return _objectChar;
 }
 
-int CSDungObj::getType(void)
+objType CSDungObj::getType(void)
 {
     return _objectType;
 }
@@ -158,12 +258,30 @@ CSPoint* CSDungObj::getLoc(void)
     return &_objectLoc;
 }
 
+CSDungObj* CSDungObj::getParent(void)
+{
+    return _parentObj;
+}
+
+CSDungObj* CSDungObj::getChild(void)
+{
+    return _childObj;
+}
+
 CSDungObj* CSDungObj::getConnect(void)
 {
-    return _connectTo;
+    return _connect;
 }
 
 CSRoom* CSDungObj::getOwner(void)
 {
     return _owner;
 }
+
+
+
+
+
+
+
+

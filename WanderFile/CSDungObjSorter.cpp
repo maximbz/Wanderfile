@@ -21,7 +21,7 @@ bool CSDungObjSorter::operator()(CSDungObj* &earlierItem, CSDungObj* &laterItem)
     if((earlierItem->getType() != laterItem->getType()))
         return earlierItem->getType() < laterItem->getType();
     else//if they're both doors of the same wall, compare axis points
-        if(earlierItem->getType() == OBJ_TYPE_DOOR)
+        if(earlierItem->getType() == OBJ_DOOR)
             return earlierItem->getLoc()->getAxisPoint(getWallAxis(earlierItem->getRegion())) < laterItem->getLoc()->getAxisPoint(getWallAxis(laterItem->getRegion()));
         else//if they're both the same non-door object type, order doesn't (currently) matter
             return true;

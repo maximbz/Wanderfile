@@ -20,36 +20,45 @@ class CSRoom;
 class CSDungObj
 {
 private:
+    bool        _wasMoved;
     char        _objectChar;
-    int         _objectType;
+    objType     _objectType;
     objReg      _objectRegion;
     CSPoint     _objectLoc;
+    CSDungObj   *_parentObj, *_childObj,//the parent of a chain of objects has a child connected to it: parent -> _connectTo -> child; parent -> _connectFrom -> child
+                *_connect;//doors connect to and from one another; there's no chain of command
     CSRoom      *_owner;
-    CSDungObj   *_connectTo, *_connectFrom;
+    
     
 public:
     CSDungObj();
-    CSDungObj(char, int, objReg, CSPoint, CSRoom*);
-    CSDungObj(objReg, CSPoint, CSDungObj*, CSRoom*);
+    CSDungObj(char, objType, objReg, CSPoint, CSDungObj*, CSDungObj*, CSRoom*);
     
+    void setWasMoved(bool);
     void setChar(char);
-    void setType(int);
+    void setType(objType);
     void setRegion(objReg);
     void setLoc(CSPoint);
-    void setConnectTo(CSDungObj*);
-    void setConnectFrom(CSDungObj*);
+    void setParent(CSDungObj*);
+    void setChild(CSDungObj*);
+    void setConnect(CSDungObj*);
     void setOwner(CSRoom*);
     
-    bool slideObject(CSPoint);
+    void slideObject(CSPoint);
+    bool slideDoor(CSPoint);
+    bool checkForRegion(objReg);
     void removeConnect(void);
     void deleteObject(void);
     
+    bool getWasMoved(void);
     char getChar(void);
-    int getType(void);
+    objType getType(void);
     objReg getRegion(void);
     CSPoint* getLoc(void);
-    CSDungObj* getConnect(void);
     CSRoom* getOwner(void);
+    CSDungObj* getParent(void);
+    CSDungObj* getConnect(void);
+    CSDungObj* getChild(void);
 };
 
 #endif /* CSDungObj_hpp */

@@ -11,13 +11,19 @@
 
 #pragma mark Constants
 
-//dim
-/*typedef enum
+
+enum axis//axes/dimensions
 {
-    horiz,
-    vert,
-    error
-} axis;*/
+    AXIS_HORIZ,
+    AXIS_VERT,
+    AXIS_NULL = -1
+};
+
+enum objType//dungeon object types
+{
+    OBJ_DOOR,
+    OBJ_ROOM_NUM
+};
 
 enum objReg//dungeon object regions
 {
@@ -30,15 +36,9 @@ enum objReg//dungeon object regions
     REG_CORNER_TOP_LEFT
 };
 
-const int   HORIZ = 0;
-const int   VERT = 1;
-
 //dir
 const int   UP_LEFT = -1;
 const int   DOWN_RIGHT = 1;
-//dungeon object types
-const int   OBJ_TYPE_DOOR = 1;
-const int   OBJ_TYPE_ROOM_NUM = 4;
 const int   BAD_DATA = -69420911;//nice
 
 const int   LEVEL_BOUND_RIGHT = 600;
@@ -70,19 +70,33 @@ const char  CLOSED_DOOR_CHAR = '+';
 #pragma mark -
 #pragma mark Inline Functions
 
-inline int getWallAxis(objReg incomingWall)
+inline axis getPerpAxis(axis incomingAxis)
+{
+    switch(incomingAxis)
+    {
+        case AXIS_HORIZ:
+            return AXIS_VERT;
+        case AXIS_VERT:
+            return AXIS_HORIZ;
+        default:
+            printf("Error in WanderFile.h: Trying to return an axis other than horiz or vert.\n");
+            return AXIS_NULL;
+    }
+}
+
+inline axis getWallAxis(objReg incomingWall)
 {
     switch(incomingWall)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
-            return HORIZ;
+            return AXIS_HORIZ;
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
-            return VERT;
+            return AXIS_VERT;
         default:
-            printf("Trying to return an axis other than horiz or vert!");
-            return BAD_DATA;
+            //printf("Error in WanderFile.h: Trying to return an axis other than horiz or vert.\n");
+            return AXIS_NULL;
     }
 }
 
@@ -97,7 +111,7 @@ inline int getWallDir(objReg incomingWall)
         case REG_WALL_BOT:
             return DOWN_RIGHT;
         default:
-            printf("Trying to return an direction other than up-left or down-right!");
+            printf("Error in WanderFile.h: Trying to return an direction other than up-left or down-right.\n");
             return BAD_DATA;
     }
 }

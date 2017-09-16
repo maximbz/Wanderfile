@@ -40,13 +40,12 @@ public:
     void setHallState(bool);
     void setRoomNum(int);
     
-    CSDungObj* createObject(char, int, objReg, CSPoint, CSDungObj*);
-    void createDoor(objReg, CSPoint, CSDungObj*);
-    void addDoor(CSDungObj*, objReg, CSPoint, CSDungObj*, CSRoom*);
+    CSDungObj* createObject(char, objType, objReg, CSPoint, CSDungObj*, CSDungObj*);
+    void addDoor(CSDungObj*, objReg, CSPoint, CSDungObj*, CSDungObj*, CSRoom*);
     void removeConnection(CSRoom*);
     void deleteRoom(void);
 
-    bool doesRoomAlign(int, CSRoom *);
+    bool doesRoomAlign(axis, CSRoom *);
     bool isPointInFreeWall(CSPoint, objReg);
     bool slideRoom(CSPoint);
     string printRoomRow(CSRange, int);

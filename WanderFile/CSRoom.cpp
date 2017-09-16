@@ -46,7 +46,7 @@ void CSRoom::setRoomNum(int incomingRoomNum)
     
     //remove old room number objects
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
-        if((*listIter)->getType() == OBJ_TYPE_ROOM_NUM)
+        if((*listIter)->getType() == OBJ_ROOM_NUM)
         {
             _objects.erase(listIter);
             (*listIter)->deleteObject();
@@ -62,17 +62,17 @@ void CSRoom::setRoomNum(int incomingRoomNum)
     ones = (_roomNum % 10) + '0';
     tens = ((_roomNum / 10) % 10) + '0';//plus ascii offset
     
-    newRoomNum = createObject(tens, OBJ_TYPE_ROOM_NUM, REG_WALL_TOP, tensLoc, nullptr);
-    createObject(ones, OBJ_TYPE_ROOM_NUM, REG_WALL_TOP, onesLoc, newRoomNum);
+    newRoomNum = createObject(tens, OBJ_ROOM_NUM, REG_CORNER_TOP_LEFT, tensLoc, nullptr, nullptr);
+    createObject(ones, OBJ_ROOM_NUM, REG_CORNER_TOP_LEFT, onesLoc, newRoomNum, nullptr);//creates one's place and connect it to ten's place
 }
 
 
 #pragma mark -
 #pragma mark Doers
 
-CSDungObj* CSRoom::createObject(char incomingObjectChar, int incomingObjType, objReg incomingObjReg, CSPoint incomingObjLoc, CSDungObj *incomingCon)
+CSDungObj* CSRoom::createObject(char incObjChar, objType incObjType, objReg incObjReg, CSPoint incObjLoc, CSDungObj *incParent, CSDungObj *incCon)
 {
-    CSDungObj *newObject = new CSDungObj(incomingObjectChar, incomingObjType, incomingObjReg, incomingObjLoc, this);
+    CSDungObj *newObject = new CSDungObj(incObjChar, incObjType, incObjReg, incObjLoc, incParent, incCon, this);
     
     _objects.push_back(newObject);
     _objects.sort(_objectComparator);
@@ -80,21 +80,22 @@ CSDungObj* CSRoom::createObject(char incomingObjectChar, int incomingObjType, ob
     return newObject;
 }
 
-void CSRoom::createDoor(objReg incomingDoorWall, CSPoint incomingObjLoc, CSDungObj *incomingCon)
+/*void CSRoom::createDoor(objReg incomingDoorWall, CSPoint incomingObjLoc, CSDungObj *incomingCon)
 {
     CSDungObj *newObject = new CSDungObj(incomingDoorWall, incomingObjLoc, incomingCon, this);
     
     _objects.push_back(newObject);
     _objects.sort(_objectComparator);
-}
+}*/
 
-void CSRoom::addDoor(CSDungObj *incomingDoor, objReg incomingWall, CSPoint incomingLoc, CSDungObj *incomingCon, CSRoom *incomingOwner)
+void CSRoom::addDoor(CSDungObj *incomingDoor, objReg incomingWall, CSPoint incomingLoc, CSDungObj *incomingParent, CSDungObj *incomingCon, CSRoom *incomingOwner)
 {
     incomingDoor->setChar(OPEN_DOOR_CHAR);
-    incomingDoor->setType(OBJ_TYPE_DOOR);
+    incomingDoor->setType(OBJ_DOOR);
     incomingDoor->setRegion(incomingWall);
     incomingDoor->setLoc(incomingLoc);
-    incomingDoor->setConnectTo(incomingCon);
+    incomingDoor->setParent(incomingParent);
+    incomingDoor->setConnect(incomingCon);
     incomingDoor->setOwner(incomingOwner);
     
     _objects.push_back(incomingDoor);
@@ -146,11 +147,11 @@ char CSRoom::checkForObject(CSPoint incomingLocation, char incomingObjectChar)
     return incomingObjectChar;//if no object was found at this location, return what we expected to find
 }
 
-bool CSRoom::doesRoomAlign(int incomingDimension, CSRoom *incomingRoom)
+bool CSRoom::doesRoomAlign(axis incomingAxis, CSRoom *incomingRoom)
 {
-    if(incomingDimension == HORIZ)
+    if(incomingAxis == AXIS_HORIZ)
         return ((_roomRect.botRight.y > incomingRoom->getRect()->topLeft.y) && (_roomRect.topLeft.y < incomingRoom->getRect()->botRight.y));
-    else if(incomingDimension == VERT)
+    else if(incomingAxis == AXIS_VERT)
         return ((_roomRect.botRight.x > incomingRoom->getRect()->topLeft.x) && (_roomRect.topLeft.x < incomingRoom->getRect()->botRight.x));
     else
         return false;
@@ -170,7 +171,7 @@ bool CSRoom::isPointInFreeWall(CSPoint incomingPoint, objReg incomingWall)
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
     {
         //doors on other walls, or non-doors can be skipped entirely
-        if((*listIter)->getType() != OBJ_TYPE_DOOR || (*listIter)->getRegion() != incomingWall)
+        if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getRegion() != incomingWall)
             continue;
         
         wallRange.max = (*listIter)->getLoc()->getAxisPoint(getWallAxis(incomingWall)) - 1;//set max to just before current door, along wall
@@ -195,7 +196,8 @@ bool CSRoom::slideRoom(CSPoint incomingVector)
 {
     CSDungObj   *connectedDoor;
     CSRect      oldRoomLoc;
-    int         nullVectorAxis = BAD_DATA, axis = BAD_DATA;
+    CSPoint     newLoc;
+    axis        slideAxis = AXIS_NULL, axis = AXIS_NULL;
     bool        success = true;
     
     vector<CSDungObj *>             slidDoors;
@@ -215,20 +217,26 @@ bool CSRoom::slideRoom(CSPoint incomingVector)
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
     {
         //ignore non-doors and non-connected doors
-        if((*listIter)->getType() != OBJ_TYPE_DOOR || (*listIter)->getConnect() == nullptr)
+        if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getConnect() == nullptr)
             continue;
         
-        connectedDoor = (*listIter)->getConnect();
-        axis = getWallAxis((*listIter)->getRegion());
-        
-        if(!_isHall && (incomingVector.getAxisPoint(getWallAxis((*listIter)->getRegion())) != 0))//if this is a para room-door
+        ////if this is a para room-door...
+        if(!_isHall && (incomingVector.getAxisPoint(getWallAxis((*listIter)->getRegion())) != 0))
+        {
+            //no doors are moving along their wall, so rather than using the freeWall system, let's only check if this door is still between the wall's corners, now that the room has moved around it
+            axis = getWallAxis((*listIter)->getRegion());
+            
             success = (((*listIter)->getLoc()->getAxisPoint(axis) > _roomRect.getWallStartPoint((*listIter)->getRegion())) &&
-                       ((*listIter)->getLoc()->getAxisPoint(axis) < _roomRect.getWallEndPoint((*listIter)->getRegion())));//no doors are moving along their wall, so rather than usingthe freeWall system, let's only check if this door is still between the wall's corners, now that the room has moved around it
+                       ((*listIter)->getLoc()->getAxisPoint(axis) < _roomRect.getWallEndPoint((*listIter)->getRegion())));
+        }
         else//else, this is a perp or para hall-door, or a perp room-door
         {
-            success = connectedDoor->slideObject(incomingVector);//if it let us slide it
+            //try to slide the door's connected door (in the adjacent room), and if it worked, add it to the slidDoors vector
+            connectedDoor = (*listIter)->getConnect();
+            
+            success = connectedDoor->slideDoor(incomingVector);
             if(success)
-                slidDoors.push_back(connectedDoor);//it's been slid, so add it to the list
+                slidDoors.push_back(connectedDoor);
         }
         
         if(!success)
@@ -244,24 +252,32 @@ bool CSRoom::slideRoom(CSPoint incomingVector)
         {
             //only one axis in the vector could ever be 0
             if(incomingVector.x == 0)
-                nullVectorAxis = HORIZ;
+                slideAxis = AXIS_VERT;
             else if(incomingVector.y == 0)
-                nullVectorAxis = VERT;
+                slideAxis = AXIS_HORIZ;
         }
         
-        //and all its objects
+        //also slide every object in the room except connected para room-doors
         for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
-            if(_isHall || (!_isHall && getWallAxis((*listIter)->getRegion()) == nullVectorAxis) || (*listIter)->getConnect() == nullptr)//don't move any doors that're on para slides unless they haven't been connected to anything
-                (*listIter)->getLoc()->slidePoint(incomingVector);
+            if(((_isHall || (!_isHall && getWallAxis((*listIter)->getRegion()) != slideAxis) || (*listIter)->getConnect() == nullptr)) &&
+               !(*listIter)->getWasMoved())
+            {
+                newLoc =  *(*listIter)->getLoc() + incomingVector;
+                (*listIter)->setLoc(newLoc);
+            }
     }
     else//but if any doors failed their slide, we undo what we have done
     {
         for(vectIter = slidDoors.begin(); vectIter != slidDoors.end(); vectIter++)//go through the vector of doors that did let us slide them
-            (*vectIter)->slideObject(incomingVector * -1);//and undo the slide
+            (*vectIter)->slideDoor(incomingVector * -1);//and undo the slide
         
         if(!_isHall)
             _roomRect = oldRoomLoc;//undo the room's slide
     }
+    
+    //reset all objects' _wasMoved to false;
+    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+        (*listIter)->setWasMoved(false);
     
     return success;
 }

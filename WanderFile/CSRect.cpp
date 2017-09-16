@@ -165,13 +165,13 @@ int CSRect::getHeight(void)
     return _rectHeight;
 }
 
-int CSRect::getDim(int incomingDim)
+int CSRect::getDim(axis incomingDim)
 {
     switch(incomingDim)
     {
-        case HORIZ:
+        case AXIS_HORIZ:
             return _rectWidth;
-        case VERT:
+        case AXIS_VERT:
             return _rectHeight;
             
         default:

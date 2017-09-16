@@ -17,14 +17,14 @@ CSPoint::CSPoint(int incomingX, int incomingY)
 }
 
 
-void CSPoint::setAxisPoint(int incomingDim, int incomingPoint)
+void CSPoint::setAxisPoint(axis incomingAxis, int incomingPoint)
 {
-    if(incomingDim == HORIZ)
+    if(incomingAxis == AXIS_HORIZ)
         x = incomingPoint;
-    else if(incomingDim == VERT)
+    else if(incomingAxis == AXIS_VERT)
         y = incomingPoint;
     else
-        printf("Error: Attempting to access dimension other than X or Y.\n");
+        printf("Error in CSPoint: Attempting to access dimension other than X or Y.\n");
 }
 
 void CSPoint::setPoints(int incomingXPoint, int incomingYPoint)
@@ -46,22 +46,30 @@ void CSPoint::slidePoint(CSPoint incomingVector)
     y += incomingVector.y;
 }
 
-int CSPoint::getAxisPoint(int incomingDim)
+int CSPoint::getAxisPoint(axis incomingAxis)
 {
-    if(incomingDim == HORIZ)
+    if(incomingAxis == AXIS_HORIZ)
         return x;
-    else if(incomingDim == VERT)
+    else if(incomingAxis == AXIS_VERT)
         return y;
     else
     {
-        printf("Error: Attempting to access dimension other than X or Y.\n");
-        return -(LEVEL_BOUND_RIGHT + LEVEL_BOUND_BOTTOM);//error
+        printf("Error in CSPoint: Attempting to access dimension other than X or Y.\n");
+        return BAD_DATA;//error
     }
 }
 
 
 //operator overloads!
-       
+
+CSPoint& CSPoint::operator=(const CSPoint &incomingPoint)
+{
+    x = incomingPoint.x;
+    y = incomingPoint.y;
+    
+    return *this;
+}
+
 bool CSPoint::operator==(const CSPoint &incomingCoord)
 {
     return ((x == incomingCoord.x) && (y == incomingCoord.y));
@@ -113,6 +121,16 @@ CSPoint CSPoint::operator+(CSPoint &incomingPoint)
     
     outgoingPoint.x = x + incomingPoint.x;
     outgoingPoint.y = y + incomingPoint.y;
+    
+    return outgoingPoint;
+}
+
+CSPoint CSPoint::operator-(CSPoint &incomingPoint)
+{
+    CSPoint outgoingPoint;
+    
+    outgoingPoint.x = x - incomingPoint.x;
+    outgoingPoint.y = y - incomingPoint.y;
     
     return outgoingPoint;
 }

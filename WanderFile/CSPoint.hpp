@@ -20,13 +20,16 @@ public:
     CSPoint();
     CSPoint(int, int);
     
-    void setAxisPoint(int, int);//dynamic input of x or y
+    void setAxisPoint(axis, int);//dynamic input of x or y
     void setPoints(int, int);
     
     void slidePoint(int, int);
     void slidePoint(CSPoint);
     
-    int getAxisPoint(int);//dynamic return of x value or y value from axis (horiz or vert) input
+    int getAxisPoint(axis);//dynamic return of x value or y value from axis (horiz or vert) input
+    
+    
+    CSPoint& operator=(const CSPoint&);
     
     bool operator==(const CSPoint&);
     bool operator!=(const CSPoint&);
@@ -37,6 +40,7 @@ public:
     
     CSPoint operator*(int);
     CSPoint operator+(CSPoint&);
+    CSPoint operator-(CSPoint&);
 };
 
 #endif /* CSPoint_hpp */

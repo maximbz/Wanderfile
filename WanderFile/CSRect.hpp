@@ -42,7 +42,7 @@ public:
     
     int getWidth(void);
     int getHeight(void);
-    int getDim(int);//get heidth or width of room
+    int getDim(axis);//get heidth or width of room
     
     //dynamic getters
     CSPoint* getCorner(int);//topLeft or botRight from direction UP_LEFT or DOWN_RIGHT
