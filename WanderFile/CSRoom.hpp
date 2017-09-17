@@ -25,7 +25,7 @@ private:
     CSGameState         *_theGame;
     
     bool                _isHall;
-    int                 _roomNum;
+    int                 _roomNum, _roomNumDigits;
     CSRect              _roomRect;
     list<CSDungObj*>    _objects;
     CSDungObjSorter     _objectComparator;
@@ -45,9 +45,11 @@ public:
     void removeConnection(CSRoom*);
     void deleteRoom(void);
 
+    void updateRoomNum(int);
     bool doesRoomAlign(axis, CSRoom *);
     bool isPointInFreeWall(CSPoint, objReg);
     bool slideRoom(CSPoint);
+    bool slideWall(objReg, int);
     string printRoomRow(CSRange, int);
     string printRoomToFile(void);
     

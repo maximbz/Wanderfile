@@ -78,7 +78,7 @@ void CSRect::setBotRight(int incomingRight, int incomingBot)
     calculateArea();
 }
 
-void CSRect::setWallLoc(int incomingWall, int incomingLocPoint)
+void CSRect::setWallLoc(objReg incomingWall, int incomingLocPoint)
 {
     switch(incomingWall)
     {
@@ -93,12 +93,16 @@ void CSRect::setWallLoc(int incomingWall, int incomingLocPoint)
             break;
         case REG_WALL_BOT:
             botRight.y = incomingLocPoint;
+            break;
+        
+        default:
+            printf("Error in CSRect: Attempting to set a wall loc other than the four possible walls.\n");
     }
     
     calculateArea();
 }
 
-void CSRect::setWallRange(int incomingWall, CSRange incomingRange)
+void CSRect::setWallRange(objReg incomingWall, CSRange incomingRange)
 {
     switch(incomingWall)
     {
@@ -112,20 +116,27 @@ void CSRect::setWallRange(int incomingWall, CSRange incomingRange)
             topLeft.y = incomingRange.min;
             botRight.y = incomingRange.max;
             break;
+            
+        default:
+            printf("Error in CSRect: Attempting to set a wall range other than the four possible walls.\n");
     }
     
     calculateArea();
 }
 
-void CSRect::setCorner(int incomingDirection, CSPoint incomingPoint)
+void CSRect::setCorner(direction incomingDir, CSPoint incomingPoint)
 {
-    switch(incomingDirection)
+    switch(incomingDir)
     {
-        case UP_LEFT:
+        case DIR_UP_LEFT:
             topLeft = incomingPoint;
             break;
-        case DOWN_RIGHT:
+        case DIR_DOWN_RIGHT:
             botRight = incomingPoint;
+            break;
+            
+        default:
+            printf("Error in CSRect: Attempting to set a corner other than top-left or bottom-right.\n");
     }
     
     calculateArea();
@@ -179,15 +190,27 @@ int CSRect::getDim(axis incomingDim)
     }
 }
 
-CSPoint* CSRect::getCorner(int incomingDirection)
+CSPoint CSRect::getCenterPoint(void)
 {
-    switch(incomingDirection)
+    CSPoint outgoingPoint;
+    
+    outgoingPoint.x = topLeft.x + (_rectWidth / 2);
+    outgoingPoint.y = topLeft.y + (_rectHeight / 2);
+    
+    return outgoingPoint;
+}
+
+CSPoint* CSRect::getCorner(direction incomingDir)
+{
+    switch(incomingDir)
     {
-        case UP_LEFT:
+        case DIR_UP_LEFT:
             return &topLeft;
-        case DOWN_RIGHT:
+        case DIR_DOWN_RIGHT:
             return &botRight;
+            
         default:
+            printf("Error in CSRect: Attempting to get a corner's point other than top-left or bottom-right.\n");
             return nullptr;
     }
 }

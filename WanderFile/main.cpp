@@ -93,12 +93,10 @@ int main(void)
                         if(menuSelectMatrix.y == 1)
                         {
                             dungeon.createDungeon();
-                            dungeon.printWindow();
                         }
                         if(menuSelectMatrix.y == 2)
                         {
                             dungeon.deleteLastRoom();
-                            dungeon.printWindow();
                         }
                     }
                     

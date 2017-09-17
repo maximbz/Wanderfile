@@ -24,6 +24,7 @@ public:
     void setGameWindow(CSRect);
     
     void slideGameWindow(int, int);
+    void centerGameWindow(CSPoint);
     void toggleRoomNums(void);
     void toggleBreak(void);
     

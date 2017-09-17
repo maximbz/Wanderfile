@@ -1,4 +1,3 @@
-
 //
 //  CSDungeonLevel.cpp
 //  Random Rooms
@@ -56,10 +55,15 @@ void CSDungeonLevel::createDungeon(void)
         superRoom = createRoom(subRoom);
         
         if(superRoom != nullptr)
+        {
             _levelRooms.push_back(superRoom);
+            _theGame->centerGameWindow(superRoom->getRect()->getCenterPoint());
+        }
         else
             printf("Made a bad room. Type 'r' to try again.\n");
     }
+    
+    updateRoomNums();
     
     /*do
     {
@@ -158,11 +162,28 @@ void CSDungeonLevel::updateLevelBounds(CSRoom *incomingRoom)
         _levelBounds.botRight.y = incomingRoom->getRect()->botRight.y;
 }
 
+void CSDungeonLevel::updateRoomNums(void)
+{
+    int numRoomsRemainder = (int)_levelRooms.size() - 1, numDigits = 0;
+    
+    list<CSRoom *>::iterator    listIter;
+    
+    do
+    {
+        numRoomsRemainder /= 10;
+        numDigits++;
+    }
+    while(numRoomsRemainder > 0);
+    
+    for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
+        (*listIter)->updateRoomNum(numDigits);
+}
+
 CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
 {
     bool        goodDoorLoc, nextWall = false;
-    int         dir = BAD_DATA, loopCounter, thisIndexDist, nextIndexDist;
-    axis        axis = AXIS_NULL;
+    int         loopCounter, thisIndexDist, nextIndexDist;
+    CSAxis      roomGenAxis, collisionCheckAxis;
     objReg      originDoorWall = REG_NULL, newDoorWall = REG_NULL;
     CSPoint     newPoint;
     CSRoom      *newRoom = new CSRoom(_theGame);
@@ -198,9 +219,9 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
         _theRandHand->addRandomRange(doorLocGen);//offsets keep doors from appearing in corners
         
         //dynamically set the door's loc in the wall
-        axis = getPerpAxis(getWallAxis(newDoorWall));
-        newPoint.setAxisPoint(axis, newRoom->getRect()->getWallLocPoint(newDoorWall));
-        newPoint.setAxisPoint(getPerpAxis(axis), _theRandHand->getNumber("doorLocGen"));
+        roomGenAxis.setAxisFromWall(newDoorWall, PERPENDICULAR);
+        newPoint.setAxisPoint(roomGenAxis.dim, newRoom->getRect()->getWallLocPoint(newDoorWall));
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), _theRandHand->getNumber("doorLocGen"));
         newRoom->createObject(OPEN_DOOR_CHAR, OBJ_DOOR, newDoorWall, newPoint, nullptr, nextDoor);
         
         newRoom->setHallState(false);
@@ -210,6 +231,9 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
         return newRoom;
     }//if we haven't left the method yet...
     
+    
+    if(_theGame->getBreakState())
+        newPoint.x = newPoint.y;//leave break point for debug purposes.
     
     /*Make the room*/
     
@@ -221,8 +245,8 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
         if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect() == nullptr)//this is a door & it should connect to our new room
         {
             //set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
-            axis = getPerpAxis(getWallAxis((*objListIter)->getRegion()));
-            dir = getWallDir((*objListIter)->getRegion()) * -1;
+            roomGenAxis.setAxisFromWall((*objListIter)->getRegion(), PERPENDICULAR);
+            roomGenAxis.setDir(roomGenAxis.getWallDir((*objListIter)->getRegion()), PERPENDICULAR);
             
             incomingDoor = *objListIter;
             originDoorWall = getFacingWall(incomingDoor->getRegion());
@@ -231,31 +255,38 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
         }
             
     //dynamically create a room from the unconnected door we found
-    newPoint.setAxisPoint(axis, incomingDoor->getLoc()->getAxisPoint(axis) - dir);//set our facing wall adjacent to incomingRoom's door wall
+    newPoint.setAxisPoint(roomGenAxis.dim, incomingDoor->getLoc()->getAxisPoint(roomGenAxis.dim) -
+                          roomGenAxis.getDirectionOffset());//set our facing wall adjacent to incomingRoom's door wall
     if(newRoom->isHall())
-        newPoint.setAxisPoint(getPerpAxis(axis), incomingDoor->getLoc()->getAxisPoint(getPerpAxis(axis)) + ((HALL_SIZE / 2) * dir));//set perpendicular wall adjacent to door
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), incomingDoor->getLoc()->getAxisPoint(roomGenAxis.getPerpAxis()) +
+                              ((HALL_SIZE / 2) * roomGenAxis.getDirectionOffset()));//set perpendicular wall adjacent to door
     else
-        newPoint.setAxisPoint(getPerpAxis(axis), incomingDoor->getLoc()->getAxisPoint(getPerpAxis(axis)) +
-            (((_theRandHand->getNumber("roomSizeGen") / (getPerpAxis(axis) + 1)) / 2) * dir));//set perpendicular wall to half room size away from door
-    newRoom->getRect()->setCorner(dir, newPoint);//create the closer corner of the new room
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), incomingDoor->getLoc()->getAxisPoint(roomGenAxis.getPerpAxis()) +
+                              ((roomGenAxis.getAxisMod(_theRandHand->getNumber("roomSizeGen") / 2, PARALLEL)) *
+                              roomGenAxis.getDirectionOffset()));//set perpendicular wall to half room size away from door
+    newRoom->getRect()->setCorner(roomGenAxis.dir, newPoint);//create the closer corner of the new room
     
     if(newRoom->isHall())
     {
-        newPoint.setAxisPoint(axis, newPoint.getAxisPoint(axis) - ((_theRandHand->getNumber("hallLengthGen") / (axis + 1)) * dir));//add or subtract hall length to get opposite wall
-        newPoint.setAxisPoint(getPerpAxis(axis), newPoint.getAxisPoint(getPerpAxis(axis)) - (HALL_SIZE * dir));//set opposite, perpendicular wall adjacent to door the other way
+        newPoint.setAxisPoint(roomGenAxis.dim, newPoint.getAxisPoint(roomGenAxis.dim) - ((roomGenAxis.getAxisMod(_theRandHand->getNumber("hallLengthGen"), PARALLEL)) * roomGenAxis.getDirectionOffset()));//add or subtract hall length to get opposite wall
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), newPoint.getAxisPoint(roomGenAxis.getPerpAxis()) - (HALL_SIZE * roomGenAxis.getDirectionOffset()));//set opposite, perpendicular wall adjacent to door the other way
     }
     else
     {
-        newPoint.setAxisPoint(axis, newPoint.getAxisPoint(axis) - ((_theRandHand->getNumber("roomSizeGen") / (axis + 1)) * dir));//add or subtract room size to get opposite wall
-        newPoint.setAxisPoint(getPerpAxis(axis), incomingDoor->getLoc()->getAxisPoint(getPerpAxis(axis)) - (((_theRandHand->getNumber("roomSizeGen") / (axis + 1)) / 2) * dir));//set opposite, perpendicular wall to half room size away from door the other way
+        newPoint.setAxisPoint(roomGenAxis.dim,
+                              newPoint.getAxisPoint(roomGenAxis.dim) - (roomGenAxis.getAxisMod(_theRandHand->getNumber("roomSizeGen"), PARALLEL) *
+                                                                        roomGenAxis.getDirectionOffset()));//add or subtract room size to get opposite wall
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(),
+                              incomingDoor->getLoc()->getAxisPoint(roomGenAxis.getPerpAxis()) -
+                              ((roomGenAxis.getAxisMod((_theRandHand->getNumber("roomSizeGen") / 2), PARALLEL)) *
+                               roomGenAxis.getDirectionOffset()));//set opposite, perpendicular wall to half room size away from door the other way
     }
-    newRoom->getRect()->setCorner(dir * -1, newPoint);//create the further away corner of the new room
+    newRoom->getRect()->setCorner(roomGenAxis.getOpposingDir(), newPoint);//create the further away corner of the new room
     
     //create a new door in our new room, adjacent to the door we found in incomingRoom, then connect it to incomingRoom
     newPoint = (*incomingDoor->getLoc());
-    newPoint.setAxisPoint(axis, newPoint.getAxisPoint(axis) - dir);//x-- or y-- OR x++ or y++
+    newPoint.setAxisPoint(roomGenAxis.dim, newPoint.getAxisPoint(roomGenAxis.dim) - roomGenAxis.getDirectionOffset());//x-- or y-- OR x++ or y++
     newRoom->addDoor(newDoor, originDoorWall, newPoint, nullptr, incomingDoor, newRoom);
-    incomingDoor->setConnect(newDoor);//and add us to them
     
     
     /*Check for collisions*/
@@ -271,8 +302,9 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
         newRoom->getRect()->botRight.y = LEVEL_BOUND_BOTTOM - 1;
     
     //check if the new room is within any other room
-    for(loopCounter = 0; loopCounter < NUM_ROOM_WALLS; loopCounter++)//we're using the y coord to record which wall and the x coord to record the point
+    for(loopCounter = 0; loopCounter < NUM_ROOM_WALLS; loopCounter++)
     {
+        //we're using the x coord to record which wall and the y coord to record the point
         overlapWall[loopCounter].wall = getRegionFromInt(loopCounter);
         overlapWall[loopCounter].distance = BAD_DATA;
     }
@@ -311,6 +343,9 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
             //move down the ordered list and choose a wall to move
             for(loopCounter = 0; loopCounter < NUM_ROOM_WALLS; loopCounter++)
             {
+                collisionCheckAxis.setAxis(roomGenAxis.getWallAxis(overlapWall[loopCounter].wall), PARALLEL);
+                collisionCheckAxis.setDir(roomGenAxis.getWallDir(overlapWall[loopCounter].wall), PARALLEL);
+                
                 if(overlapWall[loopCounter].distance == getFacingWall(incomingDoor->getRegion()))//if this index is the wall with incomingDoor in it
                     nextWall = true;
                 else if(overlapWall[loopCounter].distance == getClockwiseWall(incomingDoor->getRegion()) || overlapWall[loopCounter].distance == getFacingWall(getClockwiseWall(incomingDoor->getRegion())))//if it's either perpendicular wall
@@ -321,18 +356,18 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
                         overlapWall[loopCounter].distance == REG_WALL_TOP))//OR if hall's min is less than new top
                         nextWall = true;//then NO, we can't slide the wall that far
                     else//if the perpendicular walls are the shortest distance to slide the offending/overlapping wall that don't have some room-breaking issue, let's slide them!
-                        newRoom->getRect()->setWallLoc(overlapWall[loopCounter].distance, overlapWall[loopCounter].wall);
+                        newRoom->getRect()->setWallLoc(overlapWall[loopCounter].wall, overlapWall[loopCounter].distance);
                 }
                 else//it's the far wall from incomingDoor, so there should be no issues moving it
                 {
                     //if sliding the wall opposite the door to incomingRoom pushes beyond that door, then we move to the next index or stop trying to make this room
-                    if((getWallDir(overlapWall[loopCounter].wall) == DOWN_RIGHT && overlapWall[loopCounter].wall <
-                        newRoom->getRect()->botRight.getAxisPoint(getPerpAxis(getWallAxis(overlapWall[loopCounter].wall)))) ||
-                       (getWallDir(overlapWall[loopCounter].wall) == DOWN_RIGHT && overlapWall[loopCounter].wall <
-                        newRoom->getRect()->botRight.getAxisPoint(getPerpAxis(getWallAxis(overlapWall[loopCounter].wall)))))
+                    if((collisionCheckAxis.dir == DIR_DOWN_RIGHT &&
+                        overlapWall[loopCounter].wall < newRoom->getRect()->botRight.getAxisPoint(collisionCheckAxis.getPerpAxis())) ||
+                       (roomGenAxis.dir == DIR_DOWN_RIGHT &&
+                        overlapWall[loopCounter].wall < newRoom->getRect()->botRight.getAxisPoint(roomGenAxis.getPerpAxis())))
                         nextWall = true;
                     else
-                        newRoom->getRect()->setWallLoc(overlapWall[loopCounter].distance, overlapWall[loopCounter].wall);
+                        newRoom->getRect()->setWallLoc(overlapWall[loopCounter].wall, overlapWall[loopCounter].distance);
                 }
                 
                 if(nextWall)
@@ -347,6 +382,7 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
                     {
                         delete newDoor;
                         delete newRoom;
+                        incomingDoor->setConnect(nullptr);
                         
                         return nullptr;
                     }
@@ -363,8 +399,8 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
     {
         newDoorWall = incomingDoor->getRegion();
         
-        newPoint.setAxisPoint(axis, newRoom->getRect()->getWallLocPoint(newDoorWall));
-        newPoint.setAxisPoint(getPerpAxis(axis), newRoom->getRect()->topLeft.getAxisPoint(getPerpAxis(axis)) + (HALL_SIZE / 2));
+        newPoint.setAxisPoint(roomGenAxis.dim, newRoom->getRect()->getWallLocPoint(newDoorWall));
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), newRoom->getRect()->topLeft.getAxisPoint(roomGenAxis.getPerpAxis()) + (HALL_SIZE / 2));
     }
     else//or to a random wall for a room
     {
@@ -401,9 +437,9 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *incomingRoom)
         _theRandHand->addRandomRange(doorLocGen);//offsets keep doors from appearing in corners
         
         //dynamically set the door's loc in the wall
-        axis = getPerpAxis(getWallAxis(newDoorWall));
-        newPoint.setAxisPoint(axis, newRoom->getRect()->getWallLocPoint(newDoorWall));
-        newPoint.setAxisPoint(getPerpAxis(axis), _theRandHand->getNumber("doorLocGen"));
+        roomGenAxis.setAxisFromWall(newDoorWall, PERPENDICULAR);
+        newPoint.setAxisPoint(roomGenAxis.dim, newRoom->getRect()->getWallLocPoint(newDoorWall));
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), _theRandHand->getNumber("doorLocGen"));
     }
     
     newRoom->createObject(OPEN_DOOR_CHAR, OBJ_DOOR, newDoorWall, newPoint, nullptr, nextDoor);
@@ -418,6 +454,7 @@ bool CSDungeonLevel::doesRoomOverlap(CSRoom *incomingRoom, wallOverlap incOverla
 {
     bool        overlap = false;
     int         loopCounter;
+    CSAxis      collisionCheckAxis;
     CSRange     incPerpWallRange, incWallRange, facePerpWallRange, faceWallRange;
     
     list<CSRoom *>::iterator    listIter;
@@ -426,6 +463,8 @@ bool CSDungeonLevel::doesRoomOverlap(CSRoom *incomingRoom, wallOverlap incOverla
     {
         for(loopCounter = 0; loopCounter < NUM_ROOM_WALLS; loopCounter++)
         {
+            collisionCheckAxis.setAxisFromWall(getRegionFromInt(loopCounter), PARALLEL);
+            
             //set our room's dims (width & height or height & width)
             incPerpWallRange.setRange(incomingRoom->getRect()->getWallStartPoint(loopCounter),
                                       incomingRoom->getRect()->getWallEndPoint(loopCounter));
@@ -443,7 +482,7 @@ bool CSDungeonLevel::doesRoomOverlap(CSRoom *incomingRoom, wallOverlap incOverla
                 if(((incWallRange.min - faceWallRange.max) <= 0) && ((faceWallRange.min - incWallRange.max) <= 0))
                 {
                     incOverlapWalls[loopCounter].distance = (*listIter)->getRect()->getWallLocPoint(getFacingWall(getRegionFromInt(loopCounter))) -
-                    getWallDir(getRegionFromInt(loopCounter));//return a wall loc that will be just outside of listIter
+                    collisionCheckAxis.dir;//return a wall loc that will be just outside of listIter
                     overlap = true;
                 }
         }

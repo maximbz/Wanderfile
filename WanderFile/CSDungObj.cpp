@@ -8,6 +8,7 @@
 
 #include "CSDungObj.hpp"
 #include "CSRoom.hpp"
+#include "CSAxis.hpp"
 
 CSDungObj::CSDungObj()
 {
@@ -127,45 +128,23 @@ void CSDungObj::slideObject(CSPoint incomingVector)
 bool CSDungObj::slideDoor(CSPoint incomingVector)
 {
     bool    goodLoc = true;
-    axis    axis = getWallAxis(_objectRegion);
+    CSAxis  wallAxis;
     CSPoint newLoc = (_objectLoc + incomingVector);
-    CSRange wallMovementRange;
-    CSRect  newRoomRect;
-    CSDungObj   *objectToCheck;
     
     list<CSDungObj*>            *roomObjects;
     list<CSDungObj*>::iterator  listIter;
     
+    wallAxis.setAxisFromWall(_objectRegion, PARALLEL);
     _wasMoved = true;
     
     //if the door is attempting to be slid along the perp axis, away from the wall...
-    if(incomingVector.getAxisPoint(getPerpAxis(axis)) != 0)
+    if(incomingVector.getAxisPoint(wallAxis.getPerpAxis()) != 0)
     {
-        //move the wall this door is on to the same spot
-        newRoomRect = *_owner->getRect();
-        newRoomRect.setWallLoc(_objectRegion, newLoc.getAxisPoint(getPerpAxis(axis)));
-        
-        //Before the wall can be slid, check if there are any doors on the tiles between the wall's current and future loc.
-        wallMovementRange.setRange(newRoomRect.getWallLocPoint(_objectRegion), _owner->getRect()->getWallLocPoint(_objectRegion));
-        roomObjects = _owner->getObjects();
-        for(listIter = roomObjects->begin(); listIter != roomObjects->end(); listIter++)
-        {
-            if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getRegion() == _objectRegion)
-                continue;
-            
-            //If there are, cancel the move
-            objectToCheck = (*listIter);
-            if(wallMovementRange.doesContain((*listIter)->getLoc()->getAxisPoint(getPerpAxis(axis))))
-                return false;
-        }
-        
-        //don't let the room be squished to nothing
-        if(newRoomRect.getDim(getPerpAxis(axis)) >= HALL_SIZE)
-            _owner->getRect()->setPoints(newRoomRect.topLeft, newRoomRect.botRight);
-        else
+        if(!_owner->slideWall(_objectRegion, incomingVector.getAxisPoint(wallAxis.getPerpAxis())))
             return false;
         
         //loop through all of the moved wall's doors, see if they can be slid
+        roomObjects = _owner->getObjects();
         for(listIter = roomObjects->begin(); listIter != roomObjects->end(); listIter++)
             if((*listIter)->checkForRegion(_objectRegion) && !(*listIter)->getWasMoved())//if it's an object that should be moved, but hasn't yet been
             {
@@ -185,7 +164,7 @@ bool CSDungObj::slideDoor(CSPoint incomingVector)
     }//if we come out the other side of this if, then this slide worked so far
     
     //if the door is attempting to be slid along the para axis, within the wall...
-    if(incomingVector.getAxisPoint(getWallAxis(_objectRegion)) != 0)
+    if(incomingVector.getAxisPoint(wallAxis.dim) != 0)
         goodLoc = _owner->isPointInFreeWall(newLoc, _objectRegion);//check that newDoorLoc is in free-wall
     
     //if the intended location is within any free-wall range, we set ourselves to it and return that we were successful

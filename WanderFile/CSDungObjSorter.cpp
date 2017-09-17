@@ -8,6 +8,7 @@
 
 #include "CSDungObjSorter.hpp"
 #include "CSRect.hpp"
+#include "CSAxis.hpp"
 
 CSDungObjSorter::CSDungObjSorter()
 {
@@ -17,12 +18,19 @@ CSDungObjSorter::CSDungObjSorter()
 
 bool CSDungObjSorter::operator()(CSDungObj* &earlierItem, CSDungObj* &laterItem)
 {
+    CSAxis  earlierAxis, laterAxis;
+    
     //shove all non-door objects to the back, doros of different walls should be in wall order
     if((earlierItem->getType() != laterItem->getType()))
         return earlierItem->getType() < laterItem->getType();
     else//if they're both doors of the same wall, compare axis points
         if(earlierItem->getType() == OBJ_DOOR)
-            return earlierItem->getLoc()->getAxisPoint(getWallAxis(earlierItem->getRegion())) < laterItem->getLoc()->getAxisPoint(getWallAxis(laterItem->getRegion()));
+        {
+            earlierAxis.setAxisFromWall(earlierItem->getRegion(), PARALLEL);
+            laterAxis.setAxisFromWall(laterItem->getRegion(), PARALLEL);
+            
+            return earlierItem->getLoc()->getAxisPoint(earlierAxis.dim) < laterItem->getLoc()->getAxisPoint(laterAxis.dim);
+        }
         else//if they're both the same non-door object type, order doesn't (currently) matter
             return true;
 }

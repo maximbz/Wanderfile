@@ -10,7 +10,7 @@
 #define CSPoint_hpp
 
 #include <stdio.h>
-#include "WanderFile.h"
+#include "CSAxis.hpp"
 
 class CSPoint
 {

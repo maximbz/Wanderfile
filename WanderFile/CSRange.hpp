@@ -10,7 +10,6 @@
 #define CSRange_hpp
 
 #include <stdio.h>
-#include "WanderFile.h"
 
 class CSRange
 {

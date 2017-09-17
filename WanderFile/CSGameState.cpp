@@ -40,6 +40,45 @@ void CSGameState::slideGameWindow(int incomingXDist, int incomingYDist)
     printf("Game Window: %d, %d - %d, %d\n", _gameWindow.topLeft.x, _gameWindow.topLeft.y, _gameWindow.botRight.x, _gameWindow.botRight.y);
 }
 
+void CSGameState::centerGameWindow(CSPoint incomingPoint)
+{
+    bool    topLeftAnchor = true;
+    
+    //center on incoming point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
+    
+    _gameWindow.topLeft.x =  incomingPoint.x - (WINDOW_BOUND_RIGHT / 2);
+    if(_gameWindow.topLeft.x < 0)
+        _gameWindow.topLeft.x = 0;
+    else if(_gameWindow.botRight.x > LEVEL_BOUND_RIGHT)
+    {
+        _gameWindow.botRight.x = LEVEL_BOUND_RIGHT;
+        topLeftAnchor = false;
+    }
+    
+    _gameWindow.topLeft.y = incomingPoint.y - (WINDOW_BOUND_BOTTOM / 2);
+    if(_gameWindow.topLeft.y < 0)
+        _gameWindow.topLeft.y = 0;
+    else if(_gameWindow.botRight.y > LEVEL_BOUND_BOTTOM)
+    {
+        _gameWindow.botRight.y = LEVEL_BOUND_BOTTOM;
+        topLeftAnchor = false;
+    }
+    
+    
+    //adjust other corner based on the corner we set
+    
+    if(topLeftAnchor)
+    {
+        _gameWindow.botRight.x = _gameWindow.topLeft.x + WINDOW_BOUND_RIGHT;
+        _gameWindow.botRight.y = _gameWindow.topLeft.y + WINDOW_BOUND_BOTTOM;
+    }
+    else
+    {
+        _gameWindow.topLeft.x = _gameWindow.botRight.x - WINDOW_BOUND_RIGHT;
+        _gameWindow.topLeft.y = _gameWindow.botRight.y - WINDOW_BOUND_BOTTOM;
+    }
+}
+
 void CSGameState::toggleRoomNums(void)
 {
     _printRoomNums = !_printRoomNums;

@@ -11,13 +11,14 @@
 
 #include <list>
 #include "WanderFile.h"
-#include "CSDungObj.hpp"
-#include "CSRandomHandler.hpp"
 #include "CSGameState.hpp"
+#include "CSRandomHandler.hpp"
 #include "CSRandomRange.hpp"
-#include "CSRoomSorter.hpp"
 #include "CSRoom.hpp"
+#include "CSRoomSorter.hpp"
 #include "CSRoomProx.hpp"
+#include "CSDungObj.hpp"
+#include "CSAxis.hpp"
 
 struct wallOverlap
 {
@@ -50,6 +51,7 @@ public:
     int loadDungeon(void);
     void deleteDungeon(void);
     void updateLevelBounds(CSRoom *);
+    void updateRoomNums(void);
     void deleteLastRoom(void);
     void slideRoom(int, int, int);
     void printWindow();

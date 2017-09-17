@@ -10,7 +10,6 @@
 #define CSDungObjSorter_hpp
 
 #include <stdio.h>
-#include "WanderFile.h"
 #include "CSDungObj.hpp"
 
 class CSDungObjSorter

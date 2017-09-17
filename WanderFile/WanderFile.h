@@ -11,14 +11,6 @@
 
 #pragma mark Constants
 
-
-enum axis//axes/dimensions
-{
-    AXIS_HORIZ,
-    AXIS_VERT,
-    AXIS_NULL = -1
-};
-
 enum objType//dungeon object types
 {
     OBJ_DOOR,
@@ -36,9 +28,6 @@ enum objReg//dungeon object regions
     REG_CORNER_TOP_LEFT
 };
 
-//dir
-const int   UP_LEFT = -1;
-const int   DOWN_RIGHT = 1;
 const int   BAD_DATA = -69420911;//nice
 
 const int   LEVEL_BOUND_RIGHT = 600;
@@ -70,52 +59,6 @@ const char  CLOSED_DOOR_CHAR = '+';
 #pragma mark -
 #pragma mark Inline Functions
 
-inline axis getPerpAxis(axis incomingAxis)
-{
-    switch(incomingAxis)
-    {
-        case AXIS_HORIZ:
-            return AXIS_VERT;
-        case AXIS_VERT:
-            return AXIS_HORIZ;
-        default:
-            printf("Error in WanderFile.h: Trying to return an axis other than horiz or vert.\n");
-            return AXIS_NULL;
-    }
-}
-
-inline axis getWallAxis(objReg incomingWall)
-{
-    switch(incomingWall)
-    {
-        case REG_WALL_TOP:
-        case REG_WALL_BOT:
-            return AXIS_HORIZ;
-        case REG_WALL_LEFT:
-        case REG_WALL_RIGHT:
-            return AXIS_VERT;
-        default:
-            //printf("Error in WanderFile.h: Trying to return an axis other than horiz or vert.\n");
-            return AXIS_NULL;
-    }
-}
-
-inline int getWallDir(objReg incomingWall)
-{
-    switch(incomingWall)
-    {
-        case REG_WALL_LEFT:
-        case REG_WALL_TOP:
-            return UP_LEFT;
-        case REG_WALL_RIGHT:
-        case REG_WALL_BOT:
-            return DOWN_RIGHT;
-        default:
-            printf("Error in WanderFile.h: Trying to return an direction other than up-left or down-right.\n");
-            return BAD_DATA;
-    }
-}
-
 inline objReg getFacingWall(objReg incomingWall)
 {
     switch(incomingWall)
@@ -130,6 +73,7 @@ inline objReg getFacingWall(objReg incomingWall)
             return REG_WALL_TOP;
             
         default:
+            printf("Error in WanderFile.h: Trying to return a facing wall of a null wall.\n");
             return REG_NULL;
     }
 }
@@ -148,6 +92,7 @@ inline objReg getClockwiseWall(objReg incomingWall)
             return REG_WALL_LEFT;
             
         default:
+            printf("Error in WanderFile.h: Trying to return a clockwise wall of a null wall.\n");
             return REG_NULL;
     }
 }
@@ -189,3 +134,20 @@ inline int getIntFromRegion(objReg incomingReg)
 }
 
 #endif /* RandomRooms_h */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
