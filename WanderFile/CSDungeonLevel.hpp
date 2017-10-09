@@ -20,7 +20,7 @@
 #include "CSDungObj.hpp"
 #include "CSAxis.hpp"
 
-struct wallOverlap
+struct roomOverlap
 {
     objReg  wall;
     int     distance;
@@ -36,12 +36,11 @@ private:
     int             _levelNum;
     CSRect          _levelBounds;
     string          _fileName;
+    CSRoom          *_outerRooms[NUM_ROOM_WALLS];
     list<CSRoom *>  _levelRooms;
     
     void indexRooms(list<CSRoom*>*);
     CSRoom* createRoom(CSRoom*);
-    bool doesRoomOverlap(CSRoom*, wallOverlap[NUM_ROOM_WALLS]);
-    vector<CSRoomProx> getNearbyRooms(CSRoom *, objReg);
     
 public:
     CSDungeonLevel(CSRandomHandler *, CSGameState *, int);

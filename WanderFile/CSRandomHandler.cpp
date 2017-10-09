@@ -44,3 +44,15 @@ int CSRandomHandler::getNumber(string incomgingRange)
     
     return distributionRange(_randomGenerator);
 }
+
+int CSRandomHandler::getNumber (CSRandomRange *incomingRange)
+{
+    int numberMin = 0, numberMax = 0;
+    
+    numberMin = incomingRange->getRangeMin();
+    numberMax = incomingRange->getRangeMax();
+    
+    uniform_int_distribution<int>   distributionRange(numberMin, numberMax);
+    
+    return distributionRange(_randomGenerator);
+}

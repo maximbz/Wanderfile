@@ -37,18 +37,17 @@ void CSRoomProx::setRoomOverlap(CSRange incomingRange)
 
 void CSRoomProx::setRoomOverlap(int incomingMin, int incomingMax)
 {
-    _roomOverlap.min = incomingMin;
-    _roomOverlap.max = incomingMax;
+    _roomOverlap.setRange(incomingMin,incomingMax);
 }
 
 void CSRoomProx::setRoomOverlapMin(int incomingMin)
 {
-    _roomOverlap.min = incomingMin;
+    _roomOverlap.setMin(incomingMin);
 }
 
 void CSRoomProx::setRoomOverlapMax(int incomingMax)
 {
-    _roomOverlap.max = incomingMax;
+    _roomOverlap.setMax(incomingMax);
 }
 
 void CSRoomProx::setDistance(int incomingDistance)

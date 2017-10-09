@@ -13,17 +13,23 @@
 
 class CSRange
 {
+private:
+    int _min, _max;
+    
 public:
-    int min, max;
     
     CSRange();
     CSRange(int, int);
     
     void setRange(int, int);
+    void setMin(int);
+    void setMax(int);
     
     bool doesContain(int);
     
-    int getSize();
+    int getMin(void);
+    int getMax(void);
+    int getSize(void);
 };
 
 #endif /* CSRange_hpp */

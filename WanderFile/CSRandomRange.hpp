@@ -22,8 +22,14 @@ private:
     CSRange _range;
     
 public:
+    CSRandomRange();
     CSRandomRange(string, int, int);
     CSRandomRange(string, CSRange);
+    
+    void setName(string);
+    void setRange(CSRange);
+    void setRangeMin(int);
+    void setRangeMax(int);
     
     string getRangeName(void);
     CSRange getRange(void);

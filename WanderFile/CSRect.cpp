@@ -108,13 +108,13 @@ void CSRect::setWallRange(objReg incomingWall, CSRange incomingRange)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
-            topLeft.x = incomingRange.min;
-            botRight.x = incomingRange.max;
+            topLeft.x = incomingRange.getMin();
+            botRight.x = incomingRange.getMax();
             break;
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
-            topLeft.y = incomingRange.min;
-            botRight.y = incomingRange.max;
+            topLeft.y = incomingRange.getMin();
+            botRight.y = incomingRange.getMax();
             break;
             
         default:
@@ -231,7 +231,7 @@ CSPoint* CSRect::getCorner(direction incomingDir)
     }
 }*/
 
-int CSRect::getWallStartPoint(int incomingWall)
+int CSRect::getWallStartPoint(objReg incomingWall)
 {
     switch(incomingWall)
     {
@@ -241,12 +241,13 @@ int CSRect::getWallStartPoint(int incomingWall)
         case REG_WALL_TOP:
         case REG_WALL_BOT:
             return topLeft.x;
+            
         default:
             return BAD_DATA;
     }
 }
 
-int CSRect::getWallEndPoint(int incomingWall)
+int CSRect::getWallEndPoint(objReg incomingWall)
 {
     switch(incomingWall)
     {
@@ -262,7 +263,7 @@ int CSRect::getWallEndPoint(int incomingWall)
     }
 }
 
-int CSRect::getWallLocPoint(int incomingWall)
+int CSRect::getWallLocPoint(objReg incomingWall)
 {
     switch(incomingWall)
     {
@@ -280,7 +281,7 @@ int CSRect::getWallLocPoint(int incomingWall)
     }
 }
 
-CSRange CSRect::getWallRange(int incomingWall)
+CSRange CSRect::getWallRange(objReg incomingWall)
 {
     CSRange outgoingRange;
     
@@ -288,17 +289,15 @@ CSRange CSRect::getWallRange(int incomingWall)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
-            outgoingRange.min = topLeft.x;
-            outgoingRange.max = botRight.x;
+            outgoingRange.setRange(topLeft.x,botRight.x);
             break;
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
-            outgoingRange.min = topLeft.y;
-            outgoingRange.max = botRight.y;
+            outgoingRange.setRange(topLeft.y,botRight.y);
             break;
+            
         default:
-            outgoingRange.min = BAD_DATA;
-            outgoingRange.max = BAD_DATA;
+            outgoingRange.setRange(BAD_DATA,BAD_DATA);
             break;
     }
     

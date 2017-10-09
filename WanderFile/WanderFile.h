@@ -97,6 +97,25 @@ inline objReg getClockwiseWall(objReg incomingWall)
     }
 }
 
+inline objReg getCounterclockwiseWall(objReg incomingWall)
+{
+    switch(incomingWall)
+    {
+        case REG_WALL_LEFT:
+            return REG_WALL_BOT;
+        case REG_WALL_TOP:
+            return REG_WALL_LEFT;
+        case REG_WALL_RIGHT:
+            return REG_WALL_TOP;
+        case REG_WALL_BOT:
+            return REG_WALL_RIGHT;
+            
+        default:
+            printf("Error in WanderFile.h: Trying to return a clockwise wall of a null wall.\n");
+            return REG_NULL;
+    }
+}
+
 inline objReg getRegionFromInt(int incomingInt)
 {
     switch(incomingInt)

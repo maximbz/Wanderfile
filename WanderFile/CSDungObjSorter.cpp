@@ -26,8 +26,8 @@ bool CSDungObjSorter::operator()(CSDungObj* &earlierItem, CSDungObj* &laterItem)
     else//if they're both doors of the same wall, compare axis points
         if(earlierItem->getType() == OBJ_DOOR)
         {
-            earlierAxis.setAxisFromWall(earlierItem->getRegion(), PARALLEL);
-            laterAxis.setAxisFromWall(laterItem->getRegion(), PARALLEL);
+            earlierAxis.setAxisFromWall(earlierItem->getRegion());
+            laterAxis.setAxisFromWall(laterItem->getRegion());
             
             return earlierItem->getLoc()->getAxisPoint(earlierAxis.dim) < laterItem->getLoc()->getAxisPoint(laterAxis.dim);
         }

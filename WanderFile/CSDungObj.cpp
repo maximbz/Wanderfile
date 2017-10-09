@@ -134,7 +134,7 @@ bool CSDungObj::slideDoor(CSPoint incomingVector)
     list<CSDungObj*>            *roomObjects;
     list<CSDungObj*>::iterator  listIter;
     
-    wallAxis.setAxisFromWall(_objectRegion, PARALLEL);
+    wallAxis.setAxisFromWall(_objectRegion);
     _wasMoved = true;
     
     //if the door is attempting to be slid along the perp axis, away from the wall...

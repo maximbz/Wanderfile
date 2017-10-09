@@ -31,7 +31,7 @@ void CSAxis::setAxis(axis incomingDim, orientation incOrientation)
         dim = getPerpAxis();
 }
 
-void CSAxis::setAxisFromWall(objReg incomingWall, orientation incOrientation)
+void CSAxis::setAxisFromWall(objReg incomingWall)
 {
     switch(incomingWall)
     {
@@ -48,9 +48,6 @@ void CSAxis::setAxisFromWall(objReg incomingWall, orientation incOrientation)
             //printf("Error in CSAxis: Trying to return an axis other than horiz or vert.\n");
             ;
     }
-    
-    if(incOrientation == PERPENDICULAR)//make dim perp
-        dim = getPerpAxis();
 }
 
 void CSAxis::setDir(direction incomingDir, orientation incOrientation)
@@ -59,6 +56,25 @@ void CSAxis::setDir(direction incomingDir, orientation incOrientation)
     
     if(incOrientation == PERPENDICULAR)//make dir opposing
         dir = getOpposingDir();
+}
+
+void CSAxis::setDirFromWall(objReg incomingWall)
+{
+    switch(incomingWall)
+    {
+        case REG_WALL_LEFT:
+        case REG_WALL_TOP:
+            dir = DIR_UP_LEFT;
+            break;
+        case REG_WALL_RIGHT:
+        case REG_WALL_BOT:
+            dir = DIR_DOWN_RIGHT;
+            break;
+            
+        default:
+            //printf("Error in CSAxis: Trying to return a direction other than up-left or down-right.\n");
+            ;
+    }
 }
 
 
@@ -165,7 +181,20 @@ int CSAxis::getDirectionOffset(void)
     }
 }
 
-
+int CSAxis::getOpposingDirOffset(void)
+{
+    switch(getOpposingDir())
+    {
+        case DIR_UP_LEFT:
+            return -1;
+        case DIR_DOWN_RIGHT:
+            return 1;
+            
+        default:
+            printf("Error in CSAxis: Trying to return an direction other than up-left or down-right.\n");
+            return 0;
+    }
+}
 
 
 

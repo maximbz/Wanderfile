@@ -190,7 +190,7 @@ bool CSRoom::isPointInFreeWall(CSPoint incomingPoint, objReg incomingWall)
     vector<CSRange>::iterator   vectIter;
     list<CSDungObj*>::iterator  listIter;
     
-    wallAxis.setAxisFromWall(incomingWall, PARALLEL);
+    wallAxis.setAxisFromWall(incomingWall);
     wallRange.setRange(_roomRect.getWallStartPoint(incomingWall) + 1, maxWallRange);//set our range up as the entire wall, less corners (which are not free walls)
     
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
@@ -199,14 +199,14 @@ bool CSRoom::isPointInFreeWall(CSPoint incomingPoint, objReg incomingWall)
         if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getRegion() != incomingWall)
             continue;
         
-        wallRange.max = (*listIter)->getLoc()->getAxisPoint(wallAxis.dim) - 1;//set max to just before current door, along wall
-        if(wallRange.max >= wallRange.min)//if it makes sense as a range...
-            freeWallRanges.push_back(wallRange);//add it
+        wallRange.setMax((*listIter)->getLoc()->getAxisPoint(wallAxis.dim) - 1);//set max to just before current door, along wall
+        //if(wallRange.max >= wallRange.min)//if it makes sense as a range...
+        freeWallRanges.push_back(wallRange);//add it
         
         wallRange.setRange((*listIter)->getLoc()->getAxisPoint(wallAxis.dim) + 1, _roomRect.getWallEndPoint(incomingWall) - 1);//set max back to just before end point, and min to just after current door
     }
     
-    if(wallRange.max >= wallRange.min && wallRange.max <= maxWallRange)//if it makes sense as a range, and doesn't go outside of the original, overall wall range...
+    if(/*wallRange.max >= wallRange.min && */wallRange.getMax() <= maxWallRange)//if it makes sense as a range, and doesn't go outside of the original, overall wall range...
         freeWallRanges.push_back(wallRange);//add final range from after last door of loop to just before end point (corner)
     
     //now go through each range and see if the incomingPoint is within any of them
@@ -245,7 +245,7 @@ bool CSRoom::slideRoom(CSPoint incomingVector)
         if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getConnect() == nullptr)
             continue;
         
-        slideAxis.setAxisFromWall((*listIter)->getRegion(), PARALLEL);
+        slideAxis.setAxisFromWall((*listIter)->getRegion());
         
         //if this is a para room-door...
         if(!_isHall && (incomingVector.getAxisPoint(slideAxis.dim) != 0))
@@ -284,7 +284,7 @@ bool CSRoom::slideRoom(CSPoint incomingVector)
         //also slide every object in the room except connected para room-doors
         for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
         {
-            roomAxis.setAxisFromWall((*listIter)->getRegion(), PARALLEL);
+            roomAxis.setAxisFromWall((*listIter)->getRegion());
             
             if(((_isHall || (!_isHall && roomAxis.dim != slideAxis.dim) || (*listIter)->getConnect() == nullptr)) &&
                !(*listIter)->getWasMoved())
@@ -325,7 +325,7 @@ bool CSRoom::slideWall(objReg incomingWall, int incomingVector)
     newRoomRect.setWallLoc(incomingWall, newWallLoc);
     
     //Before the wall can be slid, check if there are any doors on the tiles between the wall's current and future loc.
-    wallAxis.setAxisFromWall(incomingWall, PARALLEL);
+    wallAxis.setAxisFromWall(incomingWall);
     wallMovementRange.setRange(newRoomRect.getWallLocPoint(incomingWall), _roomRect.getWallLocPoint(incomingWall));
     
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
@@ -355,17 +355,17 @@ string CSRoom::printRoomRow(CSRange printRange, int rowToPrint)
     bool    printLeftWall, printRightWall;
     
     //deteremine what part of the room is visible within the window, and set bounds accordingly
-    if(printRange.min < _roomRect.topLeft.x)
+    if(printRange.getMin() < _roomRect.topLeft.x)
         leftPrintBound = _roomRect.topLeft.x;
     else
-        leftPrintBound = printRange.min;
-    printLeftWall = printRange.min < _roomRect.topLeft.x;
+        leftPrintBound = printRange.getMin();
+    printLeftWall = printRange.getMin() < _roomRect.topLeft.x;
     
-    if(printRange.max > _roomRect.botRight.x)
+    if(printRange.getMax() > _roomRect.botRight.x)
         rightPrintBound = _roomRect.botRight.x;
     else
-        rightPrintBound = printRange.max;
-    printRightWall = printRange.max > _roomRect.botRight.x;
+        rightPrintBound = printRange.getMax();
+    printRightWall = printRange.getMax() > _roomRect.botRight.x;
     
     tileToPrint.y = rowToPrint;
     

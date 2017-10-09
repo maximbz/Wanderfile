@@ -24,6 +24,7 @@ public:
     
     void addRandomRange(CSRandomRange);
     int getNumber(string);
+    int getNumber (CSRandomRange*);
 };
 
 #endif /* CSRandomHandler_hpp */

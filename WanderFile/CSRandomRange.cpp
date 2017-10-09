@@ -8,25 +8,43 @@
 
 #include "CSRandomRange.hpp"
 
+CSRandomRange::CSRandomRange()
+{
+    
+}
+
 CSRandomRange::CSRandomRange(string incomingName, int incomingRangeMin, int incomingRangeMax)
 {
     _rangeName = incomingName;
     
-    if(incomingRangeMax < incomingRangeMin)
-        printf("RandomRange created with max below min. This will create unexpected results.\n");
-    
-    _range.min = incomingRangeMin;
-    _range.max = incomingRangeMax;
+    _range.setRange(incomingRangeMin, incomingRangeMax);
 }
 
 CSRandomRange::CSRandomRange(string incomingName, CSRange incomingRange)
 {
     _rangeName = incomingName;
-    
-    if(incomingRange.max < incomingRange.min)
-        printf("RandomRange created with max below min. This will create unexpected results.\n");
-    
     _range = incomingRange;
+}
+
+
+void CSRandomRange::setName(string incomingName)
+{
+    _rangeName = incomingName;
+}
+
+void CSRandomRange::setRange(CSRange incomingRange)
+{
+    _range = incomingRange;
+}
+
+void CSRandomRange::setRangeMin(int incomingMin)
+{
+    _range.setMin(incomingMin);
+}
+
+void CSRandomRange::setRangeMax(int incomingMax)
+{
+    _range.setMin(incomingMax);
 }
 
 
@@ -42,10 +60,10 @@ CSRange CSRandomRange::getRange(void)
 
 int CSRandomRange::getRangeMin(void)
 {
-    return _range.min;
+    return _range.getMin();
 }
 
 int CSRandomRange::getRangeMax(void)
 {
-    return _range.max;
+    return _range.getMax();
 }

@@ -101,7 +101,7 @@ int CSPlayerChoice::getUserIntAnswer(void)
     
     while(!goodResponse)
     {
-        printf("(%d - %d)", _intRange.min, _intRange.max);
+        printf("(%d - %d)", _intRange.getMin(), _intRange.getMax());
         scanf("%d", &userResponse);
         
         goodResponse = _intRange.doesContain(userResponse);
@@ -119,7 +119,7 @@ CSPoint CSPlayerChoice::getUserMixedAnswer(void)
     
     while(!goodResponse)
     {
-        printf("(%d - %d OR: ", _intRange.min, _intRange.max);//print number range first
+        printf("(%d - %d OR: ", _intRange.getMin(), _intRange.getMax());//print number range first
         printOptions();//then go through vector and print it, formatted
         
         scanf("%s", &userResponse[0]);

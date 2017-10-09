@@ -48,10 +48,10 @@ public:
     
     //dynamic getters
     CSPoint* getCorner(direction);//topLeft or botRight from direction UP_LEFT or DOWN_RIGHT
-    int getWallStartPoint(int);//top or left
-    int getWallEndPoint(int);//bottom or right
-    int getWallLocPoint(int);//x or y of entire wall
-    CSRange getWallRange(int);//start and end based on incomingWall
+    int getWallStartPoint(objReg);//top or left
+    int getWallEndPoint(objReg);//bottom or right
+    int getWallLocPoint(objReg);//x or y of entire wall
+    CSRange getWallRange(objReg);//start and end based on incomingWall
     
     //operators?!
     CSRect& operator=(const CSRect&);
