@@ -13,38 +13,38 @@ CSRandomRange::CSRandomRange()
     
 }
 
-CSRandomRange::CSRandomRange(string incomingName, int incomingRangeMin, int incomingRangeMax)
+CSRandomRange::CSRandomRange(string inName, int inRangeMin, int inRangeMax)
 {
-    _rangeName = incomingName;
+    _rangeName = inName;
     
-    _range.setRange(incomingRangeMin, incomingRangeMax);
+    _range.setRange(inRangeMin, inRangeMax);
 }
 
-CSRandomRange::CSRandomRange(string incomingName, CSRange incomingRange)
+CSRandomRange::CSRandomRange(string inName, CSRange inRange)
 {
-    _rangeName = incomingName;
-    _range = incomingRange;
+    _rangeName = inName;
+    _range = inRange;
 }
 
 
-void CSRandomRange::setName(string incomingName)
+void CSRandomRange::setName(string inName)
 {
-    _rangeName = incomingName;
+    _rangeName = inName;
 }
 
-void CSRandomRange::setRange(CSRange incomingRange)
+void CSRandomRange::setRange(CSRange inRange)
 {
-    _range = incomingRange;
+    _range = inRange;
 }
 
-void CSRandomRange::setRangeMin(int incomingMin)
+void CSRandomRange::setRangeMin(int inMin)
 {
-    _range.setMin(incomingMin);
+    _range.setMin(inMin);
 }
 
-void CSRandomRange::setRangeMax(int incomingMax)
+void CSRandomRange::setRangeMax(int inMax)
 {
-    _range.setMin(incomingMax);
+    _range.setMin(inMax);
 }
 
 

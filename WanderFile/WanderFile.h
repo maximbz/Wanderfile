@@ -43,7 +43,7 @@ const int   ROOM_SIZE_X_MAX = 40;
 const int   ROOM_SIZE_Y_MIN = 3;
 const int   ROOM_SIZE_Y_MAX = 18;*/
 //divide heights in half due to how ascii printing looks
-const int   ROOM_SIZE_MIN = 6;
+const int   ROOM_SIZE_MIN = 4;
 const int   ROOM_SIZE_MAX = 40;
 const int   HALL_SIZE = 2;//+1 for total width/height
 const int   HALL_LENGTH_MAX = 10;
@@ -112,6 +112,25 @@ inline objReg getCounterclockwiseWall(objReg incomingWall)
             
         default:
             printf("Error in WanderFile.h: Trying to return a clockwise wall of a null wall.\n");
+            return REG_NULL;
+    }
+}
+
+inline objReg getAxisDirWall(objReg inWall)
+{
+    switch(inWall)
+    {
+        case REG_WALL_LEFT:
+            return REG_WALL_TOP;
+        case REG_WALL_TOP:
+            return REG_WALL_LEFT;
+        case REG_WALL_RIGHT:
+            return REG_WALL_BOT;
+        case REG_WALL_BOT:
+            return REG_WALL_RIGHT;
+            
+        default:
+            printf("Error in anderFile.h: Trying to return a wall other other than top, left, bottom or right.\n");
             return REG_NULL;
     }
 }

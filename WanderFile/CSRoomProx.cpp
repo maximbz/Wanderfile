@@ -14,45 +14,45 @@ CSRoomProx::CSRoomProx()
 {
 }
 
-CSRoomProx::CSRoomProx(CSRoom *incomingRoom, CSRange incomingRange, int incomingDistance)
+CSRoomProx::CSRoomProx(CSRoom *inRoom, CSRange inRange, int inDistance)
 {
-    _nearbyRoom = incomingRoom;
-    _roomOverlap = incomingRange;
-    _distance = incomingDistance;
+    _nearbyRoom = inRoom;
+    _roomOverlap = inRange;
+    _distance = inDistance;
 }
 
 
 #pragma mark -
 #pragma mark Setters
 
-void CSRoomProx::setNearbyRoom(CSRoom *incomingRoom)
+void CSRoomProx::setNearbyRoom(CSRoom *inRoom)
 {
-    _nearbyRoom = incomingRoom;
+    _nearbyRoom = inRoom;
 }
 
-void CSRoomProx::setRoomOverlap(CSRange incomingRange)
+void CSRoomProx::setRoomOverlap(CSRange inRange)
 {
-    _roomOverlap = incomingRange;
+    _roomOverlap = inRange;
 }
 
-void CSRoomProx::setRoomOverlap(int incomingMin, int incomingMax)
+void CSRoomProx::setRoomOverlap(int inMin, int inMax)
 {
-    _roomOverlap.setRange(incomingMin,incomingMax);
+    _roomOverlap.setRange(inMin,inMax);
 }
 
-void CSRoomProx::setRoomOverlapMin(int incomingMin)
+void CSRoomProx::setRoomOverlapMin(int inMin)
 {
-    _roomOverlap.setMin(incomingMin);
+    _roomOverlap.setMin(inMin);
 }
 
-void CSRoomProx::setRoomOverlapMax(int incomingMax)
+void CSRoomProx::setRoomOverlapMax(int inMax)
 {
-    _roomOverlap.setMax(incomingMax);
+    _roomOverlap.setMax(inMax);
 }
 
-void CSRoomProx::setDistance(int incomingDistance)
+void CSRoomProx::setDistance(int inDistance)
 {
-    _distance = incomingDistance;
+    _distance = inDistance;
 }
 
 

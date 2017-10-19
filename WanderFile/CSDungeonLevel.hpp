@@ -16,9 +16,6 @@
 #include "CSRandomRange.hpp"
 #include "CSRoom.hpp"
 #include "CSRoomSorter.hpp"
-#include "CSRoomProx.hpp"
-#include "CSDungObj.hpp"
-#include "CSAxis.hpp"
 
 struct roomOverlap
 {

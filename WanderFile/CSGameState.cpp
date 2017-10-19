@@ -17,36 +17,36 @@ CSGameState::CSGameState()
     _gameWindow.setPoints((LEVEL_BOUND_RIGHT / 2) - (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) - (WINDOW_BOUND_BOTTOM / 2), (LEVEL_BOUND_RIGHT / 2) + (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) + (WINDOW_BOUND_BOTTOM / 2));
 }
 
-void CSGameState::setGameWindow(CSRect incomingRect)
+void CSGameState::setGameWindow(CSRect inRect)
 {
-    _gameWindow = incomingRect;
+    _gameWindow = inRect;
 }
 
 
-void CSGameState::slideGameWindow(int incomingXDist, int incomingYDist)
+void CSGameState::slideGameWindow(int inXDist, int inYDist)
 {
-    if((_gameWindow.topLeft.x > 1 && incomingXDist < 0) || (_gameWindow.botRight.x < LEVEL_BOUND_RIGHT && incomingXDist > 0))
+    if((_gameWindow.topLeft.x > 1 && inXDist < 0) || (_gameWindow.botRight.x < LEVEL_BOUND_RIGHT && inXDist > 0))
     {
-        _gameWindow.topLeft.x += incomingXDist;
-        _gameWindow.botRight.x += incomingXDist;
+        _gameWindow.topLeft.x += inXDist;
+        _gameWindow.botRight.x += inXDist;
     }
     
-    if((_gameWindow.topLeft.y > 1 && incomingYDist < 0) || (_gameWindow.botRight.y < LEVEL_BOUND_BOTTOM && incomingYDist > 0))
+    if((_gameWindow.topLeft.y > 1 && inYDist < 0) || (_gameWindow.botRight.y < LEVEL_BOUND_BOTTOM && inYDist > 0))
     {
-        _gameWindow.topLeft.y += incomingYDist;
-        _gameWindow.botRight.y += incomingYDist;
+        _gameWindow.topLeft.y += inYDist;
+        _gameWindow.botRight.y += inYDist;
     }
     
     printf("Game Window: %d, %d - %d, %d\n", _gameWindow.topLeft.x, _gameWindow.topLeft.y, _gameWindow.botRight.x, _gameWindow.botRight.y);
 }
 
-void CSGameState::centerGameWindow(CSPoint incomingPoint)
+void CSGameState::centerGameWindow(CSPoint inPoint)
 {
     bool    topLeftAnchor = true;
     
-    //center on incoming point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
+    //center on in point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
     
-    _gameWindow.topLeft.x =  incomingPoint.x - (WINDOW_BOUND_RIGHT / 2);
+    _gameWindow.topLeft.x =  inPoint.x - (WINDOW_BOUND_RIGHT / 2);
     if(_gameWindow.topLeft.x < 0)
         _gameWindow.topLeft.x = 0;
     else if(_gameWindow.botRight.x > LEVEL_BOUND_RIGHT)
@@ -55,7 +55,7 @@ void CSGameState::centerGameWindow(CSPoint incomingPoint)
         topLeftAnchor = false;
     }
     
-    _gameWindow.topLeft.y = incomingPoint.y - (WINDOW_BOUND_BOTTOM / 2);
+    _gameWindow.topLeft.y = inPoint.y - (WINDOW_BOUND_BOTTOM / 2);
     if(_gameWindow.topLeft.y < 0)
         _gameWindow.topLeft.y = 0;
     else if(_gameWindow.botRight.y > LEVEL_BOUND_BOTTOM)

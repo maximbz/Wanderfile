@@ -14,18 +14,18 @@ CSRect::CSRect()
 {
 }
 
-CSRect::CSRect(CSPoint incomingTopLeft, CSPoint incomingBotRight)
+CSRect::CSRect(CSPoint inTopLeft, CSPoint inBotRight)
 {
-    topLeft = incomingTopLeft;
-    botRight = incomingBotRight;
+    topLeft = inTopLeft;
+    botRight = inBotRight;
     
     calculateArea();
 }
 
-CSRect::CSRect(int incomingLeft, int incomingTop, int incomingRight, int incomingBot)
+CSRect::CSRect(int inLeft, int inTop, int inRight, int inBot)
 {
-    topLeft.setPoints(incomingLeft, incomingTop);
-    botRight.setPoints(incomingRight, incomingBot);
+    topLeft.setPoints(inLeft, inTop);
+    botRight.setPoints(inRight, inBot);
     
     calculateArea();
 }
@@ -34,65 +34,65 @@ CSRect::CSRect(int incomingLeft, int incomingTop, int incomingRight, int incomin
 #pragma mark -
 #pragma mark Setters
 
-void CSRect::setPoints(int incomingLeft, int incomingTop, int incomingRight, int incomingBot)
+void CSRect::setPoints(int inLeft, int inTop, int inRight, int inBot)
 {
-    topLeft.setPoints(incomingLeft, incomingTop);
-    botRight.setPoints(incomingRight, incomingBot);
+    topLeft.setPoints(inLeft, inTop);
+    botRight.setPoints(inRight, inBot);
     
     calculateArea();
 }
 
-void CSRect::setPoints(CSPoint incomingTopLeft, CSPoint incomingBotRight)
+void CSRect::setPoints(CSPoint inTopLeft, CSPoint inBotRight)
 {
-    topLeft = incomingTopLeft;
-    botRight = incomingBotRight;
+    topLeft = inTopLeft;
+    botRight = inBotRight;
     
     calculateArea();
 }
 
-void CSRect::setTopLeft(CSPoint incomingTopLeft)
+void CSRect::setTopLeft(CSPoint inTopLeft)
 {
-    topLeft = incomingTopLeft;
+    topLeft = inTopLeft;
     
     calculateArea();
 }
 
-void CSRect::setTopLeft(int incomingLeft, int incomingTop)
+void CSRect::setTopLeft(int inLeft, int inTop)
 {
-    topLeft.setPoints(incomingLeft, incomingTop);
+    topLeft.setPoints(inLeft, inTop);
     
     calculateArea();
 }
 
-void CSRect::setBotRight(CSPoint incomingBotRight)
+void CSRect::setBotRight(CSPoint inBotRight)
 {
-    botRight = incomingBotRight;
+    botRight = inBotRight;
     
     calculateArea();
 }
 
-void CSRect::setBotRight(int incomingRight, int incomingBot)
+void CSRect::setBotRight(int inRight, int inBot)
 {
-    botRight.setPoints(incomingRight, incomingBot);
+    botRight.setPoints(inRight, inBot);
     
     calculateArea();
 }
 
-void CSRect::setWallLoc(objReg incomingWall, int incomingLocPoint)
+void CSRect::setWallLoc(objReg inWall, int inLocPoint)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_TOP:
-            topLeft.y = incomingLocPoint;
+            topLeft.y = inLocPoint;
             break;
         case REG_WALL_LEFT:
-            topLeft.x = incomingLocPoint;
+            topLeft.x = inLocPoint;
             break;
         case REG_WALL_RIGHT:
-            botRight.x = incomingLocPoint;
+            botRight.x = inLocPoint;
             break;
         case REG_WALL_BOT:
-            botRight.y = incomingLocPoint;
+            botRight.y = inLocPoint;
             break;
         
         default:
@@ -102,19 +102,19 @@ void CSRect::setWallLoc(objReg incomingWall, int incomingLocPoint)
     calculateArea();
 }
 
-void CSRect::setWallRange(objReg incomingWall, CSRange incomingRange)
+void CSRect::setWallRange(objReg inWall, CSRange inRange)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
-            topLeft.x = incomingRange.getMin();
-            botRight.x = incomingRange.getMax();
+            topLeft.x = inRange.getMin();
+            botRight.x = inRange.getMax();
             break;
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
-            topLeft.y = incomingRange.getMin();
-            botRight.y = incomingRange.getMax();
+            topLeft.y = inRange.getMin();
+            botRight.y = inRange.getMax();
             break;
             
         default:
@@ -124,15 +124,15 @@ void CSRect::setWallRange(objReg incomingWall, CSRange incomingRange)
     calculateArea();
 }
 
-void CSRect::setCorner(direction incomingDir, CSPoint incomingPoint)
+void CSRect::setCorner(direction inDir, CSPoint inPoint)
 {
-    switch(incomingDir)
+    switch(inDir)
     {
         case DIR_UP_LEFT:
-            topLeft = incomingPoint;
+            topLeft = inPoint;
             break;
         case DIR_DOWN_RIGHT:
-            botRight = incomingPoint;
+            botRight = inPoint;
             break;
             
         default:
@@ -153,13 +153,13 @@ void CSRect::calculateArea(void)
     _rectHeight = (botRight.y + 1) - topLeft.y;
 }
 
-void CSRect::slideRect(CSPoint incomingVector)
+void CSRect::slideRect(CSPoint inVector)
 {
-    topLeft.x += incomingVector.x;
-    botRight.x += incomingVector.x;
+    topLeft.x += inVector.x;
+    botRight.x += inVector.x;
     
-    topLeft.y += incomingVector.y;
-    botRight.y += incomingVector.y;
+    topLeft.y += inVector.y;
+    botRight.y += inVector.y;
 }
 
 
@@ -176,9 +176,9 @@ int CSRect::getHeight(void)
     return _rectHeight;
 }
 
-int CSRect::getDim(axis incomingDim)
+int CSRect::getDim(axis inDim)
 {
-    switch(incomingDim)
+    switch(inDim)
     {
         case AXIS_HORIZ:
             return _rectWidth;
@@ -200,9 +200,9 @@ CSPoint CSRect::getCenterPoint(void)
     return outgoingPoint;
 }
 
-CSPoint* CSRect::getCorner(direction incomingDir)
+CSPoint* CSRect::getCorner(direction inDir)
 {
-    switch(incomingDir)
+    switch(inDir)
     {
         case DIR_UP_LEFT:
             return &topLeft;
@@ -215,9 +215,9 @@ CSPoint* CSRect::getCorner(direction incomingDir)
     }
 }
 
-/*int CSRect::getWallSize(int incomingWall)
+/*int CSRect::getWallSize(int inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
@@ -231,9 +231,9 @@ CSPoint* CSRect::getCorner(direction incomingDir)
     }
 }*/
 
-int CSRect::getWallStartPoint(objReg incomingWall)
+int CSRect::getWallStartPoint(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
@@ -247,9 +247,9 @@ int CSRect::getWallStartPoint(objReg incomingWall)
     }
 }
 
-int CSRect::getWallEndPoint(objReg incomingWall)
+int CSRect::getWallEndPoint(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
@@ -263,9 +263,9 @@ int CSRect::getWallEndPoint(objReg incomingWall)
     }
 }
 
-int CSRect::getWallLocPoint(objReg incomingWall)
+int CSRect::getWallLocPoint(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_LEFT:
             return topLeft.x;
@@ -281,11 +281,11 @@ int CSRect::getWallLocPoint(objReg incomingWall)
     }
 }
 
-CSRange CSRect::getWallRange(objReg incomingWall)
+CSRange CSRect::getWallRange(objReg inWall)
 {
     CSRange outgoingRange;
     
-    switch (incomingWall)
+    switch (inWall)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
@@ -308,19 +308,19 @@ CSRange CSRect::getWallRange(objReg incomingWall)
 #pragma mark -
 #pragma mark Operators
 
-CSRect& CSRect::operator=(const CSRect &incomingRect)
+CSRect& CSRect::operator=(const CSRect &inRect)
 {
-    topLeft = incomingRect.topLeft;
-    botRight = incomingRect.botRight;
+    topLeft = inRect.topLeft;
+    botRight = inRect.botRight;
     
     return *this;
 }
 
-CSRect CSRect::operator+(const CSPoint &incomingVector)
+CSRect CSRect::operator+(const CSPoint &inVector)
 {
     CSRect  tempRect = *this;
     
-    tempRect.slideRect(incomingVector);
+    tempRect.slideRect(inVector);
     tempRect.calculateArea();
     
     return tempRect;

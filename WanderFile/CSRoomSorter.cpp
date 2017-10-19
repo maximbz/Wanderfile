@@ -13,14 +13,14 @@ CSRoomSorter::CSRoomSorter()
     
 }
 
-CSRoomSorter::CSRoomSorter(bool incomingSortType)
+CSRoomSorter::CSRoomSorter(bool inSortType)
 {
-    _topDown = incomingSortType;
+    _topDown = inSortType;
 }
 
-void CSRoomSorter::setSortMode(bool incomingMode)
+void CSRoomSorter::setSortMode(bool inMode)
 {
-    _topDown = incomingMode;
+    _topDown = inMode;
 }
 
 bool CSRoomSorter::operator()(CSRoom* &earlierItem, CSRoom* &laterItem)

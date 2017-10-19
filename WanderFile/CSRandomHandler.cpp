@@ -14,27 +14,27 @@ CSRandomHandler::CSRandomHandler(void) : _randomGenerator((unsigned int)time(0))
 
 //doers
 
-void CSRandomHandler::addRandomRange(CSRandomRange incomingRandomRange)
+void CSRandomHandler::addRandomRange(CSRandomRange inRandRange)
 {
     int loopCounter;
     
     //check for dupes from previous dungeon
     for(loopCounter = 0; loopCounter < _ranges.size(); loopCounter++)
-        if(incomingRandomRange.getRangeName() == _ranges[loopCounter].getRangeName())
+        if(inRandRange.getRangeName() == _ranges[loopCounter].getRangeName())
             _ranges.erase(_ranges.begin() + loopCounter);
     
-    _ranges.push_back(incomingRandomRange);
+    _ranges.push_back(inRandRange);
     //printf("%lu ", _ranges.size());
 }
 
-int CSRandomHandler::getNumber(string incomgingRange)
+int CSRandomHandler::getNumber(string inRange)
 {
     int numberMin = 0, numberMax = 0;
     
     vector<CSRandomRange>::iterator vectIter;
     
     for(vectIter = _ranges.begin(); vectIter != _ranges.end(); vectIter++)
-        if(incomgingRange == vectIter->getRangeName())
+        if(inRange == vectIter->getRangeName())
         {
             numberMin = vectIter->getRangeMin();
             numberMax = vectIter->getRangeMax();
@@ -45,12 +45,12 @@ int CSRandomHandler::getNumber(string incomgingRange)
     return distributionRange(_randomGenerator);
 }
 
-int CSRandomHandler::getNumber (CSRandomRange *incomingRange)
+int CSRandomHandler::getNumber (CSRandomRange *inRange)
 {
     int numberMin = 0, numberMax = 0;
     
-    numberMin = incomingRange->getRangeMin();
-    numberMax = incomingRange->getRangeMax();
+    numberMin = inRange->getRangeMin();
+    numberMax = inRange->getRangeMax();
     
     uniform_int_distribution<int>   distributionRange(numberMin, numberMax);
     

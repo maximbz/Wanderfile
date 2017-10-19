@@ -63,7 +63,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "233"
             endingLineNumber = "233"
-            landmarkName = "CSRoom::slideRoom(CSPoint incomingVector)"
+            landmarkName = "CSRoom::slideRoom(CSPoint inVector)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -74,12 +74,28 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WanderFile/CSDungeonLevel.cpp"
-            timestampString = "527662624.618667"
+            timestampString = "530080803.783439"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "304"
-            endingLineNumber = "304"
-            landmarkName = "CSDungeonLevel::createRoom(CSRoom *incomingRoom)"
+            startingLineNumber = "470"
+            endingLineNumber = "470"
+            landmarkName = "CSDungeonLevel::printWindow()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "WanderFile/CSDungeonLevel.cpp"
+            timestampString = "530069434.142768"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "323"
+            endingLineNumber = "323"
+            landmarkName = "CSDungeonLevel::createRoom(CSRoom *inRoom)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

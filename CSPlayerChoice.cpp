@@ -21,31 +21,31 @@ CSPlayerChoice::CSPlayerChoice()
 {
 }
 
-CSPlayerChoice::CSPlayerChoice(CSRange incomingRange)
+CSPlayerChoice::CSPlayerChoice(CSRange inRange)
 {
     _hasInt = true;
     _hasChar = false;
     
-    _intRange = incomingRange;
+    _intRange = inRange;
 }
 
-CSPlayerChoice::CSPlayerChoice(vector<char> incomingCharOptions)
+CSPlayerChoice::CSPlayerChoice(vector<char> inCharOptions)
 {
     _hasInt = false;
     _hasChar = true;
     
-    _charOptions.push_back(incomingCharOptions);
+    _charOptions.push_back(inCharOptions);
     _charOptionStates.push_back(true);
 }
 
-CSPlayerChoice::CSPlayerChoice(CSRange incomingRange, vector<char> incomingCharOptions)
+CSPlayerChoice::CSPlayerChoice(CSRange inRange, vector<char> inCharOptions)
 {
     _hasInt = true;
     _hasChar = true;
     
-    _intRange = incomingRange;
+    _intRange = inRange;
     
-    _charOptions.push_back(incomingCharOptions);
+    _charOptions.push_back(inCharOptions);
     _charOptionStates.push_back(true);
 }
 
@@ -53,20 +53,20 @@ CSPlayerChoice::CSPlayerChoice(CSRange incomingRange, vector<char> incomingCharO
 #pragma mark -
 #pragma mark Setters
 
-void CSPlayerChoice::setIntRange(CSRange incomingRange)
+void CSPlayerChoice::setIntRange(CSRange inRange)
 {
-    _intRange = incomingRange;
+    _intRange = inRange;
 }
 
-void CSPlayerChoice::addCharVect(vector<char> incomingCharOptions)
+void CSPlayerChoice::addCharVect(vector<char> inCharOptions)
 {
-    _charOptions.push_back(incomingCharOptions);
+    _charOptions.push_back(inCharOptions);
     _charOptionStates.push_back(true);
 }
 
-void CSPlayerChoice::toggleCharOption(int incomingCharOption, bool incomingState)
+void CSPlayerChoice::toggleCharOption(int inCharOption, bool inState)
 {
-    _charOptionStates[incomingCharOption] = incomingState;
+    _charOptionStates[inCharOption] = inState;
 }
 
 
@@ -198,7 +198,7 @@ void CSPlayerChoice::printOptions(void)
     printf(")  ");
 }
 
-CSPoint CSPlayerChoice::parseResponse(string &incomingResponse)
+CSPoint CSPlayerChoice::parseResponse(string &inResponse)
 {
     int     loopCounter, subLoopCounter;
     CSPoint responseMatrix(BAD_DATA, BAD_DATA);
@@ -209,7 +209,7 @@ CSPoint CSPlayerChoice::parseResponse(string &incomingResponse)
             continue;
         
         for(subLoopCounter = 0;subLoopCounter < _charOptions[loopCounter].size(); subLoopCounter++)
-            if(incomingResponse[0] == _charOptions[loopCounter][subLoopCounter])
+            if(inResponse[0] == _charOptions[loopCounter][subLoopCounter])
             {
                 responseMatrix.setPoints(loopCounter, subLoopCounter);
                 loopCounter = (int)_charOptions.size();//get us out of the outer loop

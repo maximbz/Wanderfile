@@ -18,17 +18,17 @@ CSDungObj::CSDungObj()
     _owner = nullptr;
 }
 
-CSDungObj::CSDungObj(char incomingChar, objType incomingType, objReg incomingRegion, CSPoint incomingLoc, CSDungObj *incParent, CSDungObj *incConnect, CSRoom *incomingOwner)
+CSDungObj::CSDungObj(char inChar, objType inType, objReg inRegion, CSPoint inLoc, CSDungObj *inParent, CSDungObj *inConnect, CSRoom *inOwner)
 {
-    _objectChar = incomingChar;
-    _objectType = incomingType;
-    _objectRegion = incomingRegion;
-    _objectLoc = incomingLoc;
+    _objectChar = inChar;
+    _objectType = inType;
+    _objectRegion = inRegion;
+    _objectLoc = inLoc;
     
-    setParent(incParent);
+    setParent(inParent);
     _childObj = nullptr;
-    setConnect(incConnect);
-    _owner = incomingOwner;
+    setConnect(inConnect);
+    _owner = inOwner;
     
     _wasMoved = false;
 }
@@ -37,50 +37,50 @@ CSDungObj::CSDungObj(char incomingChar, objType incomingType, objReg incomingReg
 #pragma mark -
 #pragma mark Setters
 
-void CSDungObj::setWasMoved(bool incomingState)
+void CSDungObj::setWasMoved(bool inState)
 {
-    _wasMoved = incomingState;
+    _wasMoved = inState;
 }
 
-void CSDungObj::setChar(char incomingChar)
+void CSDungObj::setChar(char inChar)
 {
-    _objectChar = incomingChar;
+    _objectChar = inChar;
 }
 
-void CSDungObj::setType(objType incomingType)
+void CSDungObj::setType(objType inType)
 {
-    _objectType = incomingType;
+    _objectType = inType;
 }
 
-void CSDungObj::setRegion(objReg incomingRegion)
+void CSDungObj::setRegion(objReg inRegion)
 {
-    _objectRegion = incomingRegion;
+    _objectRegion = inRegion;
 }
 
-void CSDungObj::setLoc(CSPoint incomingLoc)
+void CSDungObj::setLoc(CSPoint inLoc)
 {
-    _objectLoc = incomingLoc;
+    _objectLoc = inLoc;
 }
 
-void CSDungObj::setParent(CSDungObj *incomingParent)
+void CSDungObj::setParent(CSDungObj *inParent)
 {
-    _parentObj = incomingParent;
+    _parentObj = inParent;
     
-    if(incomingParent != nullptr)
+    if(inParent != nullptr)
         if(_parentObj->getChild() != this)
             _parentObj->setChild(this);
 }
 
-void CSDungObj::setChild(CSDungObj *incomingChild)
+void CSDungObj::setChild(CSDungObj *inChild)
 {
-    _childObj = incomingChild;
+    _childObj = inChild;
     
-    if(incomingChild != nullptr)
+    if(inChild != nullptr)
         if(_childObj->getParent() != this)
             _childObj->setParent(this);
     
     if(_objectType == OBJ_DOOR)
-        incomingChild = nullptr;
+        inChild = nullptr;
 }
 
 void CSDungObj::setConnect(CSDungObj *incConnect)
@@ -92,18 +92,18 @@ void CSDungObj::setConnect(CSDungObj *incConnect)
             incConnect->setConnect(this);
 }
 
-void CSDungObj::setOwner(CSRoom *incomingOwner)
+void CSDungObj::setOwner(CSRoom *inOwner)
 {
-    _owner = incomingOwner;
+    _owner = inOwner;
 }
 
 
 #pragma mark -
 #pragma mark Doers
 
-void CSDungObj::slideObject(CSPoint incomingVector)
+void CSDungObj::slideObject(CSPoint inVector)
 {
-    CSPoint newLoc = _objectLoc + incomingVector;
+    CSPoint newLoc = _objectLoc + inVector;
     bool    slideUp = false;
     
     //if we have a parent, pass this up the chain to them. If we don't set our loc, then go down the chain, and move our child on the same vector we were moved
@@ -114,22 +114,22 @@ void CSDungObj::slideObject(CSPoint incomingVector)
     }
     
     if(slideUp)
-        _parentObj->slideObject(incomingVector);
+        _parentObj->slideObject(inVector);
     else
     {
         _wasMoved = true;
         setLoc(newLoc);
         
         if(_childObj != nullptr)
-            _childObj->slideObject(incomingVector);
+            _childObj->slideObject(inVector);
     }
 }
 
-bool CSDungObj::slideDoor(CSPoint incomingVector)
+bool CSDungObj::slideDoor(CSPoint inVector)
 {
     bool    goodLoc = true;
     CSAxis  wallAxis;
-    CSPoint newLoc = (_objectLoc + incomingVector);
+    CSPoint newLoc = (_objectLoc + inVector);
     
     list<CSDungObj*>            *roomObjects;
     list<CSDungObj*>::iterator  listIter;
@@ -138,9 +138,9 @@ bool CSDungObj::slideDoor(CSPoint incomingVector)
     _wasMoved = true;
     
     //if the door is attempting to be slid along the perp axis, away from the wall...
-    if(incomingVector.getAxisPoint(wallAxis.getPerpAxis()) != 0)
+    if(inVector.getAxisPoint(wallAxis.getPerpAxis()) != 0)
     {
-        if(!_owner->slideWall(_objectRegion, incomingVector.getAxisPoint(wallAxis.getPerpAxis())))
+        if(!_owner->slideWall(_objectRegion, inVector.getAxisPoint(wallAxis.getPerpAxis())))
             return false;
         
         //loop through all of the moved wall's doors, see if they can be slid
@@ -150,12 +150,12 @@ bool CSDungObj::slideDoor(CSPoint incomingVector)
             {
                 if((*listIter)->getType() == OBJ_DOOR)
                 {
-                    goodLoc = (*listIter)->slideDoor(incomingVector);//we try to slide it. If we can't...
+                    goodLoc = (*listIter)->slideDoor(inVector);//we try to slide it. If we can't...
                     if(!goodLoc)
                         break;
                 }
                 else//if it's not a door (like it's anchored to the wall that's being moved, e.g.: a room num)
-                    (*listIter)->slideObject(incomingVector);
+                    (*listIter)->slideObject(inVector);
             }
         
         //reset all objects' _wasMoved to false;
@@ -164,20 +164,20 @@ bool CSDungObj::slideDoor(CSPoint incomingVector)
     }//if we come out the other side of this if, then this slide worked so far
     
     //if the door is attempting to be slid along the para axis, within the wall...
-    if(incomingVector.getAxisPoint(wallAxis.dim) != 0)
+    if(inVector.getAxisPoint(wallAxis.dim) != 0)
         goodLoc = _owner->isPointInFreeWall(newLoc, _objectRegion);//check that newDoorLoc is in free-wall
     
     //if the intended location is within any free-wall range, we set ourselves to it and return that we were successful
     if(goodLoc)
-        slideObject(incomingVector);
+        slideObject(inVector);
     
     return goodLoc;
 }
 
-bool CSDungObj::checkForRegion(objReg incomingReg)
+bool CSDungObj::checkForRegion(objReg inReg)
 {
     if(_objectRegion == REG_CORNER_TOP_LEFT)
-        switch(incomingReg)
+        switch(inReg)
         {
             case REG_CORNER_TOP_LEFT:
             case REG_WALL_TOP:
@@ -188,7 +188,7 @@ bool CSDungObj::checkForRegion(objReg incomingReg)
                 return false;
         }
     else
-        if(_objectRegion == incomingReg)
+        if(_objectRegion == inReg)
             return true;
         else
             return false;

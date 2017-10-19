@@ -10,47 +10,47 @@
 
 CSPoint::CSPoint(){}
 
-CSPoint::CSPoint(int incomingX, int incomingY)
+CSPoint::CSPoint(int inX, int inY)
 {
-    x = incomingX;
-    y = incomingY;
+    x = inX;
+    y = inY;
 }
 
 
-void CSPoint::setAxisPoint(axis incomingAxis, int incomingPoint)
+void CSPoint::setAxisPoint(axis inAxis, int inPoint)
 {
-    if(incomingAxis == AXIS_HORIZ)
-        x = incomingPoint;
-    else if(incomingAxis == AXIS_VERT)
-        y = incomingPoint;
+    if(inAxis == AXIS_HORIZ)
+        x = inPoint;
+    else if(inAxis == AXIS_VERT)
+        y = inPoint;
     else
         printf("Error in CSPoint: Attempting to access dimension other than X or Y.\n");
 }
 
-void CSPoint::setPoints(int incomingXPoint, int incomingYPoint)
+void CSPoint::setPoints(int inXPoint, int inYPoint)
 {
-    x = incomingXPoint;
-    y = incomingYPoint;
+    x = inXPoint;
+    y = inYPoint;
 }
 
 
-void CSPoint::slidePoint(int incomingXPoint, int incomingYPoint)
+void CSPoint::slidePoint(int inXPoint, int inYPoint)
 {
-    x += incomingXPoint;
-    y += incomingYPoint;
+    x += inXPoint;
+    y += inYPoint;
 }
 
-void CSPoint::slidePoint(CSPoint incomingVector)
+void CSPoint::slidePoint(CSPoint inVector)
 {
-    x += incomingVector.x;
-    y += incomingVector.y;
+    x += inVector.x;
+    y += inVector.y;
 }
 
-int CSPoint::getAxisPoint(axis incomingAxis)
+int CSPoint::getAxisPoint(axis inAxis)
 {
-    if(incomingAxis == AXIS_HORIZ)
+    if(inAxis == AXIS_HORIZ)
         return x;
-    else if(incomingAxis == AXIS_VERT)
+    else if(inAxis == AXIS_VERT)
         return y;
     else
     {
@@ -62,77 +62,77 @@ int CSPoint::getAxisPoint(axis incomingAxis)
 
 //operator overloads!
 
-CSPoint& CSPoint::operator=(const CSPoint &incomingPoint)
+CSPoint& CSPoint::operator=(const CSPoint &inPoint)
 {
-    x = incomingPoint.x;
-    y = incomingPoint.y;
+    x = inPoint.x;
+    y = inPoint.y;
     
     return *this;
 }
 
-bool CSPoint::operator==(const CSPoint &incomingCoord)
+bool CSPoint::operator==(const CSPoint &inCoord)
 {
-    return ((x == incomingCoord.x) && (y == incomingCoord.y));
+    return ((x == inCoord.x) && (y == inCoord.y));
 }
 
-bool CSPoint::operator!=(const CSPoint &incomingCoord)
+bool CSPoint::operator!=(const CSPoint &inCoord)
 {
-    return ((x != incomingCoord.x) || (y != incomingCoord.y));
+    return ((x != inCoord.x) || (y != inCoord.y));
 }
 
 //both x and y must be > or < etc for the entire CSPoint to be > or < etc
-bool CSPoint::operator>(const CSPoint &incomingCoord)
+bool CSPoint::operator>(const CSPoint &inCoord)
 {
-    return ((x > incomingCoord.x) || (y > incomingCoord.y));
+    return ((x > inCoord.x) || (y > inCoord.y));
 }
 
-bool CSPoint::operator>=(const CSPoint &incomingCoord)
+bool CSPoint::operator>=(const CSPoint &inCoord)
 {
-    return ((x >= incomingCoord.x) || (y >= incomingCoord.y));
+    return ((x >= inCoord.x) || (y >= inCoord.y));
 }
 
-bool CSPoint::operator<(const CSPoint &incomingCoord)
+bool CSPoint::operator<(const CSPoint &inCoord)
 {
-    return ((x < incomingCoord.x) || (y < incomingCoord.y));
+    return ((x < inCoord.x) || (y < inCoord.y));
 }
 
-bool CSPoint::operator<=(const CSPoint &incomingCoord)
+bool CSPoint::operator<=(const CSPoint &inCoord)
 {
-    return ((x <= incomingCoord.x) || (y <= incomingCoord.y));
+    return ((x <= inCoord.x) || (y <= inCoord.y));
 }
 
 
 //math overloads
 
 //mostly just for inverting with "* -1"
-CSPoint CSPoint::operator*(int incomingInt)
+CSPoint CSPoint::operator*(int inInt)
 {
-    CSPoint outgoingPoint;
+    CSPoint outPoint;
     
-    outgoingPoint.x = x * incomingInt;
-    outgoingPoint.y = y * incomingInt;
+    outPoint.x = x * inInt;
+    outPoint.y = y * inInt;
     
-    return outgoingPoint;
+    return outPoint;
 }
 
-CSPoint CSPoint::operator+(CSPoint &incomingPoint)
+CSPoint CSPoint::operator+(CSPoint &inPoint)
 {
-    CSPoint outgoingPoint;
+    CSPoint outPoint;
     
-    outgoingPoint.x = x + incomingPoint.x;
-    outgoingPoint.y = y + incomingPoint.y;
+    outPoint.x = x + inPoint.x;
+    outPoint.y = y + inPoint.y;
     
-    return outgoingPoint;
+    return outPoint;
 }
 
-CSPoint CSPoint::operator-(CSPoint &incomingPoint)
+CSPoint CSPoint::operator-(CSPoint &inPoint)
 {
-    CSPoint outgoingPoint;
+    CSPoint outPoint;
     
-    outgoingPoint.x = x - incomingPoint.x;
-    outgoingPoint.y = y - incomingPoint.y;
+    outPoint.x = x - inPoint.x;
+    outPoint.y = y - inPoint.y;
     
-    return outgoingPoint;
+    return outPoint;
 }
 
 

@@ -14,34 +14,45 @@ CSAxis::CSAxis()
     dir = DIR_NULL;
 }
 
-CSAxis::CSAxis(axis incomingAxis, direction incomingDir)
+CSAxis::CSAxis(axis inAxis, direction inDir)
 {
-    dim = incomingAxis;
-    dir = incomingDir;
+    dim = inAxis;
+    dir = inDir;
 }
 
 
 #pragma mark -
 
-void CSAxis::setAxis(axis incomingDim, orientation incOrientation)
+void CSAxis::setAxis(axis inDim, orientation incOrientation)
 {
-    dim = incomingDim;
+    dim = inDim;
     
     if(incOrientation == PERPENDICULAR)//make dim perp
         dim = getPerpAxis();
 }
 
-void CSAxis::setAxisFromWall(objReg incomingWall)
+void CSAxis::setAxisFromWall(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_TOP:
+            dim = AXIS_HORIZ;
+            dir = DIR_UP_LEFT;
+            break;
+            
         case REG_WALL_BOT:
             dim = AXIS_HORIZ;
+            dir = DIR_DOWN_RIGHT;
             break;
+            
         case REG_WALL_LEFT:
+            dim = AXIS_VERT;
+            dir = DIR_UP_LEFT;
+            break;
+            
         case REG_WALL_RIGHT:
             dim = AXIS_VERT;
+            dir = DIR_DOWN_RIGHT;
             break;
             
         default:
@@ -50,31 +61,12 @@ void CSAxis::setAxisFromWall(objReg incomingWall)
     }
 }
 
-void CSAxis::setDir(direction incomingDir, orientation incOrientation)
+void CSAxis::setDir(direction inDir, orientation incOrientation)
 {
-    dir = incomingDir;
+    dir = inDir;
     
     if(incOrientation == PERPENDICULAR)//make dir opposing
         dir = getOpposingDir();
-}
-
-void CSAxis::setDirFromWall(objReg incomingWall)
-{
-    switch(incomingWall)
-    {
-        case REG_WALL_LEFT:
-        case REG_WALL_TOP:
-            dir = DIR_UP_LEFT;
-            break;
-        case REG_WALL_RIGHT:
-        case REG_WALL_BOT:
-            dir = DIR_DOWN_RIGHT;
-            break;
-            
-        default:
-            //printf("Error in CSAxis: Trying to return a direction other than up-left or down-right.\n");
-            ;
-    }
 }
 
 
@@ -94,7 +86,8 @@ axis CSAxis::getPerpAxis(void)
     }
 }
 
-int CSAxis::getAxisMod(int incomingLoc, orientation incOrientation)
+//Because, ascii characters use more pixels vertically, this cuts all vertical room gen by half to make rooms appear more square
+int CSAxis::getAxisMod(int inLoc, orientation incOrientation)
 {
     axis outDim;
     
@@ -106,9 +99,9 @@ int CSAxis::getAxisMod(int incomingLoc, orientation incOrientation)
     switch(outDim)
     {
         case AXIS_HORIZ:
-            return incomingLoc;
+            return inLoc;
         case AXIS_VERT:
-            return (incomingLoc / 2);
+            return (inLoc / 2);
             
         default:
             printf("Error in CSAxis: Trying to modify an axis other than horiz or vert.\n");
@@ -116,9 +109,9 @@ int CSAxis::getAxisMod(int incomingLoc, orientation incOrientation)
     }
 }
 
-axis CSAxis::getWallAxis(objReg incomingWall)
+axis CSAxis::getWallAxis(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
@@ -132,9 +125,9 @@ axis CSAxis::getWallAxis(objReg incomingWall)
     }
 }
 
-direction CSAxis::getWallDir(objReg incomingWall)
+direction CSAxis::getWallDir(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_LEFT:
         case REG_WALL_TOP:

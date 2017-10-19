@@ -14,55 +14,55 @@ CSRange::CSRange()
     _max = 0;
 }
 
-CSRange::CSRange(int incomingMin, int incomingMax)
+CSRange::CSRange(int inMin, int inMax)
 {
-    setRange(incomingMin, incomingMax);
+    setRange(inMin, inMax);
 }
 
 
-void CSRange::setRange(int incomingMin, int incomingMax)
+void CSRange::setRange(int inMin, int inMax)
 {
     //never allow the min to be greater than the max
-    if(incomingMin < incomingMax)
+    if(inMin < inMax)
     {
-        _min = incomingMin;
-        _max = incomingMax;
+        _min = inMin;
+        _max = inMax;
     }
     else
     {
-        _max = incomingMin;
-        _min = incomingMax;
+        _max = inMin;
+        _min = inMax;
     }
 }
 
-void CSRange::setMin(int incomingMin)
+void CSRange::setMin(int inMin)
 {
     //never allow the min to be greater than the max
-    if(incomingMin <= _max)
-        _min = incomingMin;
+    if(inMin <= _max)
+        _min = inMin;
     else
     {
         _min = _max;
-        _max = incomingMin;
+        _max = inMin;
     }
 }
 
-void CSRange::setMax(int incomingMax)
+void CSRange::setMax(int inMax)
 {
     //never allow the min to be greater than the max
-    if(incomingMax >= _min)
-        _max = incomingMax;
+    if(inMax >= _min)
+        _max = inMax;
     else
     {
         _max = _min;
-        _min = incomingMax;
+        _min = inMax;
     }
 }
 
 
-bool CSRange::doesContain(int incomingPoint)
+bool CSRange::doesContain(int inPoint)
 {
-    return incomingPoint >= _min && incomingPoint <= _max;
+    return inPoint >= _min && inPoint <= _max;
 }
 
 
