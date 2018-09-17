@@ -44,7 +44,7 @@ void CSRoom::setRoomNum(int inRoomNum)
 
 
 #pragma mark -
-#pragma mark Doers
+#pragma mark Doers - Create/Delete Functions
 
 CSDungObj* CSRoom::createObject(char inObjChar, objType inObjType, objReg inObjReg, CSPoint inObjLoc, CSDungObj *inParent, CSDungObj *inCon)
 {
@@ -111,6 +111,7 @@ void CSRoom::deleteRoom(void)
 }
 
 #pragma mark -
+#pragma mark Doers - Check/Edit Functions
 
 char CSRoom::checkForObject(CSPoint inLocation, char inObjectChar)
 {
@@ -126,7 +127,7 @@ char CSRoom::checkForObject(CSPoint inLocation, char inObjectChar)
 void CSRoom::updateRoomNum(int inNumDigits)
 {
     bool            vertHall = false;
-    int             loopCounter, powerResult;
+    int             loop, powerResult;
     char            newDigit;
     CSPoint         newDigitLoc;
     CSDungObj       *newRoomNum, *prevRoomNum = nullptr;
@@ -154,14 +155,14 @@ void CSRoom::updateRoomNum(int inNumDigits)
         vertHall = true;
     
     //create room nums based on new number of digits
-    for(loopCounter = 1; loopCounter <= inNumDigits; loopCounter++)
+    for(loop = 1; loop <= inNumDigits; loop++)
     {
         if(vertHall)
-            newDigitLoc.setPoints(_roomRect.topLeft.x + 1, (_roomRect.topLeft.y + inNumDigits) - loopCounter + 1);//inset from top & left walls by 1 tile
+            newDigitLoc.setPoints(_roomRect.topLeft.x + 1, (_roomRect.topLeft.y + inNumDigits) - loop + 1);//inset from top & left walls by 1 tile
         else
-            newDigitLoc.setPoints((_roomRect.topLeft.x + inNumDigits) - loopCounter + 1, _roomRect.topLeft.y + 1);//inset from top & left walls by 1 tile
+            newDigitLoc.setPoints((_roomRect.topLeft.x + inNumDigits) - loop + 1, _roomRect.topLeft.y + 1);//inset from top & left walls by 1 tile
         
-        powerResult = pow(10, loopCounter - 1);
+        powerResult = pow(10, loop - 1);
         newDigit = ((_roomNum / powerResult) % 10) + '0';//plus ascii offset
         
         newRoomNum = createObject(newDigit, OBJ_ROOM_NUM, REG_CORNER_TOP_LEFT, newDigitLoc, prevRoomNum, nullptr);//creates one's place and connect it to ten's place
@@ -346,6 +347,9 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
     
     return true;//if we got this far, we're good
 }
+
+#pragma mark -
+#pragma mark Doers - Graphics Functions
 
 string CSRoom::printRoomRow(CSRange printRange, int rowToPrint)
 {

@@ -48,6 +48,7 @@ public:
     
     axis getPerpAxis(void);
     int getAxisMod(int, orientation);
+    objReg getReg(void);
     axis getWallAxis(objReg);
     direction getWallDir(objReg);
     

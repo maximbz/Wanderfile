@@ -25,6 +25,7 @@ public:
     
     void slidePoint(int, int);
     void slidePoint(CSPoint);
+    void slidePointViaAxis(axis, int);
     
     int getAxisPoint(axis);//dynamic return of x value or y value from axis (horiz or vert) input
     

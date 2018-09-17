@@ -16,12 +16,12 @@ CSRandomHandler::CSRandomHandler(void) : _randomGenerator((unsigned int)time(0))
 
 void CSRandomHandler::addRandomRange(CSRandomRange inRandRange)
 {
-    int loopCounter;
+    int loop;
     
     //check for dupes from previous dungeon
-    for(loopCounter = 0; loopCounter < _ranges.size(); loopCounter++)
-        if(inRandRange.getRangeName() == _ranges[loopCounter].getRangeName())
-            _ranges.erase(_ranges.begin() + loopCounter);
+    for(loop = 0; loop < _ranges.size(); loop++)
+        if(inRandRange.getRangeName() == _ranges[loop].getRangeName())
+            _ranges.erase(_ranges.begin() + loop);
     
     _ranges.push_back(inRandRange);
     //printf("%lu ", _ranges.size());

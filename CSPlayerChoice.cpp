@@ -112,7 +112,7 @@ int CSPlayerChoice::getUserIntAnswer(void)
 
 CSPoint CSPlayerChoice::getUserMixedAnswer(void)
 {
-    int     loopCounter, loopSize, subLoopCounter;
+    int     loop, loopSize, subloop;
     string  userResponse(4, ' ');
     bool    goodResponse = false;
     CSPoint responseMatrix;
@@ -138,11 +138,11 @@ CSPoint CSPlayerChoice::getUserMixedAnswer(void)
             loopSize = (int)strlen(userResponse.c_str());
             
             ////check the beginning of userResponse for an integer
-            for(loopCounter = 0; loopCounter < loopSize; loopCounter++)
+            for(loop = 0; loop < loopSize; loop++)
             {
                 //loop through every digit, checking if it's at this index of userResponse
-                for(subLoopCounter = '0'; subLoopCounter <= '9'; subLoopCounter++)
-                    if(userResponse[loopCounter] == subLoopCounter)
+                for(subloop = '0'; subloop <= '9'; subloop++)
+                    if(userResponse[loop] == subloop)
                     {
                         intFound = true;
                         break;//we found a digit, no more need for searching
@@ -160,9 +160,9 @@ CSPoint CSPlayerChoice::getUserMixedAnswer(void)
                 responseMatrix.setPoints((int)_charOptions.size(), 0);//an int user response is treated as an additional char vector
                 
                 //takes the integer we found in userReponse and adds it to responseInt
-                for(loopCounter = intPos; loopCounter >= 0; loopCounter--)//goes from the last number of the integer we found, leftward
+                for(loop = intPos; loop >= 0; loop--)//goes from the last number of the integer we found, leftward
                 {
-                    responseMatrix.y += (userResponse[loopCounter] - '0') * pow(10, decimalPlace);//as we move right, we increase the power of ten
+                    responseMatrix.y += (userResponse[loop] - '0') * pow(10, decimalPlace);//as we move right, we increase the power of ten
                     decimalPlace++;//as we move left in the string, we must move right in the int
                 }
                 
@@ -177,22 +177,22 @@ CSPoint CSPlayerChoice::getUserMixedAnswer(void)
 
 void CSPlayerChoice::printOptions(void)
 {
-    int loopCounter, subLoopCounter;
+    int loop, subloop;
     
     //go through vector and print it, formatted
-    for(loopCounter = 0;loopCounter < _charOptions.size(); loopCounter++)
+    for(loop = 0;loop < _charOptions.size(); loop++)
     {
-        if(!_charOptionStates[loopCounter])//don't check char option sets that have been turned off
+        if(!_charOptionStates[loop])//don't check char option sets that have been turned off
             continue;
         
-        for(subLoopCounter = 0;subLoopCounter < _charOptions[loopCounter].size(); subLoopCounter++)
+        for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
         {
-            printf("%c", _charOptions[loopCounter][subLoopCounter]);
-            if(subLoopCounter < _charOptions[loopCounter].size() - 1)//if not last loop
+            printf("%c", _charOptions[loop][subloop]);
+            if(subloop < _charOptions[loop].size() - 1)//if not last loop
                 printf(", ");
         }
         
-        if(loopCounter < _charOptions.size() - 1)//if not last loop
+        if(loop < _charOptions.size() - 1)//if not last loop
             printf(", ");
     }
     printf(")  ");
@@ -200,19 +200,19 @@ void CSPlayerChoice::printOptions(void)
 
 CSPoint CSPlayerChoice::parseResponse(string &inResponse)
 {
-    int     loopCounter, subLoopCounter;
+    int     loop, subloop;
     CSPoint responseMatrix(BAD_DATA, BAD_DATA);
     
-    for(loopCounter = 0; loopCounter < _charOptions.size(); loopCounter++)
+    for(loop = 0; loop < _charOptions.size(); loop++)
     {
-        if(!_charOptionStates[loopCounter])//don't check char option sets that have been turned off
+        if(!_charOptionStates[loop])//don't check char option sets that have been turned off
             continue;
         
-        for(subLoopCounter = 0;subLoopCounter < _charOptions[loopCounter].size(); subLoopCounter++)
-            if(inResponse[0] == _charOptions[loopCounter][subLoopCounter])
+        for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
+            if(inResponse[0] == _charOptions[loop][subloop])
             {
-                responseMatrix.setPoints(loopCounter, subLoopCounter);
-                loopCounter = (int)_charOptions.size();//get us out of the outer loop
+                responseMatrix.setPoints(loop, subloop);
+                loop = (int)_charOptions.size();//get us out of the outer loop
                 break;
             }
     }

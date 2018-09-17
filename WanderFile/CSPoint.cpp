@@ -46,6 +46,17 @@ void CSPoint::slidePoint(CSPoint inVector)
     y += inVector.y;
 }
 
+void CSPoint::slidePointViaAxis(axis inAxis, int inPoint)
+{
+    if(inAxis == AXIS_HORIZ)
+        x += inPoint;
+    else if(inAxis == AXIS_VERT)
+        y += inPoint;
+    else
+        printf("Error in CSPoint: Attempting to access dimension other than X or Y.\n");
+}
+
+
 int CSPoint::getAxisPoint(axis inAxis)
 {
     if(inAxis == AXIS_HORIZ)
@@ -80,7 +91,7 @@ bool CSPoint::operator!=(const CSPoint &inCoord)
     return ((x != inCoord.x) || (y != inCoord.y));
 }
 
-//both x and y must be > or < etc for the entire CSPoint to be > or < etc
+//either x or y can be > or < etc for the entire CSPoint to be > or < etc
 bool CSPoint::operator>(const CSPoint &inCoord)
 {
     return ((x > inCoord.x) || (y > inCoord.y));

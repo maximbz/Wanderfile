@@ -59,9 +59,9 @@ const char  CLOSED_DOOR_CHAR = '+';
 #pragma mark -
 #pragma mark Inline Functions
 
-inline objReg getFacingWall(objReg incomingWall)
+inline objReg getFacingWall(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_LEFT:
             return REG_WALL_RIGHT;
@@ -78,9 +78,9 @@ inline objReg getFacingWall(objReg incomingWall)
     }
 }
 
-inline objReg getClockwiseWall(objReg incomingWall)
+inline objReg getClockWall(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_LEFT:
             return REG_WALL_TOP;
@@ -97,9 +97,9 @@ inline objReg getClockwiseWall(objReg incomingWall)
     }
 }
 
-inline objReg getCounterclockwiseWall(objReg incomingWall)
+inline objReg getCountclockWall(objReg inWall)
 {
-    switch(incomingWall)
+    switch(inWall)
     {
         case REG_WALL_LEFT:
             return REG_WALL_BOT;
@@ -135,9 +135,9 @@ inline objReg getAxisDirWall(objReg inWall)
     }
 }
 
-inline objReg getRegionFromInt(int incomingInt)
+inline objReg getRegFromInt(int inInt)
 {
-    switch(incomingInt)
+    switch(inInt)
     {
         case REG_WALL_LEFT:
             return REG_WALL_LEFT;
@@ -153,9 +153,9 @@ inline objReg getRegionFromInt(int incomingInt)
     }
 }
 
-inline int getIntFromRegion(objReg incomingReg)
+inline int getIntFromReg(objReg inReg)
 {
-    switch(incomingReg)
+    switch(inReg)
     {
         case REG_WALL_LEFT:
             return REG_WALL_LEFT;

@@ -40,6 +40,7 @@ public:
     
     void calculateArea(void);
     void slideRect(CSPoint);
+    bool doesContain(CSPoint);
     
     int getWidth(void);
     int getHeight(void);

@@ -162,6 +162,11 @@ void CSRect::slideRect(CSPoint inVector)
     botRight.y += inVector.y;
 }
 
+bool CSRect::doesContain(CSPoint inPoint)
+{
+    return (inPoint.x >= topLeft.x && inPoint.x <= botRight.x) && (inPoint.y >= topLeft.y && inPoint.y <= botRight.y);
+}
+
 
 #pragma mark -
 #pragma mark Getters

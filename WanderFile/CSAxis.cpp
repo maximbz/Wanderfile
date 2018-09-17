@@ -109,6 +109,28 @@ int CSAxis::getAxisMod(int inLoc, orientation incOrientation)
     }
 }
 
+objReg CSAxis::getReg(void)
+{
+    if(dir == DIR_UP_LEFT)
+    {
+        if(dim == AXIS_VERT)
+            return REG_WALL_LEFT;
+        if(dim == AXIS_HORIZ)
+            return REG_WALL_TOP;
+    }
+    
+    if(dir == DIR_DOWN_RIGHT)
+    {
+        if(dim == AXIS_VERT)
+            return REG_WALL_RIGHT;
+        if(dim == AXIS_HORIZ)
+            return REG_WALL_BOT;
+    }
+    
+    printf("Error in CSAxis: Trying to return a region other than one of the four walls.");
+    return REG_NULL;
+}
+
 axis CSAxis::getWallAxis(objReg inWall)
 {
     switch(inWall)
@@ -176,12 +198,12 @@ int CSAxis::getDirectionOffset(void)
 
 int CSAxis::getOpposingDirOffset(void)
 {
-    switch(getOpposingDir())
+    switch(dir)
     {
         case DIR_UP_LEFT:
-            return -1;
-        case DIR_DOWN_RIGHT:
             return 1;
+        case DIR_DOWN_RIGHT:
+            return -1;
             
         default:
             printf("Error in CSAxis: Trying to return an direction other than up-left or down-right.\n");
