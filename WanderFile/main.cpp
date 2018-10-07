@@ -58,7 +58,7 @@ int main(void)
         
         while(printLoop)
         {
-            printf("%d\n", numDungeons);
+            //printf("%d\n", numDungeons);
             //printf("12345678 112345678 212345678 312345678 412345678 512345678 612345678 712345678 812345678 912345678 0\n");//pseudo-grid
             dungeon.printWindow();
             

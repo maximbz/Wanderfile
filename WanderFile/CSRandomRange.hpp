@@ -10,28 +10,28 @@
 #define CSRandomRange_hpp
 
 #include <stdio.h>
-#include <string>
+#include "WanderFile.h"
 #include "CSRange.hpp"
 
-using namespace std;
+//using namespace std;
 
 class CSRandomRange
 {
 private:
-    string  _rangeName;
-    CSRange _range;
+    randType    _randType;
+    CSRange     _range;
     
 public:
     CSRandomRange();
-    CSRandomRange(string, int, int);
-    CSRandomRange(string, CSRange);
+    CSRandomRange(randType, int, int);
+    CSRandomRange(randType, CSRange);
     
-    void setName(string);
+    void setRandType(randType);
     void setRange(CSRange);
     void setRangeMin(int);
     void setRangeMax(int);
     
-    string getRangeName(void);
+    randType getRandType(void);
     CSRange getRange(void);
     int getRangeMin(void);
     int getRangeMax(void);

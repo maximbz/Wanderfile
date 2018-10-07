@@ -41,6 +41,7 @@ public:
     void calculateArea(void);
     void slideRect(CSPoint);
     bool doesContain(CSPoint);
+    bool doesRectContainWall(CSRect, objReg);
     
     int getWidth(void);
     int getHeight(void);

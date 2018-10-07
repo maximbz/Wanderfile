@@ -27,7 +27,7 @@ void CSAxis::setAxis(axis inDim, orientation incOrientation)
 {
     dim = inDim;
     
-    if(incOrientation == PERPENDICULAR)//make dim perp
+    if(incOrientation == PERP)//make dim perp
         dim = getPerpAxis();
 }
 
@@ -65,8 +65,8 @@ void CSAxis::setDir(direction inDir, orientation incOrientation)
 {
     dir = inDir;
     
-    if(incOrientation == PERPENDICULAR)//make dir opposing
-        dir = getOpposingDir();
+    if(incOrientation == PERP)//make dir opposing
+        dir = getOppDir();
 }
 
 
@@ -87,11 +87,11 @@ axis CSAxis::getPerpAxis(void)
 }
 
 //Because, ascii characters use more pixels vertically, this cuts all vertical room gen by half to make rooms appear more square
-int CSAxis::getAxisMod(int inLoc, orientation incOrientation)
+int CSAxis::getAxisMod(int inLoc, orientation inOrientation)
 {
     axis outDim;
     
-    if(incOrientation == PARALLEL)
+    if(inOrientation == PARA)
         outDim = dim;
     else
         outDim = getPerpAxis();
@@ -125,6 +125,28 @@ objReg CSAxis::getReg(void)
             return REG_WALL_RIGHT;
         if(dim == AXIS_HORIZ)
             return REG_WALL_BOT;
+    }
+    
+    printf("Error in CSAxis: Trying to return a region other than one of the four walls.");
+    return REG_NULL;
+}
+
+objReg CSAxis::getPerpReg(void)
+{
+    if(dir == DIR_UP_LEFT)
+    {
+        if(dim == AXIS_VERT)
+            return REG_WALL_TOP;
+        if(dim == AXIS_HORIZ)
+            return REG_WALL_LEFT;
+    }
+    
+    if(dir == DIR_DOWN_RIGHT)
+    {
+        if(dim == AXIS_VERT)
+            return REG_WALL_BOT;
+        if(dim == AXIS_HORIZ)
+            return REG_WALL_RIGHT;
     }
     
     printf("Error in CSAxis: Trying to return a region other than one of the four walls.");
@@ -166,7 +188,7 @@ direction CSAxis::getWallDir(objReg inWall)
 
 #pragma mark -
 
-direction CSAxis::getOpposingDir(void)
+direction CSAxis::getOppDir(void)
 {
     switch(dir)
     {
@@ -181,7 +203,7 @@ direction CSAxis::getOpposingDir(void)
     }
 }
 
-int CSAxis::getDirectionOffset(void)
+int CSAxis::getDirOffset(void)
 {
     switch(dir)
     {
@@ -196,7 +218,7 @@ int CSAxis::getDirectionOffset(void)
     }
 }
 
-int CSAxis::getOpposingDirOffset(void)
+int CSAxis::getOppDirOffset(void)
 {
     switch(dir)
     {

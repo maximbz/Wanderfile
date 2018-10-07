@@ -28,8 +28,8 @@ enum direction//directions
 
 enum orientation
 {
-    PARALLEL,
-    PERPENDICULAR
+    PARA,//parallel
+    PERP//perpendicular
 };
 
 class CSAxis
@@ -49,12 +49,13 @@ public:
     axis getPerpAxis(void);
     int getAxisMod(int, orientation);
     objReg getReg(void);
+    objReg getPerpReg(void);
     axis getWallAxis(objReg);
     direction getWallDir(objReg);
     
-    direction getOpposingDir(void);
-    int getDirectionOffset(void);
-    int getOpposingDirOffset(void);
+    direction getOppDir(void);
+    int getDirOffset(void);
+    int getOppDirOffset(void);
 };
 
 #endif /* CSAxis_hpp */

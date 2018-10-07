@@ -94,10 +94,13 @@ void CSRect::setWallLoc(objReg inWall, int inLocPoint)
         case REG_WALL_BOT:
             botRight.y = inLocPoint;
             break;
-        
+            
         default:
             printf("Error in CSRect: Attempting to set a wall loc other than the four possible walls.\n");
     }
+    
+    if(topLeft.y > botRight.y || topLeft.x > botRight.x)
+        printf("Error in CSRect: Rect's topLeft axis has been set on the other side of botRight axis.");
     
     calculateArea();
 }
@@ -165,6 +168,22 @@ void CSRect::slideRect(CSPoint inVector)
 bool CSRect::doesContain(CSPoint inPoint)
 {
     return (inPoint.x >= topLeft.x && inPoint.x <= botRight.x) && (inPoint.y >= topLeft.y && inPoint.y <= botRight.y);
+}
+
+bool CSRect::doesRectContainWall(CSRect inRect, objReg inReg)
+{
+    int     wallLoc, clockWallLoc, countclockWallLoc;
+    
+    wallLoc = inRect.getWallLocPoint(inReg);
+    clockWallLoc = inRect.getWallLocPoint(getClockWall(inReg));
+    countclockWallLoc = inRect.getWallLocPoint(getCountclockWall(inReg));
+        
+    if(getWallRange(getClockWall(inReg)).doesContain(wallLoc) &&//if inRect's left wall is in the range of this rect's top wall
+       (getWallRange(inReg).doesContain(clockWallLoc) ||//and either inRect's top wall is in the range of this rect's left wall
+       getWallRange(inReg).doesContain(countclockWallLoc)))//or inRect's bottom wall is the range of this rect's left wall
+        return true;
+    else
+        return false;
 }
 
 

@@ -9,41 +9,39 @@
 #include "CSRandomHandler.hpp"
 #include <stdio.h>
 
-CSRandomHandler::CSRandomHandler(void) : _randomGenerator((unsigned int)time(0)){}
+CSRandomHandler::CSRandomHandler(void) : _randomGenerator((unsigned int)time(0))
+{
+    
+}
 
 
 //doers
 
 void CSRandomHandler::addRandomRange(CSRandomRange inRandRange)
 {
-    int loop;
-    
-    //check for dupes from previous dungeon
-    for(loop = 0; loop < _ranges.size(); loop++)
-        if(inRandRange.getRangeName() == _ranges[loop].getRangeName())
-            _ranges.erase(_ranges.begin() + loop);
-    
     _ranges.push_back(inRandRange);
     //printf("%lu ", _ranges.size());
 }
 
-int CSRandomHandler::getNumber(string inRange)
+void CSRandomHandler::addRandomList(CSRandomList inRandList)
 {
-    int numberMin = 0, numberMax = 0;
-    
-    vector<CSRandomRange>::iterator vectIter;
-    
-    for(vectIter = _ranges.begin(); vectIter != _ranges.end(); vectIter++)
-        if(inRange == vectIter->getRangeName())
-        {
-            numberMin = vectIter->getRangeMin();
-            numberMax = vectIter->getRangeMax();
-        }
-    
-    uniform_int_distribution<int>   distributionRange(numberMin, numberMax);
-    
-    return distributionRange(_randomGenerator);
+    _lists.push_back(inRandList);
 }
+
+void CSRandomHandler::clearRandomItems(randType inRandType)
+{
+    vector<CSRandomRange>::iterator rangeVectIter = _ranges.begin();
+    vector<CSRandomList>::iterator  listVectIter = _lists.begin();
+    
+    while(rangeVectIter != _ranges.end())
+        if((*rangeVectIter).getRandType() == inRandType)
+            rangeVectIter = _ranges.erase(rangeVectIter);//new iterator properly goes through the list, now with fewer entries
+    
+    while(listVectIter != _lists.end())
+        if((*listVectIter).getRandType() == inRandType)
+            listVectIter = _lists.erase(listVectIter);//new iterator properly goes through the list, now with fewer entries
+}
+
 
 int CSRandomHandler::getNumber (CSRandomRange *inRange)
 {
@@ -55,4 +53,15 @@ int CSRandomHandler::getNumber (CSRandomRange *inRange)
     uniform_int_distribution<int>   distributionRange(numberMin, numberMax);
     
     return distributionRange(_randomGenerator);
+}
+
+int CSRandomHandler::getNumber (CSRandomList *inList)
+{
+    int numberMin = 0, numberMax = 0;
+    
+    numberMax = (int)inList->getList()->size() - 1;//we're using numberMax to determine the highest element in the vector, so we offset down one
+    
+    uniform_int_distribution<int>   distributionRange(numberMin, numberMax);
+    
+    return inList->getList()->at(distributionRange(_randomGenerator));
 }

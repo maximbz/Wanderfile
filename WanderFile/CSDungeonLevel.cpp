@@ -7,6 +7,7 @@
 //
 
 #include <fstream>
+#include "CSRandomList.hpp"
 #include "CSDungeonLevel.hpp"
 #include "CSRoomProx.hpp"
 #include "CSDungObj.hpp"
@@ -118,13 +119,18 @@ int CSDungeonLevel::loadDungeon(void)
 
 void CSDungeonLevel::deleteDungeon(void)
 {
-    list<CSRoom *>::iterator    listIter;
+    list<CSRoom *>::iterator    listIter = _levelRooms.begin();
     
-    for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
+    while(listIter != _levelRooms.end())
+    {
         (*listIter)->deleteRoom();
+        listIter = _levelRooms.erase(listIter);//new iterator properly goes through the list, now with fewer entries
+    }
     _levelRooms.clear();
     
     _levelBounds.setPoints(BAD_DATA, BAD_DATA, BAD_DATA, BAD_DATA);
+    
+    _theRandHand->clearRandomItems(RAND_DUNGEON);
 }
 
 #pragma mark -
@@ -188,54 +194,54 @@ void CSDungeonLevel::updateRoomNums(void)
 
 CSRoom* CSDungeonLevel::createRoom(CSRoom *inRoom)
 {
-    bool        goodDoorLoc, forwardRangeWallReached, sideRangeWallReached;
-    int         loop, newRandNum;
-    objReg      newDoorWall = REG_NULL, nextDoorWall = REG_NULL, wallToCheck;
-    CSAxis      roomGenAxis, paraWallAxis, rangeWallAxis;
-    CSPoint     newPoint;
-    CSLine      wallGenRange[NUM_ROOM_WALLS];
-    CSRoom      *newRoom = new CSRoom(_theGame);
-    CSDungObj   *inDoor = nullptr, *newDoor = new CSDungObj, *nextDoor = nullptr;
+    bool            goodDoorLoc, roomIntersects[NUM_ROOM_WALLS];
+    int             loop, newRandNum;
+    objReg          newDoorWall = REG_NULL, nextDoorWall = REG_NULL, loopReg, regToSlide;
+    CSAxis          roomGenAxis, paraWallAxis, rangeRectAxis;
+    CSPoint         newPoint;
+    CSRect          roomGenRect[NUM_ROOM_WALLS + 1];//center and each wall
+    CSRoom          *newRoom = new CSRoom(_theGame);
+    CSDungObj       *inDoor = nullptr, *newDoor = new CSDungObj, *nextDoor = nullptr;
+    CSRandomRange   roomSideGen(RAND_DUNGEON, REG_WALL_LEFT, REG_WALL_BOT), hallLengthGen(RAND_DUNGEON, ROOM_SIZE_MIN, HALL_LENGTH_MAX),
+                    wallLocGen[NUM_ROOM_WALLS];//the 4 walls
     
-    vector<CSPoint>             rangeWallPoint;
-    vector<CSPoint>::iterator   vectIter;
     list<CSRoom *>::iterator    roomListIter;
     list<CSDungObj *>::iterator objListIter;
-    
 
+    //whether the seed room or not, we'll need to add these ranges to _theRandHand
+    _theRandHand->addRandomRange(roomSideGen);
+    _theRandHand->addRandomRange(hallLengthGen);
+    for(loop = 0; loop < NUM_ROOM_WALLS; loop++)
+        wallLocGen[loop].setRandType(RAND_DUNGEON);
+    
     //if it's the seed room, generate a random width & height, surrounding the center of the level
     if(inRoom == nullptr)
     {
-        //set the random ranges for the seed room
-        CSRandomRange   roomSizeGen("roomSizeGen", ROOM_SIZE_MIN, ROOM_SIZE_MAX),
-        hallLengthGen("hallLengthGen", ROOM_SIZE_MIN, HALL_LENGTH_MAX),
-        roomSideGen("roomSideGen", REG_WALL_LEFT, REG_WALL_BOT);
-        
+        //set the random range for the seed room
+        CSRandomRange   roomSizeGen(RAND_DUNGEON, ROOM_SIZE_MIN, ROOM_SIZE_MAX);
         _theRandHand->addRandomRange(roomSizeGen);
-        _theRandHand->addRandomRange(roomSideGen);
-        _theRandHand->addRandomRange(hallLengthGen);
         
         //random location for the seed room
-        newPoint.x = (LEVEL_BOUND_RIGHT / 2) - (_theRandHand->getNumber("roomSizeGen") / 2);
-        newPoint.y = (LEVEL_BOUND_BOTTOM / 2) - ((_theRandHand->getNumber("roomSizeGen") / 2) / 2);//rooms look taller than they are because of ascii output, so we halve room height gens to make squarer looking rooms
+        newPoint.x = (LEVEL_BOUND_RIGHT / 2) - (_theRandHand->getNumber(&roomSizeGen) / 2);
+        newPoint.y = (LEVEL_BOUND_BOTTOM / 2) - ((_theRandHand->getNumber(&roomSizeGen) / 2) / 2);//rooms look taller than they are because of ascii output, so we halve room height gens to make squarer looking rooms
         newRoom->getRect()->setTopLeft(newPoint);
         
         //ranodm size for the seed room
-        newPoint.x = _theRandHand->getNumber("roomSizeGen");
+        newPoint.x = _theRandHand->getNumber(&roomSizeGen);
         newPoint.x += newRoom->getRect()->topLeft.x;
-        newPoint.y = _theRandHand->getNumber("roomSizeGen") / 2;//halve height due to asymmetry of ascii output
+        newPoint.y = _theRandHand->getNumber(&roomSizeGen) / 2;//halve height due to asymmetry of ascii output
         newPoint.y += newRoom->getRect()->topLeft.y;
         newRoom->getRect()->setBotRight(newPoint);
         
         //make a door on any side
-        nextDoorWall = getRegFromInt(_theRandHand->getNumber("roomSideGen"));
-        CSRandomRange   doorLocGen("doorLocGen", newRoom->getRect()->getWallStartPoint(nextDoorWall) + 1, newRoom->getRect()->getWallEndPoint(nextDoorWall) - 1);//offsets keep doors from appearing in corners
+        nextDoorWall = getRegFromInt(_theRandHand->getNumber(&roomSideGen));
+        CSRandomRange   doorLocGen(RAND_DUNGEON, newRoom->getRect()->getWallStartPoint(nextDoorWall) + 1, newRoom->getRect()->getWallEndPoint(nextDoorWall) - 1);//offsets keep doors from appearing in corners
         _theRandHand->addRandomRange(doorLocGen);
         
         //dynamically set the door's loc in the wall
         roomGenAxis.setAxisFromWall(nextDoorWall);
         newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), newRoom->getRect()->getWallLocPoint(nextDoorWall));
-        newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber("doorLocGen"));
+        newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber(&doorLocGen));
         newRoom->createObject(OPEN_DOOR_CHAR, OBJ_DOOR, nextDoorWall, newPoint, nullptr, nextDoor);
         
         newRoom->setHallState(false);
@@ -244,6 +250,8 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *inRoom)
         newRoom->setRoomNum((int)_levelRooms.size());
         return newRoom;
     }//if we haven't left the method yet...
+
+    
     
     
     /*Create a door*/
@@ -254,185 +262,170 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *inRoom)
         {
             inDoor = *objListIter;
             newDoorWall = getFacingWall(inDoor->getRegion());
-            roomGenAxis.setAxisFromWall(inDoor->getRegion());//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
+            roomGenAxis.setAxisFromWall(newDoorWall);//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
             
             break;//don't keep looping once we've made a room--one room per method call
         }
     
     //create a new door in our new room, adjacent to the door we found in inRoom, then connect it to inRoom
     newPoint = (*inDoor->getLoc());
-    newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getDirectionOffset());//offset the appropriate axis 1 away, using roomGenAxis (e.g.: x-- or y-- OR x++ or y++)
+    newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getOppDirOffset());//offset the appropriate axis 1 away, using roomGenAxis (e.g.: x-- or y-- OR x++ or y++)
     newRoom->addDoor(newDoor, newDoorWall, newPoint, nullptr, inDoor, newRoom);
     
     
-    /*Set up the random ranges*/
-    //set the upper gen range to max, then bring back in, if level walls are closer. Then bring in again if nearby rooms are closer. Thus, our new room can never overlap anything or go somewhere it shouldn't.
+    /*Set up the region rects that act as random ranges*/
     
-    //set up our ranges to go from newDoor, to the furthest away the new walls could be generated (based on ROOM_SIZE_MAX).
-    for(loop = 0; loop < NUM_ROOM_WALLS; loop++)
-    {
-        //don't check backward into inRoom
-        if(loop == getIntFromReg(newDoorWall))
-            continue;
-        
-        rangeWallAxis.setAxisFromWall(getRegFromInt(loop));//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
-        wallGenRange[loop].setStart(newPoint.getAxisPoint(rangeWallAxis.getPerpAxis()));//start from newDoor
-        wallGenRange[loop].setEnd((rangeWallAxis.getAxisMod(ROOM_SIZE_MAX, PERPENDICULAR)) * rangeWallAxis.getDirectionOffset());//end positive or negative ROOM_SIZE_MAX from newDoor (though we start at just ROOM_SIZE_MAX)
-        
-        if(loop != getIntFromReg(getFacingWall(newDoorWall)))//if we're setting up either perp wall range...
-        {
-            wallGenRange[loop].setStart(wallGenRange[loop].getStart() + rangeWallAxis.getDirectionOffset());//the closest the perp walls can be is 1 away. Otherwise, hallways would open up into room's walls.
-            wallGenRange[loop].setEnd(wallGenRange[loop].getEnd() / 2);//halve upper range since we're only generating 1/2 of the room
-        }
-        else//if we're setting up the opposite wall range...
-            wallGenRange[loop].setStart(wallGenRange[loop].getStart() + (ROOM_SIZE_MIN * rangeWallAxis.getDirectionOffset()));//the closest the wall across from newDoor can be is ROOM_SIZE_MIN
-                /*IF THAT'S NOT DOABLE, we have to switch modes, to create a hallway to an adjacent room*/
-        
-        wallGenRange[loop].setEnd(wallGenRange[loop].getEnd() + wallGenRange[loop].getStart());//now push it out by the line's start.
-    }
+    //set the outer wall to room size max, then bring back in, if level walls are closer. Then bring in again if nearby rooms are closer. Thus, our new room can never overlap anything or go somewhere it shouldn't.
+    
+    //first we create the min room size rect, based on newDoor.loc
+    
+    newPoint = (*newDoor->getLoc());
+    newPoint.slidePointViaAxis(roomGenAxis.dim, (ROOM_SIZE_MIN / 2) * roomGenAxis.getDirOffset());//slide along newDoorWall to create the rects's nearest point (to the right of newDoor, from the perspective of someone walking into newRoom)
+    roomGenRect[getIntFromReg(REG_ROOM_RECT_MIN)].setCorner(roomGenAxis.dir, newPoint);
+    
+    //add or subtract ROOM_SIZE_MIN to get opposite wall
+    newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), ROOM_SIZE_MIN * roomGenAxis.getOppDirOffset());
+    //set opposite, perpendicular wall adjacent to newDoor the other way (to the left of newDoor and across the room, from the perspective of someone walking into newRoom)
+    newPoint.setAxisPoint(roomGenAxis.dim, newPoint.getAxisPoint(roomGenAxis.dim) - (ROOM_SIZE_MIN * roomGenAxis.getDirOffset()));
+    roomGenRect[getIntFromReg(REG_ROOM_RECT_MIN)].setCorner(roomGenAxis.getOppDir(), newPoint);
+    
+    //check here if any room intersects. If so, check to see if newDoor can be placed in the offending room. If it can, attach inDoor's owner (previous hallway) to offending room
+    //if newDoor cannot be placed in the offending room, delete newDoor, delete newRoom, and tell inDoor's owner (previous room) to delete itself too. (This should auto-delete previous room's attached door in previous previous room)
+    //either way, send a message back to createDungeon() to start on a new door
+    
+    
+    //then we make the three region rects around the min room size rect
+    
+    loop = getIntFromReg(roomGenAxis.getPerpReg());//perp reg attatched by dir from newDoorWall
+    newPoint = (*newDoor->getLoc());
+    newPoint.slidePointViaAxis(roomGenAxis.dim, ((ROOM_SIZE_MIN / 2) * roomGenAxis.getDirOffset()) - roomGenAxis.getOppDirOffset());
+    newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PERP) * roomGenAxis.getOppDirOffset());
+    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), newPoint);
+    newPoint = (*newDoor->getLoc());
+    newPoint.slidePointViaAxis(roomGenAxis.dim, (roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PARA) / 2) * roomGenAxis.getDirOffset());
+    //perpdim doesn't need to be changed
+    roomGenRect[loop].setCorner(roomGenAxis.dir, newPoint);
+    
+    if(roomGenRect[loop].getHeight() < 0 || roomGenRect[loop].getWidth() < 0)
+        loop = 0;
+    
+    loop = getIntFromReg(getFacingWall(roomGenAxis.getReg()));//across from newDoorWall
+    newPoint = (*newDoor->getLoc());
+    newPoint.slidePointViaAxis(roomGenAxis.dim, (roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PARA) / 2) * roomGenAxis.getOppDirOffset());
+    newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PERP) * roomGenAxis.getOppDirOffset());
+    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), newPoint);
+    newPoint = (*newDoor->getLoc());
+    newPoint.slidePointViaAxis(roomGenAxis.dim, (roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PARA) / 2) * roomGenAxis.getDirOffset());
+    newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), (ROOM_SIZE_MIN * roomGenAxis.getOppDirOffset()) - roomGenAxis.getDirOffset());
+    roomGenRect[loop].setCorner(roomGenAxis.dir, newPoint);
+    
+    if(roomGenRect[loop].getHeight() < 0 || roomGenRect[loop].getWidth() < 0)
+        loop = 0;
+    
+    loop = getIntFromReg(getFacingWall(roomGenAxis.getPerpReg()));//opposite reg from perp reg attatched by dir from newDoorWall
+    newPoint = (*newDoor->getLoc());
+    newPoint.slidePointViaAxis(roomGenAxis.dim, ((roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PARA) / 2) * roomGenAxis.getOppDirOffset()) - roomGenAxis.getDirOffset());
+    newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PERP) * roomGenAxis.getOppDirOffset());
+    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), newPoint);
+    newPoint = (*newDoor->getLoc());
+    newPoint.slidePointViaAxis(roomGenAxis.dim, ((ROOM_SIZE_MIN / 2) * roomGenAxis.getOppDirOffset()));
+    //perpdim doesn't need to be changed
+    roomGenRect[loop].setCorner(roomGenAxis.dir, newPoint);
+
+    if(roomGenRect[loop].getHeight() < 0 || roomGenRect[loop].getWidth() < 0)
+        loop = 0;
+    
     
     //check if the boundries of the level are closer to inDoor than the max room sizes -- make this a loop
-    if(wallGenRange[getIntFromReg(REG_WALL_LEFT)].doesContain(0))
+    /*if(wallGenRange[getIntFromReg(REG_WALL_LEFT)].doesContain(0))
         wallGenRange[getIntFromReg(REG_WALL_LEFT)].setEnd(1);
     if(wallGenRange[getIntFromReg(REG_WALL_TOP)].doesContain(0))
         wallGenRange[getIntFromReg(REG_WALL_TOP)].setEnd(1);
     if(wallGenRange[getIntFromReg(REG_WALL_RIGHT)].doesContain(LEVEL_BOUND_RIGHT))
         wallGenRange[getIntFromReg(REG_WALL_RIGHT)].setEnd(LEVEL_BOUND_RIGHT - 1);
     if(wallGenRange[getIntFromReg(REG_WALL_BOT)].doesContain(LEVEL_BOUND_BOTTOM))
-        wallGenRange[getIntFromReg(REG_WALL_BOT)].setEnd(LEVEL_BOUND_BOTTOM - 1);
+        wallGenRange[getIntFromReg(REG_WALL_BOT)].setEnd(LEVEL_BOUND_BOTTOM - 1);*/
     
-    
-    if(_theGame->getBreakState())
-        loop = 0;//leave break point for debug purposes.
-    
-    
-    /*find the nearest room's walls to inDoor, and set the random room range max's to be smaller than this*/
-    
-    //loop through each direction, skipping back toward previous room
-    
-        //get dir and dim for this direction, then loop through every room
-    
-            //get distance between inDoor and facingWall of room along the dim
-    
-            //if it's less than the currently dtored shortest distance, set shortest distance to it
-    
-        //if shortest distance is less than wallRange[this loop], set wallRange[this loop] to shortest distance
-    
-    
-    /*first check para range from newDoor to set upper most para range (will likely end up being the same as ROOM_SIZE_MAX)
-     
-     then check the two perp ranges from newDoor to para range
-     
-     collect each change in perp range (getting smaller as it goes out)
-     
-     loop through each of those collected ranges
-     
-        check the entire para range from one perp range to the other for EACH collected per range in the loop
-     
-        if the resulting total perimeter (or area?) of the ranges in this configuration is the largest we have yet check in this loop
-     
-        save it as the best / set all ranges to this configuration
-     */
-    
-    paraWallAxis.setAxisFromWall(getFacingWall(newDoorWall));//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT, based on the wall opposite/para from newDoorWall. This will be used even as we check the perp walls
-    
-    for(loop = 0; loop <= 2; loop++)
+    /*check region zero: if there's a room in it, abort this room gen
+        make a method for handling that, where the previous hallways connects to the offending room
+            hallway or room can slide to join up
+            if that won't work, hallways is deleted, along with connecting door from previous room
+                new path is started from previous room (make a "find a good room" method)*/
+        
+    //check this reg's rect
+    for(roomListIter = _levelRooms.begin(); roomListIter != _levelRooms.end(); roomListIter++)
     {
-        sideRangeWallReached = false;//we need one outer while loop no matter which direction we're checking in
+        for(loop = 0; loop < NUM_ROOM_WALLS; loop++)//clear the bool array
+            roomIntersects[loop] = false;
+        regToSlide = REG_NULL;
         
-        //translate the loop into one para wall or the other
-        if(loop == 0)
-            wallToCheck = paraWallAxis.getReg();
-        else if(loop == 1)
-            wallToCheck = getClockWall(paraWallAxis.getReg());
-        else
-            wallToCheck = getCountclockWall(paraWallAxis.getReg());
+        newRandNum = (*roomListIter)->getRoomNum();//for debug
+        if(_theGame->getBreakState())
+            loop = 0;//leave break point for debug purposes.
         
-        rangeWallAxis.setAxisFromWall(wallToCheck);//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT, based on the wall we're checking this loop
-        rangeWallPoint.clear();
-        newPoint = *newDoor->getLoc();//set this perp rangeWall to newDoor
-        newPoint.setAxisPoint(rangeWallAxis.getPerpAxis(), wallGenRange[getIntFromReg(wallToCheck)].getEnd());//move it out to this perp range wall
-        rangeWallPoint.push_back(newPoint);//add it to the vector--it's the one range wall we know we'll need
-        newPoint = *newDoor->getLoc();//set up the the point we'll be sliding out from center
-        newPoint.setAxisPoint(rangeWallAxis.getPerpAxis(), wallGenRange[getIntFromReg(wallToCheck)].getStart());//move it out to where this wall gen range line starts (1 away from newDoor or ROOM_SIZE_MIN away from newDoor)
-        
-        while(!sideRangeWallReached)//while rangeWallPoint has not yet passed the opposite/para rangeWall, sideways
+        for(loop = 0; loop < NUM_ROOM_WALLS; loop++)//check each region rect
         {
-            forwardRangeWallReached = false;
+            if(loop == getIntFromReg(newDoorWall))//don't check the backward into newDoor
+                continue;
             
-            while(!forwardRangeWallReached)//while rangeWallPoint has not yet passed the rangeWall
+            //any reg rects that this room intersects, set true
+            if(roomGenRect[loop].doesRectContainWall(*(*roomListIter)->getRect(), getFacingWall(getRegFromInt(loop))))
             {
-                for(roomListIter = _levelRooms.begin(); roomListIter != _levelRooms.end(); roomListIter++)//loop through every room
-                    if((*roomListIter)->getRect()->doesContain(newPoint))//if we've slide into roomListIter
-                    {
-                        newPoint.setAxisPoint(rangeWallAxis.getPerpAxis(),
-                            (*roomListIter)->getRect()->getWallLocPoint(getFacingWall(rangeWallAxis.getReg())) -
-                            (1 * rangeWallAxis.getDirectionOffset()));//set para rangeWall point one closer to newDoor from the room it was inside
-                        forwardRangeWallReached = true;
-                    }
-                
-                if(forwardRangeWallReached)
-                    break;//if we found ourselves in another room, no need to do any further checks
-                else
-                    newPoint.slidePointViaAxis(rangeWallAxis.getPerpAxis(), (ROOM_SIZE_MIN * rangeWallAxis.getDirectionOffset()));//move away from newDoor toward the rangeWall by an increment of the smallest room size
-                
-                //if the distance between newPoint and newDoor is bigger than the distance between opposite/para rangeWall from newDoor, then we've gone past opposite/para's rangeWall and we can stop checking for other rooms
-                if(abs(newPoint.getAxisPoint(rangeWallAxis.getPerpAxis()) -
-                       newDoor->getLoc()->getAxisPoint(rangeWallAxis.getPerpAxis()))
-                   > abs(wallGenRange[getIntFromReg(wallToCheck)].getEnd() -
-                       newDoor->getLoc()->getAxisPoint(rangeWallAxis.getPerpAxis())))
-                {
-                    newPoint.setAxisPoint(rangeWallAxis.getPerpAxis(), wallGenRange[getIntFromReg(getFacingWall(newDoorWall))].getEnd());//set rangeWallPoint to be at opposite/para's rangeWall
-                    forwardRangeWallReached = true;
-                }
-            }
-            
-            if(loop == 0)//we're checking opposite/para range wall
-            {
-                wallGenRange[getIntFromReg(getFacingWall(newDoorWall))].setEnd(newPoint.getAxisPoint(rangeWallAxis.getPerpAxis()));//we now know the furthest out our room's random wall placement can be without hitting another room, so we set the appropriate wallGenRange
-                sideRangeWallReached = true;//only one outer while loop when checking toward opposite/para range wall
-            }
-            else
-            {
-                if(newPoint.getAxisPoint(rangeWallAxis.getPerpAxis()) != rangeWallPoint.back().getAxisPoint(rangeWallAxis.getPerpAxis()))//if the point where we hit a wall on this row is a new range wall point...
-                    rangeWallPoint.push_back(newPoint);//add it to the vector
-                
-                newPoint.slidePointViaAxis(rangeWallAxis.dim, (ROOM_SIZE_MIN * paraWallAxis.getDirectionOffset()));//move away from newDoor toward the opposite/para range wall by an increment of the smallest room size, along the perp range wall we're checking this loop
-                
-                //if the distance between newPoint and newDoor is bigger than the distance between opposite/para rangeWall from newDoor, then we've gone past opposite/para's rangeWall and we can stop checking for other rooms
-                if(abs(newPoint.getAxisPoint(rangeWallAxis.dim) -
-                       newDoor->getLoc()->getAxisPoint(rangeWallAxis.dim))
-                   > abs(wallGenRange[getIntFromReg(getFacingWall(newDoorWall))].getEnd() - newDoor->getLoc()->getAxisPoint(rangeWallAxis.dim)))
-                    sideRangeWallReached = true;
+                regToSlide = getRegFromInt(loop);//if only one reg intersects, we'll catch it here
+                roomIntersects[loop] = true;//if multiple reg's intersect, we decide below, and overwrite the previous line
             }
         }
         
-        //now we go through every para range wall option and see how big a room we can make with that set up rangeWalls/wallGenRanges
-        if(loop > 0)
-            for(vectIter = rangeWallPoint.begin(); vectIter != rangeWallPoint.end(); vectIter++)
-            {
-                
-            }
+        //if multiple reg rects intersect the room, we determine the one reg rect we'll adjust
+        
+        if(roomIntersects[getIntFromReg(getFacingWall(newDoorWall))] && roomIntersects[getIntFromReg(getClockWall(newDoorWall))] && roomIntersects[getIntFromReg(getCountclockWall(newDoorWall))])//if the room intersects all 3 reg rects...
+            regToSlide = getFacingWall(newDoorWall);//we only adjust oppositeWall
+        else if(roomIntersects[getIntFromReg(getFacingWall(newDoorWall))] && roomIntersects[getIntFromReg(getClockWall(newDoorWall))])//if the room intersects a corner...
+        {
+            //decide randomly between the two rects that form that corner
+            CSRandomList   roomGenRectList(RAND_DUNGEON);
+            roomGenRectList.addNumToList(getIntFromReg(getFacingWall(newDoorWall)));
+            roomGenRectList.addNumToList(getIntFromReg(getClockWall(newDoorWall)));
+            _theRandHand->addRandomList(roomGenRectList);
+            
+            regToSlide = getRegFromInt(_theRandHand->getNumber(&roomGenRectList));
+        }
+        else if(roomIntersects[getIntFromReg(getFacingWall(newDoorWall))] && roomIntersects[getIntFromReg(getCountclockWall(newDoorWall))])//if the room intersects the other corner...
+        {
+            //decide randomly between the two rects that form that corner
+            CSRandomList   roomGenRectList(RAND_DUNGEON);
+            roomGenRectList.addNumToList(getIntFromReg(getFacingWall(newDoorWall)));
+            roomGenRectList.addNumToList(getIntFromReg(getCountclockWall(newDoorWall)));
+            _theRandHand->addRandomList(roomGenRectList);
+            
+            regToSlide = getRegFromInt(_theRandHand->getNumber(&roomGenRectList));
+        }
+        
+        //move rect wall inward
+        if(regToSlide != REG_NULL)
+        {
+            rangeRectAxis.setAxisFromWall(regToSlide);
+            roomGenRect[getIntFromReg(regToSlide)].setWallLoc(regToSlide, (*roomListIter)->getRect()->getWallLocPoint(getFacingWall(regToSlide)) - rangeRectAxis.getDirOffset());
+            
+            if(roomGenRect[getIntFromReg(regToSlide)].getDim(rangeRectAxis.dim) < 0)//if we just pushed rect's wall to the other side of its facing wall... (which should only happen if the offending room's wall is just outside roomGenRect[REG_ROOM_RECT_MIN])
+                roomGenRect[getIntFromReg(regToSlide)].setWallLoc(getFacingWall(regToSlide), roomGenRect[getIntFromReg(regToSlide)].getWallLocPoint(regToSlide));//make both walls the same, forcing newRoom's wall to be on the edge of REG_ROOM_RECT_MIN/next to newDoor.
+        }
     }
     
     
     //now that we know our max's, set the random ranges accordingly
-    CSRandomRange   roomSideGen("roomSideGen", REG_WALL_LEFT, REG_WALL_BOT),
-                    wallLocGen[NUM_ROOM_WALLS];//the 4 walls
-    
     for(loop = 0; loop < NUM_ROOM_WALLS; loop++)
     {
         //don't add the unused direction
         if(loop == getIntFromReg(newDoorWall))
             continue;
         
-        wallLocGen[loop].setRangeMin(wallGenRange[loop].getStart());
-        wallLocGen[loop].setRangeMax(wallGenRange[loop].getEnd());
+        loopReg = getRegFromInt(loop);
+        wallLocGen[loop].setRangeMin(roomGenRect[loop].getWallLocPoint(getFacingWall(loopReg)));//inner wall
+        wallLocGen[loop].setRangeMax(roomGenRect[loop].getWallLocPoint(loopReg));//outer wall
         
         _theRandHand->addRandomRange(wallLocGen[loop]);
     }
-    
-    _theRandHand->addRandomRange(roomSideGen);
     
     
     /*Make the room*/
@@ -441,27 +434,27 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *inRoom)
     
     //dynamically generate a new rect, and create a room, from newDoor
     
-    //set our facing wall adjacent to inRoom's door wall
-    newPoint = *newDoor->getLoc();//start with newDoor
+    //set our new wall to newDoor's loc
+    newPoint = *newDoor->getLoc();//start with newDoor's loc
     if(newRoom->isHall())
-        newPoint.slidePointViaAxis(roomGenAxis.dim, (HALL_SIZE / 2) * roomGenAxis.getOpposingDirOffset());//then slide parallel to newDoorWall
+        newPoint.slidePointViaAxis(roomGenAxis.dim, (HALL_SIZE / 2) * roomGenAxis.getDirOffset());//then slide along newDoorWall to create the room's nearest point (to the right of newDoor, from the perspective of someone walking into newRoom)
     else//non-hall room
     {
-        //set perpendicular wall up to half room size away from door
-        newRandNum = _theRandHand->getNumber(&wallLocGen[getIntFromReg(getAxisDirWall(newDoorWall))]);
+        //set perpendicular wall (to the right of newDoor, from the perspective of someone walking into newRoom) up to half room size away from newDoor
+        newRandNum = _theRandHand->getNumber(&wallLocGen[getIntFromReg(roomGenAxis.getPerpReg())]);
         newPoint.setAxisPoint(roomGenAxis.dim, newRandNum);
     }
-    newRoom->getRect()->setCorner(roomGenAxis.getOpposingDir(), newPoint);//create the closer corner of the new room
+    newRoom->getRect()->setCorner(roomGenAxis.dir, newPoint);//create the closer corner of the new room
     
     if(newRoom->isHall())
     {
         //add or subtract hall length to get opposite wall
-        newRandNum = _theRandHand->getNumber("hallLengthGen");
+        newRandNum = _theRandHand->getNumber(&hallLengthGen);
         newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), newPoint.getAxisPoint(roomGenAxis.getPerpAxis()) -
-                              ((roomGenAxis.getAxisMod(newRandNum, PERPENDICULAR)) * roomGenAxis.getOpposingDirOffset()));
+                              ((roomGenAxis.getAxisMod(newRandNum, PERP)) * roomGenAxis.getDirOffset()));
         
-        //set opposite, perpendicular wall adjacent to door the other way
-        newPoint.setAxisPoint(roomGenAxis.dim, newPoint.getAxisPoint(roomGenAxis.dim) - (HALL_SIZE * roomGenAxis.getOpposingDirOffset()));
+        //set opposite, perpendicular wall adjacent to newDoor the other way (to the left of newDoor and across the room, from the perspective of someone walking into newRoom)
+        newPoint.setAxisPoint(roomGenAxis.dim, newPoint.getAxisPoint(roomGenAxis.dim) - (HALL_SIZE * roomGenAxis.getDirOffset()));
     }
     else//non-hall room
     {
@@ -469,11 +462,11 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *inRoom)
         newRandNum = _theRandHand->getNumber(&wallLocGen[getIntFromReg(getFacingWall(newDoorWall))]);
         newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), newRandNum);
         
-        //set opposite, perpendicular wall to half room size away from door the other way
-        newRandNum = _theRandHand->getNumber(&wallLocGen[getIntFromReg(getAxisDirWall(getFacingWall(newDoorWall)))]);
+        //set opposite, perpendicular wall (to the left of newDoor and across the room, from the perspective of someone walking into newRoom) to half room size away from door, the other way
+        newRandNum = _theRandHand->getNumber(&wallLocGen[getIntFromReg(getFacingWall(roomGenAxis.getPerpReg()))]);
         newPoint.setAxisPoint(roomGenAxis.dim, newRandNum);
     }
-    newRoom->getRect()->setCorner(roomGenAxis.dir, newPoint);//create the further away corner of the new room
+    newRoom->getRect()->setCorner(roomGenAxis.getOppDir(), newPoint);//create the further away corner of the new room
     
     
     /*Make a door*/
@@ -491,7 +484,7 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *inRoom)
     {
         do
         {
-            nextDoorWall = getRegFromInt(_theRandHand->getNumber("roomSideGen"));
+            nextDoorWall = getRegFromInt(_theRandHand->getNumber(&roomSideGen));
             goodDoorLoc = true;
             
             //make sure it's a wall that has no door, and that adding a door now won't create problems with very nearby rooms, in the next iteration -- in the future, same door walls should be okay, within reason, so we need to create some check for distance minimum between same door walls.
@@ -501,20 +494,23 @@ CSRoom* CSDungeonLevel::createRoom(CSRoom *inRoom)
         while(!goodDoorLoc);
         
         //dynamically set the door loc to be along the chosen wall at a random point
-        CSRandomRange   doorLocGen("doorLocGen", newRoom->getRect()->getWallStartPoint(nextDoorWall) + 1,
+        CSRandomRange   doorLocGen(RAND_DUNGEON, newRoom->getRect()->getWallStartPoint(nextDoorWall) + 1,
                                    newRoom->getRect()->getWallEndPoint(nextDoorWall) - 1);//offsets keep doors from appearing in corners
         _theRandHand->addRandomRange(doorLocGen);
         
         //dynamically set the door's loc in the wall
         roomGenAxis.setAxisFromWall(nextDoorWall);
         newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), newRoom->getRect()->getWallLocPoint(nextDoorWall));
-        newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber("doorLocGen"));
+        newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber(&doorLocGen));
     }
     
     //final steps!
     newRoom->createObject(OPEN_DOOR_CHAR, OBJ_DOOR, nextDoorWall, newPoint, nullptr, nextDoor);
     newRoom->setRoomNum((int)_levelRooms.size());
     updateLevelBounds(newRoom);
+    
+    //clean up
+    _theRandHand->clearRandomItems(RAND_DUNGEON);
     
     return newRoom;
 }

@@ -13,23 +13,22 @@ CSRandomRange::CSRandomRange()
     
 }
 
-CSRandomRange::CSRandomRange(string inName, int inRangeMin, int inRangeMax)
+CSRandomRange::CSRandomRange(randType inRandType, int inRangeMin, int inRangeMax)
 {
-    _rangeName = inName;
-    
+    _randType = inRandType;
     _range.setRange(inRangeMin, inRangeMax);
 }
 
-CSRandomRange::CSRandomRange(string inName, CSRange inRange)
+CSRandomRange::CSRandomRange(randType inRandType, CSRange inRange)
 {
-    _rangeName = inName;
+    _randType = inRandType;
     _range = inRange;
 }
 
 
-void CSRandomRange::setName(string inName)
+void CSRandomRange::setRandType(randType inRandType)
 {
-    _rangeName = inName;
+    _randType = inRandType;
 }
 
 void CSRandomRange::setRange(CSRange inRange)
@@ -48,9 +47,9 @@ void CSRandomRange::setRangeMax(int inMax)
 }
 
 
-string CSRandomRange::getRangeName(void)
+randType CSRandomRange::getRandType(void)
 {
-    return _rangeName;
+    return _randType;
 }
 
 CSRange CSRandomRange::getRange(void)
