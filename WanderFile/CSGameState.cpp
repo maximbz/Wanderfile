@@ -14,6 +14,8 @@ CSGameState::CSGameState()
     _printRoomNums = true;//false
     _breakForDebug = false;
     
+    _levelBounds.setPoints(0, 0, LEVEL_BOUND_RIGHT, LEVEL_BOUND_BOTTOM);
+    
     _gameWindow.setPoints((LEVEL_BOUND_RIGHT / 2) - (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) - (WINDOW_BOUND_BOTTOM / 2), (LEVEL_BOUND_RIGHT / 2) + (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) + (WINDOW_BOUND_BOTTOM / 2));
 }
 
@@ -95,6 +97,11 @@ CSRect CSGameState::getGameWindow(void)
     return _gameWindow;
 }
 
+CSRect CSGameState::getLevelBounds(void)
+{
+    return _levelBounds;
+}
+
 bool CSGameState::getRoomNumsState(void)
 {
     return _printRoomNums;
@@ -104,3 +111,9 @@ bool CSGameState::getBreakState(void)
 {
     return _breakForDebug;
 }
+
+
+
+
+
+

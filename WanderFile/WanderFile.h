@@ -14,7 +14,8 @@
 enum randType//categories of random ranges and lists
 {
     RAND_GAME,
-    RAND_DUNGEON
+    RAND_DUNGEON,
+    RAND_ROOM
 };
 
 enum objType//dungeon object types
@@ -30,11 +31,14 @@ enum objReg//dungeon object regions
     REG_WALL_TOP,
     REG_WALL_RIGHT,
     REG_WALL_BOT,
-    REG_ROOM_RECT_MIN,//rect centered around origin door; used for room gen
+    REG_ROOM_CORE,//rect centered around origin door; used for room gen
     REG_CORNER_TOP_LEFT,
 };
 
 const int   BAD_DATA = -69420911;//nice
+const int   RETURN_CODE_FALSE = 0;
+const int   RETURN_CODE_TRUE = 1;
+const int   RETURN_CODE_ABORT_GEN = 2;
 
 const int   LEVEL_BOUND_RIGHT = 600;
 const int   LEVEL_BOUND_BOTTOM = 600;
@@ -44,18 +48,13 @@ const int   WINDOW_BOUND_BOTTOM = 50;
 const int   NUM_ROOMS = 300;
 const int   NUM_ROOM_WALLS = 4;
 
-
-/*const int   ROOM_SIZE_X_MIN = 5;
-const int   ROOM_SIZE_X_MAX = 40;
-const int   ROOM_SIZE_Y_MIN = 3;
-const int   ROOM_SIZE_Y_MAX = 18;*/
 //divide heights in half due to how ascii printing looks
 const int   ROOM_SIZE_MIN = 2;
 const int   ROOM_SIZE_MAX = 40;
 const int   HALL_SIZE = 2;//+1 for total width/height
 const int   HALL_LENGTH_MAX = 10;
-const int   ROOM_DISTANCE_MIN = 5;
 
+const char  EMPTY_CHAR = ' ';
 const char  WALL_CHAR = '#';
 const char  FLOOR_CHAR = '.';
 const char  PLAYER_CHAR = '@';
@@ -123,61 +122,17 @@ inline objReg getCountclockWall(objReg inWall)
     }
 }
 
-inline objReg getRegFromInt(int inInt)
-{
-    switch(inInt)
-    {
-        case REG_ROOM_RECT_MIN:
-            return REG_ROOM_RECT_MIN;
-        case REG_WALL_LEFT:
-            return REG_WALL_LEFT;
-        case REG_WALL_RIGHT:
-            return REG_WALL_RIGHT;
-        case REG_WALL_TOP:
-            return REG_WALL_TOP;
-        case REG_WALL_BOT:
-            return REG_WALL_BOT;
-        case REG_CORNER_TOP_LEFT:
-            return REG_CORNER_TOP_LEFT;
-            
-        default:
-            return REG_NULL;
-    }
-}
-
-inline int getIntFromReg(objReg inReg)
-{
-    switch(inReg)
-    {
-        case REG_ROOM_RECT_MIN:
-            return REG_ROOM_RECT_MIN;
-        case REG_WALL_LEFT:
-            return REG_WALL_LEFT;
-        case REG_WALL_RIGHT:
-            return REG_WALL_RIGHT;
-        case REG_WALL_TOP:
-            return REG_WALL_TOP;
-        case REG_WALL_BOT:
-            return REG_WALL_BOT;
-        case REG_CORNER_TOP_LEFT:
-            return REG_CORNER_TOP_LEFT;
-            
-        default:
-            return REG_NULL;
-    }
-}
-
 inline objReg getNextReg(objReg inReg)//rotate to next region for next for iter
 {
     int regCount;
     
-    regCount = getIntFromReg(inReg);
+    regCount = (int)inReg;
     regCount ++;
     
-    if(regCount > getIntFromReg(REG_WALL_BOT))//wraps wall-loop around
-        regCount = getIntFromReg(REG_WALL_LEFT);
+    if(regCount > (int)REG_WALL_BOT)//wraps wall-loop around
+        regCount = (int)REG_WALL_LEFT;
     
-    return getRegFromInt(regCount);
+    return (objReg)regCount;
 }
 
 #endif /* RandomRooms_h */

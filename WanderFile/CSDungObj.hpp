@@ -22,6 +22,7 @@ class CSDungObj
 private:
     bool        _wasMoved;
     char        _objectChar;
+    int         _objNum;
     objType     _objectType;
     objReg      _objectRegion;
     CSPoint     _objectLoc;
@@ -32,17 +33,15 @@ private:
     
 public:
     CSDungObj();
-    CSDungObj(char, objType, objReg, CSPoint, CSDungObj*, CSDungObj*, CSRoom*);
+    CSDungObj(objType, objReg, CSPoint, CSDungObj*, CSDungObj*, CSRoom*);
     
     void setWasMoved(bool);
+    void setNum(int);
     void setChar(char);
-    void setType(objType);
-    void setRegion(objReg);
     void setLoc(CSPoint);
     void setParent(CSDungObj*);
     void setChild(CSDungObj*);
     void setConnect(CSDungObj*);
-    void setOwner(CSRoom*);
     
     void slideObject(CSPoint);
     bool slideDoor(CSPoint);
@@ -52,6 +51,7 @@ public:
     
     bool getWasMoved(void);
     char getChar(void);
+    int getNum(void);
     objType getType(void);
     objReg getRegion(void);
     CSPoint* getLoc(void);

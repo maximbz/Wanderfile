@@ -15,7 +15,7 @@
 class CSGameState
 {
 private:
-    CSRect  _gameWindow;
+    CSRect  _gameWindow, _levelBounds;
     bool    _printRoomNums, _breakForDebug;
     
 public:
@@ -29,6 +29,7 @@ public:
     void toggleBreak(void);
     
     CSRect getGameWindow(void);
+    CSRect getLevelBounds(void);
     bool getRoomNumsState(void);
     bool getBreakState(void);
 };

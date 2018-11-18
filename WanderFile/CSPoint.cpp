@@ -115,7 +115,7 @@ bool CSPoint::operator<=(const CSPoint &inCoord)
 
 //math overloads
 
-//mostly just for inverting with "* -1"
+//mostly just for inverting, with "* -1"
 CSPoint CSPoint::operator*(int inInt)
 {
     CSPoint outPoint;

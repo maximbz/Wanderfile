@@ -36,10 +36,14 @@ void CSRandomHandler::clearRandomItems(randType inRandType)
     while(rangeVectIter != _ranges.end())
         if((*rangeVectIter).getRandType() == inRandType)
             rangeVectIter = _ranges.erase(rangeVectIter);//new iterator properly goes through the list, now with fewer entries
+        else
+            rangeVectIter++;
     
     while(listVectIter != _lists.end())
         if((*listVectIter).getRandType() == inRandType)
             listVectIter = _lists.erase(listVectIter);//new iterator properly goes through the list, now with fewer entries
+        else
+            listVectIter++;
 }
 
 

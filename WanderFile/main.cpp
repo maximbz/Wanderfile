@@ -37,6 +37,7 @@ int main(void)
     mainModeOptions.push_back('n');
     mainModeOptions.push_back('r');
     mainModeOptions.push_back('e');
+    mainModeOptions.push_back('o');
     
     gameOptions.push_back('l');
     gameOptions.push_back('b');
@@ -67,7 +68,7 @@ int main(void)
                 if(!slideRoom)
                 {
                     printf("\n\nSlide Game Window a - Left, d - Right, w - Up, s - Down.");
-                    printf("\nOR: Create (N)ew dungeon, Add new (R)oom, D(E)lete newest Room, Enter S(L)ide Room Mode, Toggle line (B)reak, or (Q)uit?\n");
+                    printf("\nOR: Create (N)ew dungeon, Add new (R)oom, D(E)lete newest Room, Replace newest D(O)or, Enter S(L)ide Room Mode, Toggle line (B)reak, or (Q)uit?\n");
                     
                     menuSelection.toggleCharOption(1, true);//turn main mode on
                     menuSelectMatrix = menuSelection.getUserCharAnswer();
@@ -91,13 +92,11 @@ int main(void)
                         if(menuSelectMatrix.y == 0)
                             printLoop = false;
                         if(menuSelectMatrix.y == 1)
-                        {
                             dungeon.createDungeon();
-                        }
                         if(menuSelectMatrix.y == 2)
-                        {
-                            dungeon.deleteLastRoom();
-                        }
+                            dungeon.deleteRoom(nullptr);//delete last room
+                        if(menuSelectMatrix.y == 3)
+                            dungeon.replaceDoor();
                     }
                     
                     //game commends

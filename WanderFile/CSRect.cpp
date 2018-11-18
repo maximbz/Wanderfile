@@ -78,31 +78,52 @@ void CSRect::setBotRight(int inRight, int inBot)
     calculateArea();
 }
 
-void CSRect::setWallLoc(objReg inWall, int inLocPoint)
+bool CSRect::setWallLoc(objReg inWall, int inLocPoint)
 {
+    //never let a rect's wall be set to the other side of its opposite wall--thus making the rect inverted.
     switch(inWall)
     {
         case REG_WALL_TOP:
-            topLeft.y = inLocPoint;
-            break;
+            if(inLocPoint <= botRight.y)
+            {
+                topLeft.y = inLocPoint;
+                calculateArea();
+                return true;
+            }
+            else
+                return false;
         case REG_WALL_LEFT:
-            topLeft.x = inLocPoint;
-            break;
+            if(inLocPoint <= botRight.x)
+            {
+                topLeft.x = inLocPoint;
+                calculateArea();
+                return true;
+            }
+            else
+                return false;
         case REG_WALL_RIGHT:
-            botRight.x = inLocPoint;
-            break;
+            if(inLocPoint >= topLeft.x)
+            {
+                botRight.x = inLocPoint;
+                calculateArea();
+                return true;
+            }
+            else
+                return false;
         case REG_WALL_BOT:
-            botRight.y = inLocPoint;
-            break;
+            if(inLocPoint >= topLeft.y)
+            {
+                botRight.y = inLocPoint;
+                calculateArea();
+                return true;
+            }
+            else
+                return false;
             
         default:
             printf("Error in CSRect: Attempting to set a wall loc other than the four possible walls.\n");
+            return false;
     }
-    
-    if(topLeft.y > botRight.y || topLeft.x > botRight.x)
-        printf("Error in CSRect: Rect's topLeft axis has been set on the other side of botRight axis.");
-    
-    calculateArea();
 }
 
 void CSRect::setWallRange(objReg inWall, CSRange inRange)
@@ -173,14 +194,16 @@ bool CSRect::doesContain(CSPoint inPoint)
 bool CSRect::doesRectContainWall(CSRect inRect, objReg inReg)
 {
     int     wallLoc, clockWallLoc, countclockWallLoc;
+    CSAxis  wallAxis;
     
     wallLoc = inRect.getWallLocPoint(inReg);
     clockWallLoc = inRect.getWallLocPoint(getClockWall(inReg));
     countclockWallLoc = inRect.getWallLocPoint(getCountclockWall(inReg));
-        
+    wallAxis.setAxisFromWall(inReg);
+    
     if(getWallRange(getClockWall(inReg)).doesContain(wallLoc) &&//if inRect's left wall is in the range of this rect's top wall
-       (getWallRange(inReg).doesContain(clockWallLoc) ||//and either inRect's top wall is in the range of this rect's left wall
-       getWallRange(inReg).doesContain(countclockWallLoc)))//or inRect's bottom wall is the range of this rect's left wall
+       inRect.topLeft.getAxisPoint(wallAxis.dim) <= botRight.getAxisPoint(wallAxis.dim) &&//and inRect's topLeft wall is less than this rect's botRight wall
+       inRect.botRight.getAxisPoint(wallAxis.dim) >= topLeft.getAxisPoint(wallAxis.dim))//and inRect's botRight wall is greater than this rect's topLeft wall
         return true;
     else
         return false;
@@ -210,6 +233,7 @@ int CSRect::getDim(axis inDim)
             return _rectHeight;
             
         default:
+            printf("Error in CSRect: Attempting to get a dim other than horiz or vert.\n");
             return BAD_DATA;
     }
 }

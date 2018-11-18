@@ -34,7 +34,7 @@ public:
     void setBotRight(int, int);
     
     //dynamic (Irish) setters
-    void setWallLoc(objReg, int);//set the point, or perpendicular axis, based on incomingWall
+    bool setWallLoc(objReg, int);//set the point, or perpendicular axis, based on incomingWall
     void setWallRange(objReg, CSRange);//start and end points based on incomingWall
     void setCorner(direction, CSPoint);//topLeftor botRight
     

@@ -17,11 +17,6 @@
 #include "CSRoom.hpp"
 #include "CSRoomSorter.hpp"
 
-struct roomOverlap
-{
-    objReg  wall;
-    int     distance;
-};
 
 class CSDungeonLevel
 {
@@ -37,7 +32,9 @@ private:
     list<CSRoom *>  _levelRooms;
     
     void indexRooms(list<CSRoom*>*);
-    CSRoom* createRoom(CSRoom*);
+    CSRoom* createFirstRoom(void);
+    bool createRoomGenRanges(CSRoom *, CSRoom *);
+    bool createNewRoom(CSRoom *, CSRoom *);
     
 public:
     CSDungeonLevel(CSRandomHandler *, CSGameState *, int);
@@ -46,9 +43,11 @@ public:
     int saveDungeon(void);
     int loadDungeon(void);
     void deleteDungeon(void);
-    void updateLevelBounds(CSRoom *);
+    void updateLevelBounds(CSRoom *);//is this even necessary?
     void updateRoomNums(void);
-    void deleteLastRoom(void);
+    void abortRoomGenPath(CSRoom *);
+    void deleteRoom(CSRoom *);
+    void replaceDoor(void);
     void slideRoom(int, int, int);
     void printWindow();
     

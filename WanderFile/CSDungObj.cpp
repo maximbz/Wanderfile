@@ -18,9 +18,8 @@ CSDungObj::CSDungObj()
     _owner = nullptr;
 }
 
-CSDungObj::CSDungObj(char inChar, objType inType, objReg inRegion, CSPoint inLoc, CSDungObj *inParent, CSDungObj *inConnect, CSRoom *inOwner)
+CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint inLoc, CSDungObj *inParent, CSDungObj *inConnect, CSRoom *inOwner)
 {
-    _objectChar = inChar;
     _objectType = inType;
     _objectRegion = inRegion;
     _objectLoc = inLoc;
@@ -31,6 +30,18 @@ CSDungObj::CSDungObj(char inChar, objType inType, objReg inRegion, CSPoint inLoc
     _owner = inOwner;
     
     _wasMoved = false;
+    
+    //set the char based on type
+    switch(inType)
+    {
+        case OBJ_DOOR:
+            _objectChar = OPEN_DOOR_CHAR;
+            break;
+            
+        default:
+            _objectChar = EMPTY_CHAR;
+            break;
+    }
 }
 
 
@@ -42,19 +53,14 @@ void CSDungObj::setWasMoved(bool inState)
     _wasMoved = inState;
 }
 
+void CSDungObj::setNum(int inObjNum)
+{
+    _objNum = inObjNum;
+}
+
 void CSDungObj::setChar(char inChar)
 {
     _objectChar = inChar;
-}
-
-void CSDungObj::setType(objType inType)
-{
-    _objectType = inType;
-}
-
-void CSDungObj::setRegion(objReg inRegion)
-{
-    _objectRegion = inRegion;
 }
 
 void CSDungObj::setLoc(CSPoint inLoc)
@@ -83,18 +89,13 @@ void CSDungObj::setChild(CSDungObj *inChild)
         inChild = nullptr;
 }
 
-void CSDungObj::setConnect(CSDungObj *incConnect)
+void CSDungObj::setConnect(CSDungObj *inConnect)
 {
-    _connect = incConnect;
+    _connect = inConnect;
     
-    if(incConnect != nullptr)
+    if(inConnect != nullptr)
         if(_connect->getConnect() != this)
-            incConnect->setConnect(this);
-}
-
-void CSDungObj::setOwner(CSRoom *inOwner)
-{
-    _owner = inOwner;
+            inConnect->setConnect(this);
 }
 
 
@@ -165,7 +166,7 @@ bool CSDungObj::slideDoor(CSPoint inVector)
     
     //if the door is attempting to be slid along the para axis, within the wall...
     if(inVector.getAxisPoint(wallAxis.dim) != 0)
-        goodLoc = _owner->isPointInFreeWall(newLoc, _objectRegion);//check that newDoorLoc is in free-wall
+        goodLoc = _owner->isWallPointFree(newLoc, _objectRegion, this);//check that newDoorLoc is in free-wall. We're okay with with hallway walls, since we'll necessarily be checking a spot for the door that's in a wall.
     
     //if the intended location is within any free-wall range, we set ourselves to it and return that we were successful
     if(goodLoc)
@@ -215,6 +216,11 @@ void CSDungObj::deleteObject(void)
 bool CSDungObj::getWasMoved(void)
 {
     return _wasMoved;
+}
+
+int CSDungObj::getNum(void)
+{
+    return _objNum;
 }
 
 char CSDungObj::getChar(void)

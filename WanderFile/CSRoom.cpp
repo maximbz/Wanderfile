@@ -6,22 +6,31 @@
 //  Copyright © 2016 Maxim Boschert-Zielsdorf. All rights reserved.
 //
 
+#include "CSLine.hpp"
 #include "CSRoom.hpp"
 #include "CSRandomRange.hpp"
 #include "CSDungObj.hpp"
 
 #pragma mark Constructors
 
-CSRoom::CSRoom(CSGameState *inGame)
+CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand)
 {
     _theGame = inGame;
+    _theRandHand = inRandHand;
     _roomNumDigits = 0;
+    _roomToConnect = nullptr;
+    _roomToConnectDist = BAD_DATA;
+    _roomNum = BAD_DATA;
 }
 
-CSRoom::CSRoom(CSGameState *inGame, CSPoint inTopLeft, CSPoint inBotRight)
+CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSPoint inTopLeft, CSPoint inBotRight)
 {
     _theGame = inGame;
+    _theRandHand = inRandHand;
     _roomNumDigits = 0;
+    _roomToConnect = nullptr;
+    _roomToConnectDist = BAD_DATA;
+    _roomNum = BAD_DATA;
     
     _roomRect.topLeft = inTopLeft;
     _roomRect.botRight = inBotRight;
@@ -42,72 +51,126 @@ void CSRoom::setRoomNum(int inRoomNum)
     updateRoomNum(_roomNumDigits);
 }
 
+void CSRoom::setRoomToConnect(CSRoom *inRoom)
+{
+    _roomToConnect = inRoom;
+}
+
+void CSRoom::setRoomToConnectDist(int inDist)
+{
+    _roomToConnectDist = inDist;
+}
 
 #pragma mark -
 #pragma mark Doers - Create/Delete Functions
 
-CSDungObj* CSRoom::createObject(char inObjChar, objType inObjType, objReg inObjReg, CSPoint inObjLoc, CSDungObj *inParent, CSDungObj *inCon)
+CSDungObj* CSRoom::createObject(objType inObjType, objReg inObjReg, CSPoint inObjLoc, CSDungObj *inParent, CSDungObj *inCon)
 {
-    CSDungObj *newObject = new CSDungObj(inObjChar, inObjType, inObjReg, inObjLoc, inParent, inCon, this);
+    CSDungObj   *newObject = new CSDungObj(inObjType, inObjReg, inObjLoc, inParent, inCon, this);
     
     _objects.push_back(newObject);
-    _objects.sort(_objectComparator);
+    updateObjectNums();
     
     return newObject;
 }
 
-/*void CSRoom::createDoor(objReg inDoorWall, CSPoint inObjLoc, CSDungObj *inCon)
+void CSRoom::createNewDoor(void)
 {
-    CSDungObj *newObject = new CSDungObj(inDoorWall, inObjLoc, inCon, this);
+    bool            goodDoorLoc;
+    objReg          nextDoorWall = REG_NULL;
+    CSAxis          roomGenAxis;
+    CSPoint         newPoint;
+    CSRandomRange   roomSideGen(RAND_ROOM, REG_WALL_LEFT, REG_WALL_BOT);
     
-    _objects.push_back(newObject);
-    _objects.sort(_objectComparator);
-}*/
-
-void CSRoom::addDoor(CSDungObj *inDoor, objReg inWall, CSPoint inLoc, CSDungObj *inParent, CSDungObj *inCon, CSRoom *inOwner)
-{
-    inDoor->setChar(OPEN_DOOR_CHAR);
-    inDoor->setType(OBJ_DOOR);
-    inDoor->setRegion(inWall);
-    inDoor->setLoc(inLoc);
-    inDoor->setParent(inParent);
-    inDoor->setConnect(inCon);
-    inDoor->setOwner(inOwner);
+    list<CSDungObj *>::iterator objListIter;
     
-    _objects.push_back(inDoor);
-    _objects.sort(_objectComparator);
-}
-
-/*void CSRoom::removeConnection(CSRoom *inRoom)
-{
-    CSDungObj   *connectedDoor;
-    list<CSDungObj *>::iterator listIter;
+    _theRandHand->addRandomRange(roomSideGen);//add the range to the randHand
     
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    if(_isHall)//to the opposite wall for a hallway
     {
-        connectedDoor = (*listIter)->getConnect();
+        roomGenAxis.setAxisFromWall(getConnectedDoor()->getRegion());//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
+        nextDoorWall = getFacingWall(getConnectedDoor()->getRegion());
         
-        if(connectedDoor == nullptr)
-            continue;
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), _roomRect.getWallLocPoint(nextDoorWall));
+        newPoint.setAxisPoint(roomGenAxis.dim, _roomRect.topLeft.getAxisPoint(roomGenAxis.dim) + (HALL_SIZE / 2));
+    }
+    else//or to a random wall for a room
+    {
+        do
+        {
+            nextDoorWall = (objReg)_theRandHand->getNumber(&roomSideGen);
+            goodDoorLoc = true;
+            
+            //make sure it's a wall that has no door, and that adding a door now won't create problems with very nearby rooms, in the next iteration -- in the future, same door walls should be okay, within reason, so we need to create some check for distance minimum between same door walls.
+            for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+                if(nextDoorWall == (*objListIter)->getRegion())
+                    goodDoorLoc = false;
+        }
+        while(!goodDoorLoc);
         
-        if((*listIter)->getConnect()->getOwner() == inRoom)
-            (*listIter)->setConnectTo(nullptr);//listIter = _objects.erase(listIter);//this will delete the door itself, which we don't necessarily want.
+        //dynamically set the door loc to be along the chosen wall at a random point
+        CSRandomRange   doorLocGen(RAND_ROOM, _roomRect.getWallStartPoint(nextDoorWall) + 1, _roomRect.getWallEndPoint(nextDoorWall) - 1);//offsets keep doors from appearing in corners
+        _theRandHand->addRandomRange(doorLocGen);
+        
+        //dynamically set the door's loc in the wall
+        roomGenAxis.setAxisFromWall(nextDoorWall);
+        newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), _roomRect.getWallLocPoint(nextDoorWall));
+        newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber(&doorLocGen));
     }
     
-}*/
+    createObject(OBJ_DOOR, nextDoorWall, newPoint, nullptr, nullptr);//make the next door for the next room, because we don't have the door yet
+    
+    _theRandHand->clearRandomItems(RAND_ROOM);
+}
 
 void CSRoom::deleteRoom(void)
 {
-    list<CSDungObj *>::iterator     listIter = _objects.begin();
+    list<CSDungObj *>::iterator     objectIter = _objects.begin();
     
     //erases and deletes all objects, removes the reference back to this CSRoom from all connected CSRoom's
-    while(listIter != _objects.end())
+    while(objectIter != _objects.end())
     {
-        (*listIter)->deleteObject();
-        listIter = _objects.erase(listIter);//new iterator properly goes through the list, now with fewer entries
+        (*objectIter)->deleteObject();
+        objectIter = _objects.erase(objectIter);//new iterator properly goes through the list, now with fewer entries
     }
     
     delete this;
+}
+
+void CSRoom::deleteObject(int inObjNum)
+{
+    list<CSDungObj *>::iterator objectIter;
+    
+    //goes through all objects looking for the incoming object number and deletes it
+    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
+    {
+        if((*objectIter)->getNum() == inObjNum)
+        {
+            (*objectIter)->deleteObject();
+            _objects.erase(objectIter);
+            break;
+        }
+    }
+    
+    updateObjectNums();//then re-numbers the remaining objects
+}
+
+void CSRoom::deleteObject(CSDungObj *inObj)
+{
+    list<CSDungObj *>::iterator objectIter;
+    
+    //goes through all objects looking for the incoming object and deletes it
+    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
+    {
+        if((*objectIter) == inObj)
+        {
+            (*objectIter)->deleteObject();
+            _objects.erase(objectIter);
+            break;
+        }
+    }
+    
+    updateObjectNums();//then re-numbers the remaining objects
 }
 
 #pragma mark -
@@ -124,6 +187,72 @@ char CSRoom::checkForObject(CSPoint inLocation, char inObjectChar)
     return inObjectChar;//if no object was found at this location, return what we expected to find
 }
 
+int CSRoom::connectToRoom(void)
+{
+    objReg      wallToConnect, connectingWall;
+    CSPoint     newDoorPoint, testPoint;
+    CSLine      sharedOverlap;
+    CSAxis      hallwayAxis;
+    CSRoom      *connectedRoom;
+    CSDungObj   *unconnectedDoor, *doorToIgnore;
+    
+    unconnectedDoor = getUnconnectedDoor();
+    wallToConnect = unconnectedDoor->getRegion();
+    connectingWall = getFacingWall(wallToConnect);
+    hallwayAxis.setAxisFromWall(wallToConnect);
+    hallwayAxis.setAxisFromWall(hallwayAxis.getPerpReg());
+    newDoorPoint = *unconnectedDoor->getLoc();
+    
+    if(_isHall)
+    {
+        connectedRoom = getConnectedDoor()->getConnect()->getOwner();
+        doorToIgnore = connectedRoom->getDoorConnectedToRoom(this);
+    }
+    else//if we're a non-hallway, we want to slide along our own wallToConnect, rather than the room leading into us, the way we would with a hallway
+    {
+        connectedRoom = this;
+        doorToIgnore = getUnconnectedDoor();
+    }
+    
+    newDoorPoint.setAxisPoint(hallwayAxis.dim, _roomToConnect->getRect()->getWallLocPoint(connectingWall));//slide newDoorPoint into roomToConnect, where the new door might be created
+    newDoorPoint.slidePointViaAxis(hallwayAxis.dim, hallwayAxis.getOppDirOffset());//set newDoorPoint to be just outside of roomToConnect's facing wall
+    unconnectedDoor->setLoc(newDoorPoint);
+    
+    //set our open side to just before _roomToConnect (get wall that has unconnected door, get facing wall, connect to that wall). If doing so would have flipped the room inside out...
+    if(!getRect()->setWallLoc(wallToConnect, newDoorPoint.getAxisPoint(hallwayAxis.dim)))
+        return RETURN_CODE_FALSE;//delete this hallway and proceed with the room connected to this hallway
+    
+    testPoint = newDoorPoint;
+    
+    //create a range from the largest topLeft to the smallest botRight, so we only slide the room to places they can both connect
+    sharedOverlap.setStart(connectedRoom->getRect()->topLeft.getAxisPoint(hallwayAxis.getPerpAxis()));
+    if(_roomToConnect->getRect()->topLeft.getAxisPoint(hallwayAxis.getPerpAxis()) > sharedOverlap.getStart())
+        sharedOverlap.setStart(_roomToConnect->getRect()->topLeft.getAxisPoint(hallwayAxis.getPerpAxis()));
+    sharedOverlap.setEnd(connectedRoom->getRect()->botRight.getAxisPoint(hallwayAxis.getPerpAxis()));
+    if(_roomToConnect->getRect()->botRight.getAxisPoint(hallwayAxis.getPerpAxis()) < sharedOverlap.getEnd())
+        sharedOverlap.setEnd(_roomToConnect->getRect()->botRight.getAxisPoint(hallwayAxis.getPerpAxis()));
+    
+    //if the point in the roomToConnect doesn't work, slide along the walls until you find a point that does, testing both connected rooms at each slide point
+    while(!_roomToConnect->isWallPointFree(testPoint, connectingWall, nullptr) || !connectedRoom->isWallPointFree(testPoint, wallToConnect, doorToIgnore))
+    {
+        testPoint.slidePointViaAxis(hallwayAxis.getPerpAxis(), 1);//slide one to the botRight
+        if(testPoint.getAxisPoint(hallwayAxis.getPerpAxis()) > sharedOverlap.getEnd())//if we're past the bottom/left-most point where the rooms overlap
+            testPoint.setAxisPoint(hallwayAxis.getPerpAxis(), sharedOverlap.getStart());//slide all the way to the top/right-most point where the rooms overlap
+        if(testPoint == newDoorPoint)//if we've gone a whole loop through the wall and we still can't connect
+            return RETURN_CODE_ABORT_GEN;
+    }
+    if(slideRoom(testPoint - newDoorPoint))
+        newDoorPoint = testPoint;
+    
+    newDoorPoint.setAxisPoint(hallwayAxis.dim, _roomToConnect->getRect()->getWallLocPoint(connectingWall));//slide newDoorPoint into roomToConnect, where the new door might be created
+    _roomToConnect->createObject(OBJ_DOOR, connectingWall, newDoorPoint, nullptr, unconnectedDoor);//now we've found a good spot for it, create a new door in _roomToConnect using newDoorPoint to match our unconnected door, and connect them to each other
+    
+    //we no longer have a room to connect to, so let's reset our variables
+    _roomToConnect = nullptr;
+    _roomToConnectDist = BAD_DATA;
+    return RETURN_CODE_TRUE;
+}
+
 void CSRoom::updateRoomNum(int inNumDigits)
 {
     bool            vertHall = false;
@@ -133,8 +262,6 @@ void CSRoom::updateRoomNum(int inNumDigits)
     CSDungObj       *newRoomNum, *prevRoomNum = nullptr;
     
     list<CSDungObj *>::iterator  listIter = _objects.begin();
-    
-    //printf("updating Room Num for Room number %d.\n", _roomNum);
     
     if(inNumDigits == _roomNumDigits)
         return;
@@ -151,7 +278,7 @@ void CSRoom::updateRoomNum(int inNumDigits)
             listIter++;
     }
 
-    if(_isHall && _roomRect.botRight.x == _roomRect.topLeft.x + HALL_SIZE)
+    if(_isHall && _roomRect.getHeight() > _roomRect.getWidth())//the real way to determine this is to check whether top & bot walls have doors, which could easily be set up during room creation, if it matters that much
         vertHall = true;
     
     //create room nums based on new number of digits
@@ -165,34 +292,74 @@ void CSRoom::updateRoomNum(int inNumDigits)
         powerResult = pow(10, loop - 1);
         newDigit = ((_roomNum / powerResult) % 10) + '0';//plus ascii offset
         
-        newRoomNum = createObject(newDigit, OBJ_ROOM_NUM, REG_CORNER_TOP_LEFT, newDigitLoc, prevRoomNum, nullptr);//creates one's place and connect it to ten's place
+        newRoomNum = createObject(OBJ_ROOM_NUM, REG_CORNER_TOP_LEFT, newDigitLoc, prevRoomNum, nullptr);//creates one's place and connect it to ten's place
+        newRoomNum->setChar(newDigit);
+        
         prevRoomNum = newRoomNum;
     }
 
 }
 
-bool CSRoom::doesRoomAlign(axis inAxis, CSRoom *inRoom)
+void CSRoom::updateObjectNums(void)
 {
-    if(inAxis == AXIS_HORIZ)
-        return ((_roomRect.botRight.y > inRoom->getRect()->topLeft.y) && (_roomRect.topLeft.y < inRoom->getRect()->botRight.y));
-    else if(inAxis == AXIS_VERT)
-        return ((_roomRect.botRight.x > inRoom->getRect()->topLeft.x) && (_roomRect.topLeft.x < inRoom->getRect()->botRight.x));
-    else
-        return false;
+    int count = 0;
+    
+    list<CSDungObj*>::iterator  objectIter;
+    
+    _objects.sort(_objectComparator);
+    
+    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
+    {
+        (*objectIter)->setNum(count);
+        count++;
+    }
 }
 
-bool CSRoom::isPointInFreeWall(CSPoint inPoint, objReg inWall)
+CSDungObj* CSRoom::getUnconnectedDoor(void)
 {
-    int     maxWallRange = _roomRect.getWallEndPoint(inWall) - 1;
+    list<CSDungObj *>::iterator objListIter;
+    
+    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+        if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect() == nullptr)//this is a door & it should connect to our new room
+            return *objListIter;
+    
+    return nullptr;
+}
+
+CSDungObj* CSRoom::getDoorConnectedToRoom(CSRoom *inRoom)
+{
+    list<CSDungObj *>::iterator objListIter;
+    
+    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+        if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect()->getOwner() == inRoom)
+            return *objListIter;
+    
+    return nullptr;
+}
+
+CSDungObj* CSRoom::getConnectedDoor(void)
+{
+    list<CSDungObj *>::iterator objListIter;
+    
+    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+        if((*objListIter)->getType() == OBJ_DOOR && ((*objListIter)->getConnect() != nullptr))//this is a door & it should connect to our new room
+            return (*objListIter);
+    
+    return nullptr;
+}
+
+/*bool CSRoom::isPointInFreeWall(CSPoint inPoint, objReg inWall)
+{
     CSAxis  wallAxis;
-    CSRange wallRange;
+    CSRange roomWallRange(_roomRect.getWallStartPoint(inWall) + 1, _roomRect.getWallEndPoint(inWall) - 1),//set our range up as the entire wall, less corners (which are not free walls)
+            wallRangeSegment;
     
     vector<CSRange>             freeWallRanges;
     vector<CSRange>::iterator   vectIter;
     list<CSDungObj*>::iterator  listIter;
     
     wallAxis.setAxisFromWall(inWall);
-    wallRange.setRange(_roomRect.getWallStartPoint(inWall) + 1, maxWallRange);//set our range up as the entire wall, less corners (which are not free walls)
+    wallRangeSegment = roomWallRange;
     
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
     {
@@ -200,15 +367,17 @@ bool CSRoom::isPointInFreeWall(CSPoint inPoint, objReg inWall)
         if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getRegion() != inWall)
             continue;
         
-        wallRange.setMax((*listIter)->getLoc()->getAxisPoint(wallAxis.dim) - 1);//set max to just before current door, along wall
-        //if(wallRange.max >= wallRange.min)//if it makes sense as a range...
-        freeWallRanges.push_back(wallRange);//add it
+        wallRangeSegment.setMax((*listIter)->getLoc()->getAxisPoint(wallAxis.dim) - HALL_SIZE);//set max to just before the wall of the hallway connected to current door, along wall
+        if(wallRangeSegment.getMin() >= roomWallRange.getMin() && wallRangeSegment.getMax() > roomWallRange.getMin())//if we haven't left the roomWallRange limits...
+            freeWallRanges.push_back(wallRangeSegment);//add it to our vector of range segments
         
-        wallRange.setRange((*listIter)->getLoc()->getAxisPoint(wallAxis.dim) + 1, _roomRect.getWallEndPoint(inWall) - 1);//set max back to just before end point, and min to just after current door
+        wallRangeSegment.setRange((*listIter)->getLoc()->getAxisPoint(wallAxis.dim) + HALL_SIZE, roomWallRange.getMax());//set max back to just before end point, and min to just after the wall of the hallway connected to current door
+        if(wallRangeSegment.getMin() >= roomWallRange.getMax() || wallRangeSegment.getMax() >= roomWallRange.getMax())//if we have left the roomWallRange limits...
+            continue;//then this wall is likely too small to have any free points
     }
     
-    if(/*wallRange.max >= wallRange.min && */wallRange.getMax() <= maxWallRange)//if it makes sense as a range, and doesn't go outside of the original, overall wall range...
-        freeWallRanges.push_back(wallRange);//add final range from after last door of loop to just before end point (corner)
+    if(wallRangeSegment.getMax() <= roomWallRange.getMax())//if it makes sense as a range, and doesn't go outside of the original, overall wall range...
+        freeWallRanges.push_back(wallRangeSegment);//add final range from after last door of loop to just before end point (corner)
     
     //now go through each range and see if the inPoint is within any of them
     for(vectIter = freeWallRanges.begin(); vectIter != freeWallRanges.end(); vectIter++)
@@ -216,6 +385,42 @@ bool CSRoom::isPointInFreeWall(CSPoint inPoint, objReg inWall)
             return true;
            
     return false;
+}*/
+
+bool CSRoom::isWallPointFree(CSPoint inPoint, objReg inWall, CSDungObj *doorToMove)
+{
+    CSAxis  wallAxis;
+    
+    list<CSDungObj*>::iterator  objectIter;
+    
+    wallAxis.setAxisFromWall(inWall);
+    
+    //if inPoint is on either corner, or is outside the wall range alltogether...
+    if(inPoint.getAxisPoint(wallAxis.dim) <= getRect()->getWallStartPoint(inWall) ||
+       inPoint.getAxisPoint(wallAxis.dim) >= getRect()->getWallEndPoint(inWall))
+        return false;
+    
+    //check every door on inWall
+    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
+    {
+        int objectNum;
+        objectNum = (*objectIter)->getNum();
+        
+        //skip doors on other walls, non-doors, or the door we're moving that's leading to this wall check
+        if((*objectIter)->getType() != OBJ_DOOR || (*objectIter)->getRegion() != inWall || (*objectIter) == doorToMove)
+            continue;
+        
+        //if inPoint is where inWall has a connected door
+        if(inPoint.getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim))
+            return false;
+        
+        //if inPoint aligns with one of the walls of a connected hallway
+        if(inPoint.getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) - (HALL_SIZE / 2) ||
+           inPoint.getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) + (HALL_SIZE / 2))
+           return false;
+    }
+    
+    return true;
 }
 
 bool CSRoom::slideRoom(CSPoint inVector)
@@ -231,7 +436,7 @@ bool CSRoom::slideRoom(CSPoint inVector)
     list<CSDungObj *>::iterator     listIter;
     
     if(_theGame->getBreakState())
-        oldRoomLoc.calculateArea();
+        oldRoomLoc.calculateArea();//for debug only
     
     if(!_isHall)//if it's a room, we slide once, then the loop checks if it's okay
     {
@@ -273,14 +478,12 @@ bool CSRoom::slideRoom(CSPoint inVector)
             _roomRect.slideRect(inVector);
         else//only non-halls care about this
         {
-            //only one axis in the vector could ever be 0
+            //only one axis in the vector could ever be 0 (otherwise, we wouldn't be sliding at all)
             if(inVector.x == 0)
                 slideAxis.dim = AXIS_VERT;
             else if(inVector.y == 0)
                 slideAxis.dim = AXIS_HORIZ;
         }
-        
-        
         
         //also slide every object in the room except connected para room-doors
         for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
@@ -314,7 +517,7 @@ bool CSRoom::slideRoom(CSPoint inVector)
 
 bool CSRoom::slideWall(objReg inWall, int inVector)
 {
-    int         newWallLoc = _roomRect.getWallLocPoint(inWall) + inVector;
+    int         newWallLoc = _roomRect.getWallLocPoint(inWall) + inVector, narrowest;
     CSAxis      wallAxis;
     CSRange     wallMovementRange;
     CSRect      newRoomRect;
@@ -324,6 +527,12 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
     //move the wall this door is on to the same spot
     newRoomRect = _roomRect;
     newRoomRect.setWallLoc(inWall, newWallLoc);
+    
+    //I'm okay making halls very short, but rooms should never be too narrow
+    if(_isHall)
+        narrowest = ROOM_SIZE_MIN / 2;
+    else
+        narrowest = ROOM_SIZE_MIN + 1;
     
     //Before the wall can be slid, check if there are any doors on the tiles between the wall's current and future loc.
     wallAxis.setAxisFromWall(inWall);
@@ -340,7 +549,7 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
     }
     
     //don't let the room be squished to nothing
-    if(newRoomRect.getDim(wallAxis.getPerpAxis()) >= HALL_SIZE)
+    if(newRoomRect.getDim(wallAxis.getPerpAxis()) >= narrowest)
         _roomRect.setPoints(newRoomRect.topLeft, newRoomRect.botRight);
     else
         return false;
@@ -433,6 +642,11 @@ int CSRoom::getRoomNum(void)
     return _roomNum;
 }
 
+CSRandomRange* CSRoom::getWallGenRanges(void)
+{
+    return &_wallGenLoc[0];
+}
+
 list<CSDungObj*>* CSRoom::getObjects(void)
 {
     return &_objects;
@@ -443,5 +657,14 @@ CSRect* CSRoom::getRect(void)
     return &_roomRect;
 }
 
+CSRoom* CSRoom::getRoomToConnect(void)
+{
+    return _roomToConnect;
+}
+
+int CSRoom::getRoomToConnectDist(void)
+{
+    return _roomToConnectDist;
+}
 
 

@@ -20,9 +20,9 @@ bool CSDungObjSorter::operator()(CSDungObj* &earlierItem, CSDungObj* &laterItem)
 {
     CSAxis  earlierAxis, laterAxis;
     
-    //shove all non-door objects to the back, doros of different walls should be in wall order
+    //shove all non-door objects to the back, doors of different walls should be in wall order
     if((earlierItem->getType() != laterItem->getType()))
-        return earlierItem->getType() < laterItem->getType();
+        return earlierItem->getType() > laterItem->getType();
     else//if they're both doors of the same wall, compare axis points
         if(earlierItem->getType() == OBJ_DOOR)
         {
