@@ -50,6 +50,7 @@
       customWorkingDirectory = "/Users/maxbz/Developer/C++/WanderFile"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
+      enableAddressSanitizer = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
       <BuildableProductRunnable

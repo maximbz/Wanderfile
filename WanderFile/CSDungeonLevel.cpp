@@ -17,10 +17,11 @@
 
 #pragma mark Constructors
 
-CSDungeonLevel::CSDungeonLevel(CSRandomHandler *inRandHand, CSGameState *inGame, int inLevelNum)
+CSDungeonLevel::CSDungeonLevel(CSRandomHandler *inRandHand, CSGameState *inGame, CSDoorHandler *inDoorHand, int inLevelNum)
 {
     _theRandHand = inRandHand;
     _theGame = inGame;
+    _theDoorHand = inDoorHand;
     
     _roomComparator.setSortMode(false);
     
@@ -36,23 +37,24 @@ CSDungeonLevel::CSDungeonLevel(CSRandomHandler *inRandHand, CSGameState *inGame,
 
 void CSDungeonLevel::createDungeon(void)
 {
-    CSRoom  *newRoom, *prevRoom;
-    bool    goodRoom;//, makeRooms = true;
+    bool        goodRoom, makeRooms = true;
+    CSRoom      *newRoom;
+    CSDungObj   *nextDoor;
     
-    //list<CSRoom *>::iterator    listIter;
     
+    while(makeRooms)
+    {
     //seed the dungeon with one room
     if(_levelRooms.empty())
         _levelRooms.push_back(createFirstRoom());
     else
     {
-        newRoom = new CSRoom(_theGame, _theRandHand);
+        newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand);
+        nextDoor = _theDoorHand->getNextDoor();
         
-        prevRoom = _levelRooms.back();
-        
-        goodRoom = createRoomGenRanges(prevRoom, newRoom);
+        goodRoom = createRoomGenRanges(nextDoor, newRoom);
         if(goodRoom)
-            goodRoom = createNewRoom(prevRoom, newRoom);
+            goodRoom = createNewRoom(nextDoor, newRoom);
         
         if(goodRoom)
         {
@@ -62,7 +64,7 @@ void CSDungeonLevel::createDungeon(void)
         else
         {
             deleteRoom(newRoom);
-            printf("Made a bad room. Type 'r' to try again.\n");
+            //printf("Made a bad room. Type 'r' to try again.\n");
         }
     }
     
@@ -70,17 +72,14 @@ void CSDungeonLevel::createDungeon(void)
     _theRandHand->clearRandomItems(RAND_DUNGEON);
     updateRoomNums();
     
-    /*do
+    if(_theDoorHand->getNumDoors() == 0)
     {
-        subRoom = createRoom(superRoom);
-        _levelRooms.push_back(subRoom);
-        superRoom = subRoom;
-        
-        if(_levelRooms.size() >= NUM_ROOMS)
-            makeRooms = false;
+        //makeOuterDoor();//select random level boundary and create a new door on that side of that wall
+        makeRooms = false;
     }
-    while(makeRooms);*/
+    }
     
+    printf("\nDungeon complete. Consists of %d rooms.\n",(int)_levelRooms.size());
     //indexRooms(&_levelRooms);
 }
 
@@ -140,6 +139,7 @@ void CSDungeonLevel::deleteDungeon(void)
     _levelRooms.clear();
     _levelBounds.setPoints(BAD_DATA, BAD_DATA, BAD_DATA, BAD_DATA);
     _theRandHand->clearRandomItems(RAND_DUNGEON);
+    _theDoorHand->clear();
 }
 
 #pragma mark -
@@ -206,7 +206,7 @@ CSRoom* CSDungeonLevel::createFirstRoom(void)
     CSPoint         newPoint;
     CSAxis          roomGenAxis;
     //objReg          nextDoorWall = REG_NULL;
-    CSRoom          *newRoom = new CSRoom(_theGame, _theRandHand);
+    CSRoom          *newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand);
     CSRandomRange   roomSideGen(RAND_DUNGEON, REG_WALL_LEFT, REG_WALL_BOT);
     
     //set the random range for the seed room
@@ -234,16 +234,16 @@ CSRoom* CSDungeonLevel::createFirstRoom(void)
     return newRoom;
 }
 
-bool CSDungeonLevel::createRoomGenRanges(CSRoom *inRoom, CSRoom *newRoom)
+bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
 {
     bool            roomIntersects[NUM_ROOM_WALLS];
-    int             loop;
-    objReg          newDoorWall = REG_NULL, loopReg, regToSlide[2];
+    int             loop, roomToConnectDist = BAD_DATA;
+    objReg          newDoorWall = REG_NULL, loopReg, regToSlide[2];//includes a fallback reg
     CSAxis          roomGenAxis, rangeRectAxis;
     CSPoint         newPoint, newDoorPoint;
     CSLine          distToRoom;
     CSRect          roomGenRect[NUM_ROOM_WALLS + 1];//center and each wall
-    CSDungObj       *inDoor;
+    CSRoom          *inRoom;
     CSRandomRange   roomSideGen(RAND_DUNGEON, REG_WALL_LEFT, REG_WALL_BOT), hallLengthGen(RAND_DUNGEON, ROOM_SIZE_MIN, HALL_LENGTH_MAX);
     
     list<CSRoom *>::iterator    roomListIter;
@@ -252,7 +252,6 @@ bool CSDungeonLevel::createRoomGenRanges(CSRoom *inRoom, CSRoom *newRoom)
     /*Setup our origin point*/
     
     //create a new location that will be the door in our new room, adjacent to the door we found in inRoom, then connect it to inRoom -- this point is continually referenced in room generation
-    inDoor = inRoom->getUnconnectedDoor();//find the door with no room yet connected
     
     if(_theGame->getBreakState())
         loop = 0;//leave break point for debug purposes.
@@ -264,6 +263,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSRoom *inRoom, CSRoom *newRoom)
     roomGenAxis.setAxisFromWall(newDoorWall);//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
     newDoorPoint = (*inDoor->getLoc());
     newDoorPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getOppDirOffset());//offset the appropriate axis 1 away, using roomGenAxis (e.g.: x-- or y-- OR x++ or y++)
+    inRoom = inDoor->getOwner();
     newRoom->setHallState(!inRoom->isHall());//room gen alternates between rooms and hallways
     
     
@@ -308,33 +308,29 @@ bool CSDungeonLevel::createRoomGenRanges(CSRoom *inRoom, CSRoom *newRoom)
         }
     }
     
-    //check all 4 of every existing room's walls to see if one intersects with the "core-rect"
+    //check every existing room's opposite wall to see if one intersects with the "core-rect"
     for(roomListIter = _levelRooms.begin(); roomListIter != _levelRooms.end(); roomListIter++)
     {
         /*for debug
         int roomNum;
         roomNum = (*roomListIter)->getRoomNum();*/
         
-        for(loop = 0; loop < NUM_ROOM_WALLS; loop++)//check each region rect
+        if(roomGenRect[REG_ROOM_CORE].doesRectContainWall(*(*roomListIter)->getRect(), newDoorWall))//if it intersect with any room...
         {
-            //if any intersect with any room
-            if(roomGenRect[REG_ROOM_CORE].doesRectContainWall(*(*roomListIter)->getRect(), (objReg)loop))
+            //set up a range to see how close this offending room is from newRoom's door
+            rangeRectAxis.setAxisFromWall(getFacingWall(newDoorWall));
+            distToRoom.setStart(newDoorPoint.getAxisPoint(rangeRectAxis.getPerpAxis()));
+            distToRoom.setEnd((*roomListIter)->getRect()->getWallLocPoint(newDoorWall));
+            
+            //if roomListIter is closer to newRoom's door than a previous offending room, then it becomes the new roomToConnect.
+            if(newRoom->getRoomToConnect() == nullptr || (newRoom->getRoomToConnect() != nullptr && distToRoom.getSize() < roomToConnectDist))
             {
-                //set up a range to see how close this offending room is from newRoom's door
-                rangeRectAxis.setAxisFromWall((objReg)loop);
-                distToRoom.setStart(newDoorPoint.getAxisPoint(rangeRectAxis.dim));
-                distToRoom.setEnd((*roomListIter)->getRect()->getWallLocPoint((objReg)loop));
-                
-                //if roomListIter is closer to newRoom's door than a previous offending room, then it becomes the new roomToConnect.
-                if(newRoom->getRoomToConnect() == nullptr || (newRoom->getRoomToConnect() != nullptr && distToRoom.getSize() < newRoom->getRoomToConnectDist()))
-                {
-                    newRoom->setRoomToConnect(*roomListIter);
-                    newRoom->setRoomToConnectDist(distToRoom.getSize());
-                    break;
-                }
+                newRoom->setRoomToConnect(*roomListIter);
+                roomToConnectDist = distToRoom.getSize();
             }
         }
     }
+    
     
     if(newRoom->isHall())//none of the rest of this concerns hallways, so we out
         return true;
@@ -392,9 +388,6 @@ bool CSDungeonLevel::createRoomGenRanges(CSRoom *inRoom, CSRoom *newRoom)
             roomIntersects[loop] = false;
         regToSlide[0] = REG_NULL;
         regToSlide[1] = REG_NULL;
-        
-        int newRandNum;
-        newRandNum = (*roomListIter)->getRoomNum();//for debug
         
         for(loop = 0; loop < NUM_ROOM_WALLS; loop++)//check each region rect
         {
@@ -469,14 +462,14 @@ bool CSDungeonLevel::createRoomGenRanges(CSRoom *inRoom, CSRoom *newRoom)
     return true;
 }
 
-bool CSDungeonLevel::createNewRoom(CSRoom *inRoom, CSRoom *newRoom)
+bool CSDungeonLevel::createNewRoom(CSDungObj *inDoor, CSRoom *newRoom)
 {
     bool            connectToRoom = false;
-    int             newRandNum, connectToRoomReturnCode;
+    int             loop, newRandNum, connectToRoomReturnCode;
     objReg          newDoorWall = REG_NULL;
     CSAxis          roomGenAxis;
     CSPoint         newPoint, newDoorPoint;
-    CSDungObj       *inDoor = nullptr;
+    CSRoom          *inRoom = inDoor->getOwner();
     CSRandomRange   hallLengthGen(RAND_DUNGEON, ROOM_SIZE_MIN, HALL_LENGTH_MAX);
     
     list<CSRoom *>::iterator            roomListIter;
@@ -485,7 +478,8 @@ bool CSDungeonLevel::createNewRoom(CSRoom *inRoom, CSRoom *newRoom)
 
     /*Setup*/
     
-    _theRandHand->addRandomRange(hallLengthGen);//add the range to the randHand
+    //add the range to the randHand
+    _theRandHand->addRandomRange(hallLengthGen);
     
     //only make a new room if newRoom doesn't have a room to connect to, as determined in createRoomGenRanges
     if(newRoom->getRoomToConnect() != nullptr)
@@ -501,7 +495,6 @@ bool CSDungeonLevel::createNewRoom(CSRoom *inRoom, CSRoom *newRoom)
     }
     
     //create a new location that will be the door in our new room, adjacent to the door we found in inRoom, then connect it to inRoom -- this point is continually referenced in room generation
-    inDoor = inRoom->getUnconnectedDoor();
     if(inDoor == nullptr)
         return false;
     
@@ -552,9 +545,16 @@ bool CSDungeonLevel::createNewRoom(CSRoom *inRoom, CSRoom *newRoom)
     
     
     /*Make a door*/
-    //add a new door for the next iteration of createRoom
-    newRoom->createNewDoor();
-    
+    //add a new door or three to newRoom, for the next iteration of createNewRoom
+    if(newRoom->isHall())
+        newRoom->createNewDoor();
+    else
+    {
+        newRandNum = _theDoorHand->getNewDoorQuantity();
+        for(loop = 0; loop < newRandNum; loop++)
+            newRoom->createNewDoor();
+    }
+        
     if(connectToRoom)//if we determined we need to connect this hallway to a previously existing room
     {
         connectToRoomReturnCode = newRoom->connectToRoom();
@@ -607,7 +607,7 @@ void CSDungeonLevel::abortRoomGenPath(CSRoom *inRoom)
             if((*objectIter)->getType() != OBJ_DOOR)
                 continue;
             
-            if((*objectIter) != inRoom->getConnectedDoor()->getConnect())
+            if((*objectIter) == inRoom->getConnectedDoor()->getConnect())//if this door is the one that connects back to inRoom
             {
                 pathDoor = *objectIter;
                 break;
@@ -615,7 +615,7 @@ void CSDungeonLevel::abortRoomGenPath(CSRoom *inRoom)
         }
         
         if(inRoom->getRoomNum() != BAD_DATA)//if connectToRoom sent in newRoom, we don't want to delete it here
-            inRoom->deleteRoom();
+            deleteRoom(inRoom);
     }
     
     pathDoor->getOwner()->deleteObject(pathDoor);
@@ -658,7 +658,6 @@ void CSDungeonLevel::deleteRoom(CSRoom *inRoom)
         roomIter = _levelRooms.end();
         roomIter--;
         roomToDelete = *roomIter;
-        _levelRooms.erase(roomIter);
         
         //if this room connects back into the dungeon, we want to delete the door that does this connect-back, since that door will never spawn a new room
         if(roomToDelete->getUnconnectedDoor() == nullptr)
@@ -684,6 +683,7 @@ void CSDungeonLevel::deleteRoom(CSRoom *inRoom)
     else
         roomToDelete = inRoom;
     
+    _levelRooms.remove(roomToDelete);
     roomToDelete->deleteRoom();
 }
 

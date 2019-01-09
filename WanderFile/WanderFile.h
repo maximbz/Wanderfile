@@ -47,6 +47,9 @@ const int   WINDOW_BOUND_BOTTOM = 50;
 
 const int   NUM_ROOMS = 300;
 const int   NUM_ROOM_WALLS = 4;
+const int   NUM_ONE_DOOR_CHANCES = 50;
+const int   NUM_TWO_DOOR_CHANCES = 10;
+const int   NUM_THREE_DOOR_CHANCES = 1;
 
 //divide heights in half due to how ascii printing looks
 const int   ROOM_SIZE_MIN = 2;

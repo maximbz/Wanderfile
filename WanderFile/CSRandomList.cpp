@@ -12,6 +12,7 @@ CSRandomList::CSRandomList()
 {
     
 }
+
 CSRandomList::CSRandomList(randType inRandType)
 {
     _randType = inRandType;
@@ -22,6 +23,7 @@ CSRandomList::CSRandomList(randType inRandType, vector<int>* inList)
     _randType = inRandType;
     _numList = *inList;
 }
+
 
 void CSRandomList::setRandType(randType inRandType)
 {

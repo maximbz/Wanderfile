@@ -11,6 +11,7 @@
 #include "WanderFile.h"
 #include "CSPlayerChoice.hpp"
 #include "CSRandomHandler.hpp"
+#include "CSDoorHandler.hpp"
 #include "CSDungeonLevel.hpp"
 #include "CSGameState.hpp"
 
@@ -19,9 +20,10 @@ using namespace std;
 
 int main(void)
 {
-    CSRandomHandler theRandomHandler;
-    CSGameState     game;
-    CSDungeonLevel  dungeon(&theRandomHandler, &game, 1);
+    CSRandomHandler theRandHand;
+    CSGameState     theGame;
+    CSDoorHandler   theDoorHand;
+    CSDungeonLevel  dungeon(&theRandHand, &theGame, &theDoorHand, 1);
     CSPlayerChoice  menuSelection;
     vector<char>    gameOptions, slideOptions, mainModeOptions;
     CSPoint         menuSelectMatrix;
@@ -77,13 +79,13 @@ int main(void)
                     if(menuSelectMatrix.x == 0)
                     {
                         if(menuSelectMatrix.y == 0)
-                            game.slideGameWindow(-10, 0);
+                            theGame.slideGameWindow(-10, 0);
                         if(menuSelectMatrix.y == 1)
-                            game.slideGameWindow(10, 0);
+                            theGame.slideGameWindow(10, 0);
                         if(menuSelectMatrix.y == 2)
-                            game.slideGameWindow(0, -10);
+                            theGame.slideGameWindow(0, -10);
                         if(menuSelectMatrix.y == 3)
-                            game.slideGameWindow(0, 10);
+                            theGame.slideGameWindow(0, 10);
                     }
                     
                     //main menu commands
@@ -108,7 +110,7 @@ int main(void)
                             slideRoomNum = dungeon.getNumRooms() - 1;
                         }
                         if(menuSelectMatrix.y == 1)
-                            game.toggleBreak();
+                            theGame.toggleBreak();
                         if(menuSelectMatrix.y == 2)//quit
                         {
                             gameLoop = false;
@@ -150,7 +152,7 @@ int main(void)
                         if(menuSelectMatrix.y == 0)//leave slide mode
                             slideRoom = false;
                         if(menuSelectMatrix.y == 1)
-                            game.toggleBreak();
+                            theGame.toggleBreak();
                         if(menuSelectMatrix.y == 2)//quit
                         {
                             gameLoop = false;

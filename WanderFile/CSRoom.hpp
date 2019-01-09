@@ -11,11 +11,12 @@
 
 #include <list>
 #include "WanderFile.h"
+#include "CSRandomHandler.hpp"
+#include "CSDoorHandler.hpp"
 #include "CSGameState.hpp"
 #include "CSRect.hpp"
 #include "CSRange.hpp"
 #include "CSRandomRange.hpp"
-#include "CSRandomHandler.hpp"
 #include "CSDungObjSorter.hpp"
 
 class CSDungObj;
@@ -25,9 +26,10 @@ class CSRoom
 private:
     CSGameState         *_theGame;
     CSRandomHandler     *_theRandHand;
+    CSDoorHandler       *_theDoorHand;
     
     bool                _isHall;
-    int                 _roomNum, _roomNumDigits, _roomToConnectDist;
+    int                 _roomNum, _roomNumDigits;
     CSRandomRange       _wallGenLoc[NUM_ROOM_WALLS];
     CSRect              _roomRect;
     list<CSDungObj*>    _objects;
@@ -37,17 +39,16 @@ private:
     char checkForObject(CSPoint, char);//input assumes a given tile, returns possible replacement object instead, or the same assumed tile.
     
 public:    
-    CSRoom(CSGameState *, CSRandomHandler *);
-    CSRoom(CSGameState *, CSRandomHandler *, CSPoint, CSPoint);
+    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
+    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSPoint, CSPoint);
     
     void setHallState(bool);
     void setRoomNum(int);
     void setRoomToConnect(CSRoom *);
-    void setRoomToConnectDist(int);
     
-    CSDungObj* createObject(objType, objReg, CSPoint, CSDungObj*, CSDungObj*);
+    CSDungObj* createObject(objType, objReg, CSPoint, CSDungObj *, CSDungObj *);
     void createNewDoor(void);
-    void removeConnection(CSRoom*);
+    void removeConnection(CSRoom *);
     void deleteRoom(void);
     void deleteObject(int);
     void deleteObject(CSDungObj *);
@@ -67,10 +68,9 @@ public:
     bool isHall(void);
     int getRoomNum(void);
     CSRandomRange* getWallGenRanges(void);
-    list<CSDungObj*>* getObjects(void);
+    list<CSDungObj *>* getObjects(void);
     CSRect* getRect(void);
     CSRoom* getRoomToConnect(void);
-    int getRoomToConnectDist(void);
 };
 
 #endif /* CSRoom_hpp */

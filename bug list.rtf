@@ -10,23 +10,11 @@
 \
 why can\'92t hallways be squished to 1 tile wide when sliding a room toward the hallway?\
 \
-sometimes rooms still generate overlapping onto other rooms by 1 tile\
-\
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-\cf0 test the fuck out of room generation in general\
-\
-\
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+coor handler doesn\'92t always reduce numDoors to 0 by the end of dungeon generation\
 
-\b \cf0 \ul \
+\b \ul \
 Next Steps
 \b0 \ulnone \
-\
-add doorHandler\
-	dungeonLevel number determines the max door num\
-	new doors are created minimum 1 per room, but 2 per room ever 3 rooms or so, 4  per room every 6 - 10 rooms?\
-	once that number of doors has been generated, no more doors can be added to rooms\
-	when a new room is being created, it asks doorHandler for the next unconnected door, and it build the room from there\
 \
 Non-hallway rooms should be able to generate attached non-hallway rooms occasionally (one in five?). This would be easy to make happen, but it would have broken consequences, as a lot of logic assumes we are always alternating between hallways and non-hallways\
 \

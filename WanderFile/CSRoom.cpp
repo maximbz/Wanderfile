@@ -13,23 +13,23 @@
 
 #pragma mark Constructors
 
-CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand)
+CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand)
 {
     _theGame = inGame;
     _theRandHand = inRandHand;
+    _theDoorHand = inDoorHand;
     _roomNumDigits = 0;
     _roomToConnect = nullptr;
-    _roomToConnectDist = BAD_DATA;
     _roomNum = BAD_DATA;
 }
 
-CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSPoint inTopLeft, CSPoint inBotRight)
+CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSPoint inTopLeft, CSPoint inBotRight)
 {
     _theGame = inGame;
     _theRandHand = inRandHand;
+    _theDoorHand = inDoorHand;
     _roomNumDigits = 0;
     _roomToConnect = nullptr;
-    _roomToConnectDist = BAD_DATA;
     _roomNum = BAD_DATA;
     
     _roomRect.topLeft = inTopLeft;
@@ -54,11 +54,6 @@ void CSRoom::setRoomNum(int inRoomNum)
 void CSRoom::setRoomToConnect(CSRoom *inRoom)
 {
     _roomToConnect = inRoom;
-}
-
-void CSRoom::setRoomToConnectDist(int inDist)
-{
-    _roomToConnectDist = inDist;
 }
 
 #pragma mark -
@@ -118,7 +113,7 @@ void CSRoom::createNewDoor(void)
         newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber(&doorLocGen));
     }
     
-    createObject(OBJ_DOOR, nextDoorWall, newPoint, nullptr, nullptr);//make the next door for the next room, because we don't have the door yet
+    _theDoorHand->addDoor(createObject(OBJ_DOOR, nextDoorWall, newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
     
     _theRandHand->clearRandomItems(RAND_ROOM);
 }
@@ -130,6 +125,13 @@ void CSRoom::deleteRoom(void)
     //erases and deletes all objects, removes the reference back to this CSRoom from all connected CSRoom's
     while(objectIter != _objects.end())
     {
+        //if we're deleting a door, make sure to remove it from theDoorHand, then re-add the now-unconnected door.
+        if((*objectIter)->getType() == OBJ_DOOR)
+        {
+            _theDoorHand->removeDoor(*objectIter);
+            if((*objectIter)->getConnect() != nullptr)
+                _theDoorHand->addDoor((*objectIter)->getConnect());
+        }
         (*objectIter)->deleteObject();
         objectIter = _objects.erase(objectIter);//new iterator properly goes through the list, now with fewer entries
     }
@@ -141,18 +143,13 @@ void CSRoom::deleteObject(int inObjNum)
 {
     list<CSDungObj *>::iterator objectIter;
     
-    //goes through all objects looking for the incoming object number and deletes it
+    //goes through all objects looking for the incoming object number and has the otherdeleteObjects method delete it
     for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
-    {
         if((*objectIter)->getNum() == inObjNum)
         {
-            (*objectIter)->deleteObject();
-            _objects.erase(objectIter);
-            break;
+            deleteObject(*objectIter);
+            return;
         }
-    }
-    
-    updateObjectNums();//then re-numbers the remaining objects
 }
 
 void CSRoom::deleteObject(CSDungObj *inObj)
@@ -161,16 +158,17 @@ void CSRoom::deleteObject(CSDungObj *inObj)
     
     //goes through all objects looking for the incoming object and deletes it
     for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
-    {
         if((*objectIter) == inObj)
         {
+            if((*objectIter)->getType() == OBJ_DOOR)
+                _theDoorHand->removeDoor(*objectIter);
+            
             (*objectIter)->deleteObject();
             _objects.erase(objectIter);
-            break;
+            
+            updateObjectNums();//then re-numbers the remaining objects
+            return;
         }
-    }
-    
-    updateObjectNums();//then re-numbers the remaining objects
 }
 
 #pragma mark -
@@ -189,6 +187,8 @@ char CSRoom::checkForObject(CSPoint inLocation, char inObjectChar)
 
 int CSRoom::connectToRoom(void)
 {
+    bool        goodConnect = false;
+    int         loop;
     objReg      wallToConnect, connectingWall;
     CSPoint     newDoorPoint, testPoint;
     CSLine      sharedOverlap;
@@ -205,8 +205,8 @@ int CSRoom::connectToRoom(void)
     
     if(_isHall)
     {
-        connectedRoom = getConnectedDoor()->getConnect()->getOwner();
-        doorToIgnore = connectedRoom->getDoorConnectedToRoom(this);
+        doorToIgnore = getConnectedDoor()->getConnect();
+        connectedRoom = doorToIgnore->getOwner();
     }
     else//if we're a non-hallway, we want to slide along our own wallToConnect, rather than the room leading into us, the way we would with a hallway
     {
@@ -233,23 +233,31 @@ int CSRoom::connectToRoom(void)
         sharedOverlap.setEnd(_roomToConnect->getRect()->botRight.getAxisPoint(hallwayAxis.getPerpAxis()));
     
     //if the point in the roomToConnect doesn't work, slide along the walls until you find a point that does, testing both connected rooms at each slide point
-    while(!_roomToConnect->isWallPointFree(testPoint, connectingWall, nullptr) || !connectedRoom->isWallPointFree(testPoint, wallToConnect, doorToIgnore))
+    for(loop = 0; loop < sharedOverlap.getSize(); loop++)
     {
+        goodConnect = _roomToConnect->isWallPointFree(testPoint, connectingWall, nullptr) && connectedRoom->isWallPointFree(testPoint, wallToConnect, doorToIgnore);
+        if(goodConnect)
+            break;
+        
         testPoint.slidePointViaAxis(hallwayAxis.getPerpAxis(), 1);//slide one to the botRight
         if(testPoint.getAxisPoint(hallwayAxis.getPerpAxis()) > sharedOverlap.getEnd())//if we're past the bottom/left-most point where the rooms overlap
             testPoint.setAxisPoint(hallwayAxis.getPerpAxis(), sharedOverlap.getStart());//slide all the way to the top/right-most point where the rooms overlap
-        if(testPoint == newDoorPoint)//if we've gone a whole loop through the wall and we still can't connect
-            return RETURN_CODE_ABORT_GEN;
     }
+    if(!goodConnect)//if we've gone a whole loop through the wall and we still can't connect
+        return RETURN_CODE_ABORT_GEN;
+    
+    //now that we have a good connection point, try the slide. If it works, set our new door point to the successful test point 
     if(slideRoom(testPoint - newDoorPoint))
         newDoorPoint = testPoint;
+    else
+        return RETURN_CODE_ABORT_GEN;
     
     newDoorPoint.setAxisPoint(hallwayAxis.dim, _roomToConnect->getRect()->getWallLocPoint(connectingWall));//slide newDoorPoint into roomToConnect, where the new door might be created
     _roomToConnect->createObject(OBJ_DOOR, connectingWall, newDoorPoint, nullptr, unconnectedDoor);//now we've found a good spot for it, create a new door in _roomToConnect using newDoorPoint to match our unconnected door, and connect them to each other
     
-    //we no longer have a room to connect to, so let's reset our variables
+    //we no longer have a room to connect to, or an unconnected door so let's reset our variables
+    _theDoorHand->removeDoor(unconnectedDoor);
     _roomToConnect = nullptr;
-    _roomToConnectDist = BAD_DATA;
     return RETURN_CODE_TRUE;
 }
 
@@ -331,8 +339,13 @@ CSDungObj* CSRoom::getDoorConnectedToRoom(CSRoom *inRoom)
     list<CSDungObj *>::iterator objListIter;
     
     for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+    {
+        if((*objListIter)->getConnect() == nullptr)
+            continue;
+        
         if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect()->getOwner() == inRoom)
             return *objListIter;
+    }
     
     return nullptr;
 }
@@ -347,45 +360,6 @@ CSDungObj* CSRoom::getConnectedDoor(void)
     
     return nullptr;
 }
-
-/*bool CSRoom::isPointInFreeWall(CSPoint inPoint, objReg inWall)
-{
-    CSAxis  wallAxis;
-    CSRange roomWallRange(_roomRect.getWallStartPoint(inWall) + 1, _roomRect.getWallEndPoint(inWall) - 1),//set our range up as the entire wall, less corners (which are not free walls)
-            wallRangeSegment;
-    
-    vector<CSRange>             freeWallRanges;
-    vector<CSRange>::iterator   vectIter;
-    list<CSDungObj*>::iterator  listIter;
-    
-    wallAxis.setAxisFromWall(inWall);
-    wallRangeSegment = roomWallRange;
-    
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
-    {
-        //doors on other walls, or non-doors can be skipped entirely
-        if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getRegion() != inWall)
-            continue;
-        
-        wallRangeSegment.setMax((*listIter)->getLoc()->getAxisPoint(wallAxis.dim) - HALL_SIZE);//set max to just before the wall of the hallway connected to current door, along wall
-        if(wallRangeSegment.getMin() >= roomWallRange.getMin() && wallRangeSegment.getMax() > roomWallRange.getMin())//if we haven't left the roomWallRange limits...
-            freeWallRanges.push_back(wallRangeSegment);//add it to our vector of range segments
-        
-        wallRangeSegment.setRange((*listIter)->getLoc()->getAxisPoint(wallAxis.dim) + HALL_SIZE, roomWallRange.getMax());//set max back to just before end point, and min to just after the wall of the hallway connected to current door
-        if(wallRangeSegment.getMin() >= roomWallRange.getMax() || wallRangeSegment.getMax() >= roomWallRange.getMax())//if we have left the roomWallRange limits...
-            continue;//then this wall is likely too small to have any free points
-    }
-    
-    if(wallRangeSegment.getMax() <= roomWallRange.getMax())//if it makes sense as a range, and doesn't go outside of the original, overall wall range...
-        freeWallRanges.push_back(wallRangeSegment);//add final range from after last door of loop to just before end point (corner)
-    
-    //now go through each range and see if the inPoint is within any of them
-    for(vectIter = freeWallRanges.begin(); vectIter != freeWallRanges.end(); vectIter++)
-        if(vectIter->doesContain(inPoint.getAxisPoint(wallAxis.dim)))//only check the a`xis that pertains to this wall
-            return true;
-           
-    return false;
-}*/
 
 bool CSRoom::isWallPointFree(CSPoint inPoint, objReg inWall, CSDungObj *doorToMove)
 {
@@ -660,11 +634,6 @@ CSRect* CSRoom::getRect(void)
 CSRoom* CSRoom::getRoomToConnect(void)
 {
     return _roomToConnect;
-}
-
-int CSRoom::getRoomToConnectDist(void)
-{
-    return _roomToConnectDist;
 }
 
 

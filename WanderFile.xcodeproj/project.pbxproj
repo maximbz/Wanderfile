@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4117F70221A21391007B0DE3 /* CSDoorHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4117F70021A21391007B0DE3 /* CSDoorHandler.cpp */; };
 		415D74431E38655C002AC908 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74421E38655C002AC908 /* main.cpp */; };
 		415D746E1E386610002AC908 /* CSDungeonLevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D745F1E386610002AC908 /* CSDungeonLevel.cpp */; };
 		415D746F1E386610002AC908 /* CSDungObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74611E386610002AC908 /* CSDungObj.cpp */; };
@@ -38,6 +39,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4117F70021A21391007B0DE3 /* CSDoorHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSDoorHandler.cpp; sourceTree = "<group>"; };
+		4117F70121A21391007B0DE3 /* CSDoorHandler.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSDoorHandler.hpp; sourceTree = "<group>"; };
 		415D743F1E38655C002AC908 /* WanderFile */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = WanderFile; sourceTree = BUILT_PRODUCTS_DIR; };
 		415D74421E38655C002AC908 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		415D745F1E386610002AC908 /* CSDungeonLevel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSDungeonLevel.cpp; sourceTree = "<group>"; };
@@ -113,6 +116,8 @@
 				415D74671E386610002AC908 /* CSRandomRange.cpp */,
 				41A4A75E2169B9F3007B75A5 /* CSRandomList.hpp */,
 				41A4A75D2169B9F3007B75A5 /* CSRandomList.cpp */,
+				4117F70121A21391007B0DE3 /* CSDoorHandler.hpp */,
+				4117F70021A21391007B0DE3 /* CSDoorHandler.cpp */,
 				415D74791E3DD2DE002AC908 /* CSGameState.hpp */,
 				415D74781E3DD2DE002AC908 /* CSGameState.cpp */,
 				415D74601E386610002AC908 /* CSDungeonLevel.hpp */,
@@ -197,6 +202,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				415D74771E3D524E002AC908 /* CSRect.cpp in Sources */,
+				4117F70221A21391007B0DE3 /* CSDoorHandler.cpp in Sources */,
 				415D74721E386610002AC908 /* CSRandomRange.cpp in Sources */,
 				415D74701E386610002AC908 /* CSPoint.cpp in Sources */,
 				416558F21EF3808800226674 /* CSRange.cpp in Sources */,

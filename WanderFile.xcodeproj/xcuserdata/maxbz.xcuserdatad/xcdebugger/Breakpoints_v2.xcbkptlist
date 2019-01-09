@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WanderFile/WanderFile.h"
-            timestampString = "564266989.805814"
+            timestampString = "564779128.3763421"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "82"
-            endingLineNumber = "82"
+            startingLineNumber = "85"
+            endingLineNumber = "85"
             landmarkName = "getFacingWall(objReg inWall)"
             landmarkType = "9">
          </BreakpointContent>
@@ -234,12 +234,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WanderFile/CSDungeonLevel.cpp"
-            timestampString = "564263023.2157069"
+            timestampString = "568273849.794875"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "258"
-            endingLineNumber = "258"
-            landmarkName = "CSDungeonLevel::createRoomGenRanges(CSRoom *inRoom, CSRoom *newRoom)"
+            startingLineNumber = "257"
+            endingLineNumber = "257"
+            landmarkName = "CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -250,11 +250,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WanderFile/main.cpp"
-            timestampString = "563775752.712957"
+            timestampString = "564777790.764555"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "111"
-            endingLineNumber = "111"
+            startingLineNumber = "113"
+            endingLineNumber = "113"
             landmarkName = "main(void)"
             landmarkType = "9">
          </BreakpointContent>

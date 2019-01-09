@@ -13,6 +13,7 @@
 #include "WanderFile.h"
 #include "CSGameState.hpp"
 #include "CSRandomHandler.hpp"
+#include "CSDoorHandler.hpp"
 #include "CSRandomRange.hpp"
 #include "CSRoom.hpp"
 #include "CSRoomSorter.hpp"
@@ -22,6 +23,7 @@ class CSDungeonLevel
 {
 private:
     CSRandomHandler *_theRandHand;
+    CSDoorHandler   *_theDoorHand;
     CSGameState     *_theGame;
     
     CSRoomSorter    _roomComparator;
@@ -33,11 +35,11 @@ private:
     
     void indexRooms(list<CSRoom*>*);
     CSRoom* createFirstRoom(void);
-    bool createRoomGenRanges(CSRoom *, CSRoom *);
-    bool createNewRoom(CSRoom *, CSRoom *);
+    bool createRoomGenRanges(CSDungObj *, CSRoom *);
+    bool createNewRoom(CSDungObj *, CSRoom *);
     
 public:
-    CSDungeonLevel(CSRandomHandler *, CSGameState *, int);
+    CSDungeonLevel(CSRandomHandler *, CSGameState *, CSDoorHandler *, int);
     
     void createDungeon(void);
     int saveDungeon(void);
