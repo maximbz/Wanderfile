@@ -10,15 +10,13 @@
 #include "CSDoorHandler.hpp"
 #include "CSRoom.hpp"
 
-CSDoorHandler::CSDoorHandler(void)
+CSDoorHandler::CSDoorHandler(CSRandomHandler *inRandHand)
 {
     int         loop;
     vector<int> newDoorOddsList;
     
-    _numDoors = 0;
+    _theRandHand = inRandHand;
     
-    _numNewDoors.setRandType(RAND_DUNGEON);
-    _theRandHand->addRandomList(_numNewDoors);
     for(loop = 0; loop < NUM_ONE_DOOR_CHANCES; loop++)
         newDoorOddsList.push_back(1);
     for(loop = 0; loop < NUM_TWO_DOOR_CHANCES; loop++)
@@ -26,7 +24,12 @@ CSDoorHandler::CSDoorHandler(void)
     for(loop = 0; loop < NUM_THREE_DOOR_CHANCES; loop++)
         newDoorOddsList.push_back(3);
     _numNewDoors.addListToList(&newDoorOddsList);
+    _numNewDoors.setRandType(RAND_DUNGEON);
+    _theRandHand->addRandomList(_numNewDoors);
+    
+    _numDoors = 0;
 }
+
 
 void CSDoorHandler::clear(void)
 {

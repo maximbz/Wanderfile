@@ -43,7 +43,7 @@ const int   RETURN_CODE_ABORT_GEN = 2;
 const int   LEVEL_BOUND_RIGHT = 600;
 const int   LEVEL_BOUND_BOTTOM = 600;
 const int   WINDOW_BOUND_RIGHT = 150;
-const int   WINDOW_BOUND_BOTTOM = 50;
+const int   WINDOW_BOUND_BOTTOM = 43;
 
 const int   NUM_ROOMS = 300;
 const int   NUM_ROOM_WALLS = 4;

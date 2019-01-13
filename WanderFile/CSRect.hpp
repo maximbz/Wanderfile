@@ -10,7 +10,7 @@
 #define CSRect_hpp
 
 #include <stdio.h>
-#include "Wanderfile.h"
+#include "WanderFile.h"
 #include "CSPoint.hpp"
 #include "CSRange.hpp"
 

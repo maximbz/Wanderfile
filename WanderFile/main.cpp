@@ -22,7 +22,7 @@ int main(void)
 {
     CSRandomHandler theRandHand;
     CSGameState     theGame;
-    CSDoorHandler   theDoorHand;
+    CSDoorHandler   theDoorHand(&theRandHand);
     CSDungeonLevel  dungeon(&theRandHand, &theGame, &theDoorHand, 1);
     CSPlayerChoice  menuSelection;
     vector<char>    gameOptions, slideOptions, mainModeOptions;

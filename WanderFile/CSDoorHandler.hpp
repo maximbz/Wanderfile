@@ -25,7 +25,7 @@ private:
     CSRandomList        _numNewDoors;
     
 public:
-    CSDoorHandler();
+    CSDoorHandler(CSRandomHandler *);
     void clear(void);
     
     void addDoor(CSDungObj *);

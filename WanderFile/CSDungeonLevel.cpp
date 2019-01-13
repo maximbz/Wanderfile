@@ -41,7 +41,6 @@ void CSDungeonLevel::createDungeon(void)
     CSRoom      *newRoom;
     CSDungObj   *nextDoor;
     
-    
     while(makeRooms)
     {
     //seed the dungeon with one room

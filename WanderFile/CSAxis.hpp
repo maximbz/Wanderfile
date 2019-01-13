@@ -10,7 +10,7 @@
 #define CSAxis_hpp
 
 #include <stdio.h>
-#include "Wanderfile.h"
+#include "WanderFile.h"
 
 enum axis//axes/dimensions
 {
