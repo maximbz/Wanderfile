@@ -27,13 +27,13 @@ private:
     CSGameState     *_theGame;
     
     CSRoomSorter    _roomComparator;
-    int             _levelNum;
+    int             _levelNum, _maxNumDoors;
     CSRect          _levelBounds;
     string          _fileName;
     CSRoom          *_outerRooms[NUM_ROOM_WALLS];
     list<CSRoom *>  _levelRooms;
     
-    void indexRooms(list<CSRoom*>*);
+    //void indexRooms(list<CSRoom*>*);
     CSRoom* createFirstRoom(void);
     bool createRoomGenRanges(CSDungObj *, CSRoom *);
     bool createNewRoom(CSDungObj *, CSRoom *);
@@ -45,7 +45,7 @@ public:
     int saveDungeon(void);
     int loadDungeon(void);
     void deleteDungeon(void);
-    void updateLevelBounds(CSRoom *);//is this even necessary?
+    void updateLevelBounds(CSRoom *);
     void updateRoomNums(void);
     void abortRoomGenPath(CSRoom *);
     void deleteRoom(CSRoom *);

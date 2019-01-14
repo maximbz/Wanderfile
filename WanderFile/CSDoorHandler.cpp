@@ -12,22 +12,28 @@
 
 CSDoorHandler::CSDoorHandler(CSRandomHandler *inRandHand)
 {
-    int         loop;
+    int         loop, subLoop, subLoopTotal;
     vector<int> newDoorOddsList;
     
     _theRandHand = inRandHand;
-    
-    for(loop = 0; loop < NUM_ONE_DOOR_CHANCES; loop++)
-        newDoorOddsList.push_back(1);
-    for(loop = 0; loop < NUM_TWO_DOOR_CHANCES; loop++)
-        newDoorOddsList.push_back(2);
-    for(loop = 0; loop < NUM_THREE_DOOR_CHANCES; loop++)
-        newDoorOddsList.push_back(3);
-    _numNewDoors.addListToList(&newDoorOddsList);
-    _numNewDoors.setRandType(RAND_DUNGEON);
-    _theRandHand->addRandomList(_numNewDoors);
-    
     _numDoors = 0;
+    
+    //make and add the normal door qty gen list
+    for(loop = 1; loop < NUM_ROOM_WALLS; loop++)
+    {
+        subLoopTotal = ONE_DOOR_CHANCES / (pow(loop, 2));//30, 7, 3
+        for(subLoop = 0; subLoop < subLoopTotal; subLoop++)
+            newDoorOddsList.push_back(loop);
+    }
+    _numNewDoorsRandList.addListToList(&newDoorOddsList);
+    _numNewDoorsRandList.setRandType(RAND_DUNGEON);
+    _theRandHand->addRandomList(_numNewDoorsRandList);
+    
+    //make and add the "too many doors" door qty gen range (50/50, 0 or 1)
+    _newDoorRandRange.setRangeMin(0);
+    _newDoorRandRange.setRangeMax(1);
+    _newDoorRandRange.setRandType(RAND_DUNGEON);
+    _theRandHand->addRandomRange(_newDoorRandRange);
 }
 
 
@@ -52,13 +58,13 @@ CSDungObj* CSDoorHandler::getNextDoor(void)
 {
     CSDungObj   *doorAtBack;
     
-    if(_unconnectedLevelDoors.size() == 0)
+    if(_unconnectedLevelDoors.size() == 0)//we are out of doors!
         return nullptr;
     
+    //pull the next door from the list
     doorAtBack = _unconnectedLevelDoors.back();
-    
-    _numDoors--;
     _unconnectedLevelDoors.pop_back();
+    _numDoors--;
     
     return doorAtBack;
 }
@@ -67,22 +73,33 @@ void CSDoorHandler::removeDoor(CSDungObj *inDoor)
 {
     list<CSDungObj*>::iterator doorIter;
     
+    //used when aborting room gen paths, we remove the incoming door from the list
     for(doorIter = _unconnectedLevelDoors.begin(); doorIter != _unconnectedLevelDoors.end(); doorIter++)
         if((*doorIter) == inDoor)
         {
-            //for debug
-            //CSDungObj   *doorToDelete = *doorIter;
-            //printf("Removing object num %d from room num %d.\n", doorToDelete->getNum(), doorToDelete->getOwner()->getRoomNum());
-            
             _unconnectedLevelDoors.erase(doorIter);
             _numDoors--;
             return;
         }
 }
 
-int CSDoorHandler::getNewDoorQuantity(void)
+int CSDoorHandler::getNewDoorQuantity(int inDoorsRemaining)
 {
-    return _theRandHand->getNumber(&_numNewDoors);
+    int numNewDoors, loop;
+    
+    if(_numDoors > inDoorsRemaining * .7)//if we're close to making as many doors as is the goal of the level, we pull back
+        numNewDoors = _theRandHand->getNumber(&_newDoorRandRange);//1 or 0
+    else//normal mode
+    {
+        numNewDoors = _theRandHand->getNumber(&_numNewDoorsRandList);//1 door is likely, 2 is occasional, 3 is rare
+        
+        //the number of doors NOT choosen become more likely
+        for(loop = 1; loop < NUM_ROOM_WALLS; loop++)
+            if(numNewDoors != loop)
+                _numNewDoorsRandList.addNumToList(loop);
+    }
+    
+    return numNewDoors;
 }
 
 

@@ -23,9 +23,9 @@ CSDungeonLevel::CSDungeonLevel(CSRandomHandler *inRandHand, CSGameState *inGame,
     _theGame = inGame;
     _theDoorHand = inDoorHand;
     
-    _roomComparator.setSortMode(false);
-    
+    _roomComparator.setSortMode(false);//used for printWindow
     _levelNum = inLevelNum;
+    
     _fileName = "dungeonLevel";
     _fileName += to_string(_levelNum);
     _fileName += ".txt";
@@ -37,49 +37,47 @@ CSDungeonLevel::CSDungeonLevel(CSRandomHandler *inRandHand, CSGameState *inGame,
 
 void CSDungeonLevel::createDungeon(void)
 {
-    bool        goodRoom, makeRooms = true;
-    CSRoom      *newRoom;
-    CSDungObj   *nextDoor;
+    bool            goodRoom, makeRooms = true;
+    CSRoom          *newRoom;
+    CSDungObj       *nextDoor;
+    
+    _maxNumDoors = NUM_DOORS_MIN + ((_levelNum - 1) * NUM_DOORS_LEVEL_RATE);
     
     while(makeRooms)
     {
-    //seed the dungeon with one room
-    if(_levelRooms.empty())
-        _levelRooms.push_back(createFirstRoom());
-    else
-    {
-        newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand);
-        nextDoor = _theDoorHand->getNextDoor();
-        
-        goodRoom = createRoomGenRanges(nextDoor, newRoom);
-        if(goodRoom)
-            goodRoom = createNewRoom(nextDoor, newRoom);
-        
-        if(goodRoom)
-        {
-            _levelRooms.push_back(newRoom);
-            _theGame->centerGameWindow(newRoom->getRect()->getCenterPoint());
-        }
+        //seed the dungeon with one room
+        if(_levelRooms.empty())
+            _levelRooms.push_back(createFirstRoom());
         else
         {
-            deleteRoom(newRoom);
-            //printf("Made a bad room. Type 'r' to try again.\n");
+            newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand);
+            nextDoor = _theDoorHand->getNextDoor();
+            
+            goodRoom = createRoomGenRanges(nextDoor, newRoom);
+            if(goodRoom)
+                goodRoom = createNewRoom(nextDoor, newRoom);
+            
+            if(goodRoom)
+            {
+                _levelRooms.push_back(newRoom);
+                _theGame->centerGameWindow(newRoom->getRect()->getCenterPoint());
+            }
+            else
+                deleteRoom(newRoom);
         }
-    }
-    
-    //clean up
-    _theRandHand->clearRandomItems(RAND_DUNGEON);
-    updateRoomNums();
-    
-    if(_theDoorHand->getNumDoors() == 0)
-    {
-        //makeOuterDoor();//select random level boundary and create a new door on that side of that wall
-        makeRooms = false;
-    }
+        
+        //clean up
+        _theRandHand->clearRandomItems(RAND_DUNGEON);
+        updateRoomNums();
+        
+        if(_theDoorHand->getNumDoors() == 0)
+        {
+            //makeOuterDoor();//select random level boundary and create a new door on that side of that wall
+            makeRooms = false;
+        }
     }
     
     printf("\nDungeon complete. Consists of %d rooms.\n",(int)_levelRooms.size());
-    //indexRooms(&_levelRooms);
 }
 
 int CSDungeonLevel::saveDungeon(void)
@@ -144,7 +142,7 @@ void CSDungeonLevel::deleteDungeon(void)
 #pragma mark -
 #pragma mark Doers - Room Functions
 
-void CSDungeonLevel::indexRooms(list<CSRoom*> *inRoomList)
+/*void CSDungeonLevel::indexRooms(list<CSRoom*> *inRoomList)
 {
     int loop = 0;
     
@@ -157,7 +155,7 @@ void CSDungeonLevel::indexRooms(list<CSRoom*> *inRoomList)
         (*listIter)->setRoomNum(loop);
         loop++;
     }
-}
+}*/
 
 void CSDungeonLevel::updateLevelBounds(CSRoom *inRoom)
 {
@@ -204,7 +202,6 @@ CSRoom* CSDungeonLevel::createFirstRoom(void)
 {
     CSPoint         newPoint;
     CSAxis          roomGenAxis;
-    //objReg          nextDoorWall = REG_NULL;
     CSRoom          *newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand);
     CSRandomRange   roomSideGen(RAND_DUNGEON, REG_WALL_LEFT, REG_WALL_BOT);
     
@@ -289,7 +286,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
         newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), ROOM_SIZE_MIN * roomGenAxis.getOppDirOffset());//add or subtract ROOM_SIZE_MIN to get opposite wall
         newPoint.setAxisPoint(roomGenAxis.dim, newPoint.getAxisPoint(roomGenAxis.dim) - (ROOM_SIZE_MIN * roomGenAxis.getDirOffset()));//set opposite, perpendicular wall adjacent to newDoor the other way (to the left of newDoor and across the room, from the perspective of someone walking into newRoom)
     }
-   roomGenRect[(int)REG_ROOM_CORE].setCorner(roomGenAxis.getOppDir(), newPoint);
+    roomGenRect[(int)REG_ROOM_CORE].setCorner(roomGenAxis.getOppDir(), newPoint);
     
     //check if the boundries of the level are closer to inDoor than the min room size
     for(loop = 0; loop < NUM_ROOM_WALLS; loop++)//check each region rect
@@ -301,7 +298,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
         
         if(!_theGame->getLevelBounds().getWallRange(getClockWall((objReg)loop)).doesContain(roomGenRect[(int)REG_ROOM_CORE].getWallLocPoint((objReg)loop)))//if the core rect is beyond level bounds...
         {
-            //abort room gen--destroy this room and the previous one if this one wasn't a hallway, destroy the door that leads to that hallway
+            //abort room gen--destroy this room and if this one wasn't a hallway, the previous one (and destroy the door that leads to that hallway)
             abortRoomGenPath(inRoom);
             return false;
         }
@@ -309,11 +306,6 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
     
     //check every existing room's opposite wall to see if one intersects with the "core-rect"
     for(roomListIter = _levelRooms.begin(); roomListIter != _levelRooms.end(); roomListIter++)
-    {
-        /*for debug
-        int roomNum;
-        roomNum = (*roomListIter)->getRoomNum();*/
-        
         if(roomGenRect[REG_ROOM_CORE].doesRectContainWall(*(*roomListIter)->getRect(), newDoorWall))//if it intersect with any room...
         {
             //set up a range to see how close this offending room is from newRoom's door
@@ -328,7 +320,6 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
                 roomToConnectDist = distToRoom.getSize();
             }
         }
-    }
     
     
     if(newRoom->isHall())//none of the rest of this concerns hallways, so we out
@@ -543,13 +534,13 @@ bool CSDungeonLevel::createNewRoom(CSDungObj *inDoor, CSRoom *newRoom)
     newRoom->getRect()->setCorner(roomGenAxis.getOppDir(), newPoint);//create the further away corner of the new room
     
     
-    /*Make a door*/
+    /*Make a door/some doors*/
     //add a new door or three to newRoom, for the next iteration of createNewRoom
     if(newRoom->isHall())
         newRoom->createNewDoor();
     else
     {
-        newRandNum = _theDoorHand->getNewDoorQuantity();
+        newRandNum = _theDoorHand->getNewDoorQuantity(_maxNumDoors - (int)_levelRooms.size());
         for(loop = 0; loop < newRandNum; loop++)
             newRoom->createNewDoor();
     }

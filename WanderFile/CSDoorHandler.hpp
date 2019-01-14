@@ -22,7 +22,8 @@ private:
     int                 _numDoors;
     list<CSDungObj *>   _unconnectedLevelDoors;
     CSRandomHandler     *_theRandHand;
-    CSRandomList        _numNewDoors;
+    CSRandomList        _numNewDoorsRandList;
+    CSRandomRange       _newDoorRandRange;
     
 public:
     CSDoorHandler(CSRandomHandler *);
@@ -31,7 +32,7 @@ public:
     void addDoor(CSDungObj *);
     CSDungObj* getNextDoor(void);
     void removeDoor(CSDungObj *);
-    int getNewDoorQuantity(void);
+    int getNewDoorQuantity(int);
     
     int getNumDoors(void);
     int getSize(void);

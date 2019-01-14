@@ -45,11 +45,11 @@ const int   LEVEL_BOUND_BOTTOM = 600;
 const int   WINDOW_BOUND_RIGHT = 150;
 const int   WINDOW_BOUND_BOTTOM = 43;
 
-const int   NUM_ROOMS = 300;
 const int   NUM_ROOM_WALLS = 4;
-const int   NUM_ONE_DOOR_CHANCES = 50;
-const int   NUM_TWO_DOOR_CHANCES = 10;
-const int   NUM_THREE_DOOR_CHANCES = 1;
+const int   NUM_DOORS_MIN = 20;
+const float   NUM_DOORS_DELTA = 0.3;//random range or additional doors in each level
+const float   NUM_DOORS_LEVEL_RATE = 2;//rate at which doors increase per level
+const int   ONE_DOOR_CHANCES = 30;
 
 //divide heights in half due to how ascii printing looks
 const int   ROOM_SIZE_MIN = 2;
