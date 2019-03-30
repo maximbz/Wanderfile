@@ -47,7 +47,8 @@ public:
     void setRoomToConnect(CSRoom *);
     
     CSDungObj* createObject(objType, objReg, CSPoint, CSDungObj *, CSDungObj *);
-    void createNewDoor(void);
+    void createNewDoor(objReg);
+    void createNewObject(objType);
     void removeConnection(CSRoom *);
     void deleteRoom(void);
     void deleteObject(int);
@@ -70,6 +71,7 @@ public:
     CSRandomRange* getWallGenRanges(void);
     list<CSDungObj *>* getObjects(void);
     CSRect* getRect(void);
+    CSRect getWallessRect(void);
     CSRoom* getRoomToConnect(void);
 };
 

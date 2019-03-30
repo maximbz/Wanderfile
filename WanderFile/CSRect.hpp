@@ -54,6 +54,7 @@ public:
     int getWallEndPoint(objReg);//bottom or right
     int getWallLocPoint(objReg);//x or y of entire wall
     CSRange getWallRange(objReg);//start and end based on incomingWall
+    CSRange getAxisRange(axis);//start and end based on incomingAxis
     
     //operators?!
     CSRect& operator=(const CSRect&);

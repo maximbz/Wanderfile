@@ -21,7 +21,9 @@ enum randType//categories of random ranges and lists
 enum objType//dungeon object types
 {
     OBJ_DOOR,
-    OBJ_ROOM_NUM
+    OBJ_ROOM_NUM,
+    OBJ_STAIRS_UP,
+    OBJ_STAIRS_DOWN
 };
 
 enum objReg//dungeon object regions
@@ -33,6 +35,7 @@ enum objReg//dungeon object regions
     REG_WALL_BOT,
     REG_ROOM_CORE,//rect centered around origin door; used for room gen
     REG_CORNER_TOP_LEFT,
+    REG_ROOM//somewhere in the room, not in a wall
 };
 
 const int   BAD_DATA = -69420911;//nice
@@ -47,8 +50,8 @@ const int   WINDOW_BOUND_BOTTOM = 43;
 
 const int   NUM_ROOM_WALLS = 4;
 const int   NUM_DOORS_MIN = 20;
-const float   NUM_DOORS_DELTA = 0.3;//random range or additional doors in each level
-const float   NUM_DOORS_LEVEL_RATE = 2;//rate at which doors increase per level
+const float NUM_DOORS_LEVEL_RATE = 2;//rate at which doors increase per level
+const float DOOR_GEN_SLOW_POINT = .7;
 const int   ONE_DOOR_CHANCES = 30;
 
 //divide heights in half due to how ascii printing looks
@@ -63,6 +66,8 @@ const char  FLOOR_CHAR = '.';
 const char  PLAYER_CHAR = '@';
 const char  OPEN_DOOR_CHAR = '.';
 const char  CLOSED_DOOR_CHAR = '+';
+const char  STAIRS_UP_CHAR = '<';
+const char  STAIRS_DOWN_CHAR = '>';
 
 
 #pragma mark -

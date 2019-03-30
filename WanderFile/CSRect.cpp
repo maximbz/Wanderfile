@@ -333,7 +333,7 @@ CSRange CSRect::getWallRange(objReg inWall)
 {
     CSRange outgoingRange;
     
-    switch (inWall)
+    switch(inWall)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
@@ -346,12 +346,30 @@ CSRange CSRect::getWallRange(objReg inWall)
             
         default:
             outgoingRange.setRange(BAD_DATA,BAD_DATA);
-            break;
     }
     
     return outgoingRange;
 }
 
+CSRange CSRect::getAxisRange(axis inAxis)
+{
+    objReg  regFromDim;
+    
+    switch(inAxis)
+    {
+        case AXIS_HORIZ:
+            regFromDim = REG_WALL_TOP;
+            break;
+        case AXIS_VERT:
+            regFromDim = REG_WALL_LEFT;
+            break;
+            
+        default:
+            regFromDim = REG_NULL;
+    }
+    
+    return getWallRange(regFromDim);
+}
 
 #pragma mark -
 #pragma mark Operators

@@ -26,7 +26,7 @@ void CSRoomSorter::setSortMode(bool inMode)
 bool CSRoomSorter::operator()(CSRoom* &earlierItem, CSRoom* &laterItem)
 {
     /*if((earlierItem->getRect()->topLeft.x < 0) || (earlierItem->getRect()->topLeft.y < 0) ||
-       (earlierItem->getRect()->botRight.x > LEVEL_BOUND_RIGHT) || (earlierItem->getRect()->botRight.y > LEVEL_BOUND_BOTTOM))
+       (earlierItem->getRect()->botRight.x > _theGame->getLevelBounds().botRight.x) || (earlierItem->getRect()->botRight.y > _theGame->getLevelBounds().botRight.y))
         printf("Room %d is out of window bounds. This will result in unexpected behavior.\n", earlierItem->getRoomNum());*/
     
     if(_topDown)

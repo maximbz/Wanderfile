@@ -26,17 +26,19 @@ private:
     CSDoorHandler   *_theDoorHand;
     CSGameState     *_theGame;
     
-    CSRoomSorter    _roomComparator;
     int             _levelNum, _maxNumDoors;
-    CSRect          _levelBounds;
     string          _fileName;
+    CSRect          _dungeonBounds;
     CSRoom          *_outerRooms[NUM_ROOM_WALLS];
     list<CSRoom *>  _levelRooms;
+    CSRoomSorter    _roomComparator;
     
     //void indexRooms(list<CSRoom*>*);
     CSRoom* createFirstRoom(void);
     bool createRoomGenRanges(CSDungObj *, CSRoom *);
-    bool createNewRoom(CSDungObj *, CSRoom *);
+    bool createNewRoom(CSDungObj *, CSRoom *, int*);
+    void createOuterDoor(void);
+    void createStairs(void);
     
 public:
     CSDungeonLevel(CSRandomHandler *, CSGameState *, CSDoorHandler *, int);
@@ -45,7 +47,7 @@ public:
     int saveDungeon(void);
     int loadDungeon(void);
     void deleteDungeon(void);
-    void updateLevelBounds(CSRoom *);
+    void updateDungeonBounds(CSRoom *);
     void updateRoomNums(void);
     void abortRoomGenPath(CSRoom *);
     void deleteRoom(CSRoom *);

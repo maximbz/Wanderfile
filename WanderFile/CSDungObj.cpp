@@ -37,6 +37,12 @@ CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint inLoc, CSDungObj *
         case OBJ_DOOR:
             _objectChar = OPEN_DOOR_CHAR;
             break;
+        case OBJ_STAIRS_UP:
+            _objectChar = STAIRS_UP_CHAR;
+            break;
+        case OBJ_STAIRS_DOWN:
+            _objectChar = STAIRS_DOWN_CHAR;
+            break;
             
         default:
             _objectChar = EMPTY_CHAR;

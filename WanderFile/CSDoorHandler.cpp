@@ -87,9 +87,7 @@ int CSDoorHandler::getNewDoorQuantity(int inDoorsRemaining)
 {
     int numNewDoors, loop;
     
-    if(_numDoors > inDoorsRemaining * .7)//if we're close to making as many doors as is the goal of the level, we pull back
-        numNewDoors = _theRandHand->getNumber(&_newDoorRandRange);//1 or 0
-    else//normal mode
+    if(_numDoors < inDoorsRemaining * DOOR_GEN_SLOW_POINT)//normal mode
     {
         numNewDoors = _theRandHand->getNumber(&_numNewDoorsRandList);//1 door is likely, 2 is occasional, 3 is rare
         
@@ -98,6 +96,8 @@ int CSDoorHandler::getNewDoorQuantity(int inDoorsRemaining)
             if(numNewDoors != loop)
                 _numNewDoorsRandList.addNumToList(loop);
     }
+    else//if we're close to hitting max num doors, we pull back
+        numNewDoors = _theRandHand->getNumber(&_newDoorRandRange);//1 or 0--either maintain this room path or make a dead-end
     
     return numNewDoors;
 }

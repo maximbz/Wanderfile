@@ -27,13 +27,13 @@ void CSGameState::setGameWindow(CSRect inRect)
 
 void CSGameState::slideGameWindow(int inXDist, int inYDist)
 {
-    if((_gameWindow.topLeft.x > 1 && inXDist < 0) || (_gameWindow.botRight.x < LEVEL_BOUND_RIGHT && inXDist > 0))
+    if((_gameWindow.topLeft.x > 1 && inXDist < 0) || (_gameWindow.botRight.x < _levelBounds.botRight.x && inXDist > 0))
     {
         _gameWindow.topLeft.x += inXDist;
         _gameWindow.botRight.x += inXDist;
     }
     
-    if((_gameWindow.topLeft.y > 1 && inYDist < 0) || (_gameWindow.botRight.y < LEVEL_BOUND_BOTTOM && inYDist > 0))
+    if((_gameWindow.topLeft.y > 1 && inYDist < 0) || (_gameWindow.botRight.y < _levelBounds.botRight.y && inYDist > 0))
     {
         _gameWindow.topLeft.y += inYDist;
         _gameWindow.botRight.y += inYDist;
@@ -51,18 +51,18 @@ void CSGameState::centerGameWindow(CSPoint inPoint)
     _gameWindow.topLeft.x =  inPoint.x - (WINDOW_BOUND_RIGHT / 2);
     if(_gameWindow.topLeft.x < 0)
         _gameWindow.topLeft.x = 0;
-    else if(_gameWindow.botRight.x > LEVEL_BOUND_RIGHT)
+    else if(_gameWindow.botRight.x > _levelBounds.botRight.x)
     {
-        _gameWindow.botRight.x = LEVEL_BOUND_RIGHT;
+        _gameWindow.botRight.x = _levelBounds.botRight.x;
         topLeftAnchor = false;
     }
     
     _gameWindow.topLeft.y = inPoint.y - (WINDOW_BOUND_BOTTOM / 2);
     if(_gameWindow.topLeft.y < 0)
         _gameWindow.topLeft.y = 0;
-    else if(_gameWindow.botRight.y > LEVEL_BOUND_BOTTOM)
+    else if(_gameWindow.botRight.y > _levelBounds.botRight.y)
     {
-        _gameWindow.botRight.y = LEVEL_BOUND_BOTTOM;
+        _gameWindow.botRight.y = _levelBounds.botRight.y;
         topLeftAnchor = false;
     }
     

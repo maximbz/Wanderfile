@@ -69,7 +69,7 @@ CSDungObj* CSRoom::createObject(objType inObjType, objReg inObjReg, CSPoint inOb
     return newObject;
 }
 
-void CSRoom::createNewDoor(void)
+void CSRoom::createNewDoor(objReg inReg)
 {
     bool            goodDoorLoc;
     objReg          nextDoorWall = REG_NULL;
@@ -91,17 +91,20 @@ void CSRoom::createNewDoor(void)
     }
     else//or to a random wall for a room
     {
-        do
-        {
-            nextDoorWall = (objReg)_theRandHand->getNumber(&roomSideGen);
-            goodDoorLoc = true;
-            
-            //make sure it's a wall that has no door, and that adding a door now won't create problems with very nearby rooms, in the next iteration -- in the future, same door walls should be okay, within reason, so we need to create some check for distance minimum between same door walls.
-            for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
-                if(nextDoorWall == (*objListIter)->getRegion())
-                    goodDoorLoc = false;
-        }
-        while(!goodDoorLoc);
+        if(inReg == REG_NULL)
+            do
+            {
+                nextDoorWall = (objReg)_theRandHand->getNumber(&roomSideGen);
+                goodDoorLoc = true;
+                
+                //make sure it's a wall that has no door, and that adding a door now won't create problems with very nearby rooms, in the next iteration -- in the future, same door walls should be okay, within reason, so we need to create some check for distance minimum between same door walls.
+                for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+                    if(nextDoorWall == (*objListIter)->getRegion())
+                        goodDoorLoc = false;
+            }
+            while(!goodDoorLoc);
+        else
+            nextDoorWall = inReg;
         
         //dynamically set the door loc to be along the chosen wall at a random point
         CSRandomRange   doorLocGen(RAND_ROOM, _roomRect.getWallStartPoint(nextDoorWall) + 1, _roomRect.getWallEndPoint(nextDoorWall) - 1);//offsets keep doors from appearing in corners
@@ -114,6 +117,27 @@ void CSRoom::createNewDoor(void)
     }
     
     _theDoorHand->addDoor(createObject(OBJ_DOOR, nextDoorWall, newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
+    
+    _theRandHand->clearRandomItems(RAND_ROOM);
+}
+
+void CSRoom::createNewObject(objType inType)
+{
+    int             loop;
+    CSPoint         objectLoc;
+    CSRandomRange   dimLocPoint;
+    
+    dimLocPoint.setRandType(RAND_ROOM);
+    
+    for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
+    {
+        dimLocPoint.setRange(getWallessRect().getAxisRange((axis)loop));
+        _theRandHand->addRandomRange(dimLocPoint);
+        
+        objectLoc.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
+    }
+    
+    createObject(inType, REG_ROOM, objectLoc, nullptr, nullptr);
     
     _theRandHand->clearRandomItems(RAND_ROOM);
 }
@@ -293,9 +317,9 @@ void CSRoom::updateRoomNum(int inNumDigits)
     for(loop = 1; loop <= inNumDigits; loop++)
     {
         if(vertHall)
-            newDigitLoc.setPoints(_roomRect.topLeft.x + 1, (_roomRect.topLeft.y + inNumDigits) - loop + 1);//inset from top & left walls by 1 tile
+            newDigitLoc.setPoints(getWallessRect().topLeft.x, (getWallessRect().topLeft.y + inNumDigits) - loop);//inset from top & left walls by 1 tile
         else
-            newDigitLoc.setPoints((_roomRect.topLeft.x + inNumDigits) - loop + 1, _roomRect.topLeft.y + 1);//inset from top & left walls by 1 tile
+            newDigitLoc.setPoints((getWallessRect().topLeft.x + inNumDigits) - loop, getWallessRect().topLeft.y);//inset from top & left walls by 1 tile
         
         powerResult = pow(10, loop - 1);
         newDigit = ((_roomNum / powerResult) % 10) + '0';//plus ascii offset
@@ -629,6 +653,23 @@ list<CSDungObj*>* CSRoom::getObjects(void)
 CSRect* CSRoom::getRect(void)
 {
     return &_roomRect;
+}
+
+CSRect CSRoom::getWallessRect(void)
+{
+    int     newWallLoc, loop;
+    CSAxis  wallAxis;
+    CSRect  insetRect = _roomRect;
+    
+    for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
+    {
+        wallAxis.setAxisFromWall((objReg)loop);
+        newWallLoc = insetRect.getWallLocPoint((objReg)loop);
+        newWallLoc += 1 * wallAxis.getOppDirOffset();//increase on top/left, decreases on bot/right--thus always sliding in from wall
+        insetRect.setWallLoc((objReg)loop, newWallLoc);
+    }
+    
+    return insetRect;
 }
 
 CSRoom* CSRoom::getRoomToConnect(void)
