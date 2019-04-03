@@ -30,24 +30,6 @@ CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint inLoc, CSDungObj *
     _owner = inOwner;
     
     _wasMoved = false;
-    
-    //set the char based on type
-    switch(inType)
-    {
-        case OBJ_DOOR:
-            _objectChar = OPEN_DOOR_CHAR;
-            break;
-        case OBJ_STAIRS_UP:
-            _objectChar = STAIRS_UP_CHAR;
-            break;
-        case OBJ_STAIRS_DOWN:
-            _objectChar = STAIRS_DOWN_CHAR;
-            break;
-            
-        default:
-            _objectChar = EMPTY_CHAR;
-            break;
-    }
 }
 
 
@@ -59,14 +41,14 @@ void CSDungObj::setWasMoved(bool inState)
     _wasMoved = inState;
 }
 
+void CSDungObj::setChar(char inChar)
+{
+    _objChar = inChar;
+}
+
 void CSDungObj::setNum(int inObjNum)
 {
     _objNum = inObjNum;
-}
-
-void CSDungObj::setChar(char inChar)
-{
-    _objectChar = inChar;
 }
 
 void CSDungObj::setLoc(CSPoint inLoc)
@@ -231,7 +213,23 @@ int CSDungObj::getNum(void)
 
 char CSDungObj::getChar(void)
 {
-    return _objectChar;
+    //set the char based on type
+    switch(_objectType)
+    {
+        case OBJ_ROOM_NUM:
+            return _objChar;
+        case OBJ_DOOR:
+            return OPEN_DOOR_CHAR;
+        case OBJ_STAIRS_UP:
+            return STAIRS_UP_CHAR;
+        case OBJ_STAIRS_DOWN:
+            return STAIRS_DOWN_CHAR;
+        case OBJ_TREASURE:
+            return CHEST_CHAR;
+            
+        default:
+            return EMPTY_CHAR;
+    }
 }
 
 objType CSDungObj::getType(void)

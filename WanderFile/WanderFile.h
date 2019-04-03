@@ -23,7 +23,8 @@ enum objType//dungeon object types
     OBJ_DOOR,
     OBJ_ROOM_NUM,
     OBJ_STAIRS_UP,
-    OBJ_STAIRS_DOWN
+    OBJ_STAIRS_DOWN,
+    OBJ_TREASURE
 };
 
 enum objReg//dungeon object regions
@@ -53,6 +54,7 @@ const int   NUM_DOORS_MIN = 20;
 const float NUM_DOORS_LEVEL_RATE = 2;//rate at which doors increase per level
 const float DOOR_GEN_SLOW_POINT = .7;
 const int   ONE_DOOR_CHANCES = 30;
+const int   NO_TREASURE_CHANCES = 30;
 
 //divide heights in half due to how ascii printing looks
 const int   ROOM_SIZE_MIN = 2;
@@ -68,6 +70,7 @@ const char  OPEN_DOOR_CHAR = '.';
 const char  CLOSED_DOOR_CHAR = '+';
 const char  STAIRS_UP_CHAR = '<';
 const char  STAIRS_DOWN_CHAR = '>';
+const char  CHEST_CHAR = '=';
 
 
 #pragma mark -

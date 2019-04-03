@@ -72,24 +72,21 @@ void CSDungeonLevel::createDungeon(void)
         _theRandHand->clearRandomItems(RAND_ROOM);
         //updateRoomNums();
         
-        if(_theDoorHand->getNumDoors() == 0)
+        if(_theDoorHand->getNumDoors() == 0)//if we're out of unconnected doors...
         {
-            if(_levelRooms.size() < _maxNumDoors)
-            {
-                createOuterDoor();//select random level boundary and create a new door on that side of that wall
-                printf("Only %d rooms have been created, so we created an Outer Door.\n", (int)_levelRooms.size());
-            }
+            if(_levelRooms.size() < _maxNumDoors)//but we haven't hit level min...
+                createOuterDoor();//create a new door on the outer edge of the dungeon, on the side closest to the center
             else
-                makeRooms = false;
+                makeRooms = false;//otherwise, we can leave the room creation loop
         }
     }
     
-    printf("Dungeon complete with %d rooms.\n0 doors were added %d times.\n1 door was added %d times.\n2 doors were added %d times.\n3 doors were added %d times.\n", (int)_levelRooms.size(), newDoorNumQty[0], newDoorNumQty[1], newDoorNumQty[2], newDoorNumQty[3]);
+    //populate dungeon!
+    createStairs();//add stairs based on top-most and bottom-most rooms
+    createTreasure();
+    //createMonsters();
     
-    //add stairs based on top-most and bottom-most rooms
-    createStairs();
-    
-    //clean up dungeon-creating
+    //clean up dungeon-creation
     _theRandHand->clearRandomItems(RAND_DUNGEON);
 }
 
@@ -740,6 +737,34 @@ void CSDungeonLevel::createStairs()
     
     _outerRooms[stairsOrientation.getReg()]->createNewObject(OBJ_STAIRS_UP);
     _outerRooms[getFacingWall(stairsOrientation.getReg())]->createNewObject(OBJ_STAIRS_DOWN);
+}
+
+void CSDungeonLevel::createTreasure()
+{
+    int             loop, subLoop, subLoopTotal;
+    vector<int>     oddsVect;
+    CSRandomList    numNewTreasure(RAND_DUNGEON);
+    
+    list<CSRoom *>::iterator    listIter;
+   
+    for(loop = 1; loop < NUM_ROOM_WALLS; loop++)
+    {
+        subLoopTotal = NO_TREASURE_CHANCES / (pow(loop, 2));//30, 9, 4
+        for(subLoop = 0; subLoop < subLoopTotal; subLoop++)
+            oddsVect.push_back(loop - 1);
+    }
+    numNewTreasure.addListToList(&oddsVect);
+    
+    for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
+    {
+        if((*listIter)->isHall())
+            continue;
+        
+        subLoopTotal = _theRandHand->getNumber(&numNewTreasure);
+        
+        for(subLoop = 0; subLoop < subLoopTotal; subLoop++)
+            (*listIter)->createNewObject(OBJ_TREASURE);
+    }
 }
 
 #pragma mark -

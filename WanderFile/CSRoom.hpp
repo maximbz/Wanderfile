@@ -36,7 +36,7 @@ private:
     CSDungObjSorter     _objectComparator;
     CSRoom              *_roomToConnect;
 
-    char checkForObject(CSPoint, char);//input assumes a given tile, returns possible replacement object instead, or the same assumed tile.
+    CSDungObj* checkForObject(CSPoint);
     
 public:    
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
@@ -63,6 +63,8 @@ public:
     bool isWallPointFree(CSPoint, objReg, CSDungObj *);
     bool slideRoom(CSPoint);
     bool slideWall(objReg, int);
+    
+    char assumeChar(CSDungObj *, char);
     string printRoomRow(CSRange, int);
     string printRoomToFile(void);
     

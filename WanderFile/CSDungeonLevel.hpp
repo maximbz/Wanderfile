@@ -39,6 +39,7 @@ private:
     bool createNewRoom(CSDungObj *, CSRoom *, int*);
     void createOuterDoor(void);
     void createStairs(void);
+    void createTreasure(void);
     
 public:
     CSDungeonLevel(CSRandomHandler *, CSGameState *, CSDoorHandler *, int);

@@ -123,18 +123,25 @@ void CSRoom::createNewDoor(objReg inReg)
 
 void CSRoom::createNewObject(objType inType)
 {
+    bool            goodLoc = false;
     int             loop;
     CSPoint         objectLoc;
     CSRandomRange   dimLocPoint;
     
     dimLocPoint.setRandType(RAND_ROOM);
     
-    for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
+    while(!goodLoc)
     {
-        dimLocPoint.setRange(getWallessRect().getAxisRange((axis)loop));
-        _theRandHand->addRandomRange(dimLocPoint);
+        for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
+        {
+            dimLocPoint.setRange(getWallessRect().getAxisRange((axis)loop));
+            _theRandHand->addRandomRange(dimLocPoint);
+            
+            objectLoc.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
+        }
         
-        objectLoc.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
+        if(checkForObject(objectLoc) == nullptr)
+            goodLoc = true;
     }
     
     createObject(inType, REG_ROOM, objectLoc, nullptr, nullptr);
@@ -198,15 +205,15 @@ void CSRoom::deleteObject(CSDungObj *inObj)
 #pragma mark -
 #pragma mark Doers - Check/Edit Functions
 
-char CSRoom::checkForObject(CSPoint inLocation, char inObjectChar)
+CSDungObj* CSRoom::checkForObject(CSPoint inLoc)
 {
     list<CSDungObj *>::iterator   listIter;
     
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
-        if((*(*listIter)->getLoc()) == inLocation)
-            return (*listIter)->getChar();
+        if((*(*listIter)->getLoc()) == inLoc)
+            return (*listIter);
     
-    return inObjectChar;//if no object was found at this location, return what we expected to find
+    return nullptr;
 }
 
 int CSRoom::connectToRoom(void)
@@ -558,6 +565,14 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
 #pragma mark -
 #pragma mark Doers - Graphics Functions
 
+char CSRoom::assumeChar(CSDungObj *inObj, char inChar)
+{
+    if(inObj == nullptr)
+        return inChar;
+    else
+        return inObj->getChar();
+}
+
 string CSRoom::printRoomRow(CSRange printRange, int rowToPrint)
 {
     int     leftPrintBound, rightPrintBound;
@@ -583,25 +598,25 @@ string CSRoom::printRoomRow(CSRange printRange, int rowToPrint)
     //use rowToPrint to determine which horizontal line of the room to print
     if(rowToPrint == _roomRect.topLeft.y || rowToPrint == _roomRect.botRight.y)//print top or bottom wall
         for(tileToPrint.x = leftPrintBound; tileToPrint.x <= rightPrintBound; tileToPrint.x++)
-            printString += checkForObject(tileToPrint, WALL_CHAR);//send in the tile we wish to print and the tile we assume to be there, checkForObject will return the assumed tile or any overridden tile, based on room info, and append it to printString
+            printString += assumeChar(checkForObject(tileToPrint), WALL_CHAR);//send in the tile we wish to print and the tile we assume to be there, checkForObject will return the assumed tile or any overridden tile, based on room info, and append it to printString
     else//print the left wall, guts of the room, and right wall
     {
         //print left wall/door
         if(_roomRect.getWidth() > 0 && printLeftWall)
         {
             tileToPrint.x = _roomRect.topLeft.x;
-            printString += checkForObject(tileToPrint, WALL_CHAR);
+            printString += assumeChar(checkForObject(tileToPrint), WALL_CHAR);
         }
         
         //print floor and/or objects
         for(tileToPrint.x = leftPrintBound + printLeftWall; tileToPrint.x <= rightPrintBound - printRightWall; tileToPrint.x++)//inset by 1 on each side for the walls
-            printString += checkForObject(tileToPrint, FLOOR_CHAR);
+            printString += assumeChar(checkForObject(tileToPrint), FLOOR_CHAR);
         
         //print right wall/door
         if(_roomRect.getWidth() > 1 && printRightWall)//left wall and right wall
         {
             tileToPrint.x = _roomRect.botRight.x;
-            printString += checkForObject(tileToPrint, WALL_CHAR);
+            printString += assumeChar(checkForObject(tileToPrint), WALL_CHAR);
         }
     }
     

@@ -21,7 +21,7 @@ class CSDungObj
 {
 private:
     bool        _wasMoved;
-    char        _objectChar;
+    char        _objChar;//only used to override default (or with room numbers)
     int         _objNum;
     objType     _objectType;
     objReg      _objectRegion;
@@ -36,8 +36,8 @@ public:
     CSDungObj(objType, objReg, CSPoint, CSDungObj*, CSDungObj*, CSRoom*);
     
     void setWasMoved(bool);
-    void setNum(int);
     void setChar(char);
+    void setNum(int);
     void setLoc(CSPoint);
     void setParent(CSDungObj*);
     void setChild(CSDungObj*);
