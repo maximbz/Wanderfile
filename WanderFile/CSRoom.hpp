@@ -36,6 +36,7 @@ private:
     CSDungObjSorter     _objectComparator;
     CSRoom              *_roomToConnect;
 
+    CSDungObj* createObject(objType, objReg, CSPoint *, CSDungObj *, CSDungObj *);
     CSDungObj* checkForObject(CSPoint);
     
 public:    
@@ -46,7 +47,7 @@ public:
     void setRoomNum(int);
     void setRoomToConnect(CSRoom *);
     
-    CSDungObj* createObject(objType, objReg, CSPoint, CSDungObj *, CSDungObj *);
+    void createCoreDoor(objReg, CSPoint *, CSDungObj*);
     void createNewDoor(objReg);
     void createNewObject(objType);
     void removeConnection(CSRoom *);

@@ -62,7 +62,9 @@ void CSDungeonLevel::createDungeon(void)
             if(goodRoom)//if that also worked, add it to the room list
             {
                 _levelRooms.push_back(newRoom);
-                _theGame->centerGameWindow(newRoom->getRect()->getCenterPoint());
+                //updateRoomNums();
+                //_theGame->centerGameWindow(newRoom->getRect()->getCenterPoint());
+                //printWindow();
             }
             else
                 deleteRoom(newRoom);
@@ -70,7 +72,6 @@ void CSDungeonLevel::createDungeon(void)
         
         //clean up room-creating
         _theRandHand->clearRandomItems(RAND_ROOM);
-        //updateRoomNums();
         
         if(_theDoorHand->getNumDoors() == 0)//if we're out of unconnected doors...
         {
@@ -502,7 +503,7 @@ bool CSDungeonLevel::createNewRoom(CSDungObj *inDoor, CSRoom *newRoom, int* newN
     roomGenAxis.setAxisFromWall(newDoorWall);//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
     newDoorPoint = (*inDoor->getLoc());
     newDoorPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getOppDirOffset());//offset the appropriate axis 1 away, using roomGenAxis (e.g.: x-- or y-- OR x++ or y++)
-    newRoom->createObject(OBJ_DOOR, newDoorWall, newDoorPoint, nullptr, inDoor);//create the new door, around which the entire room is to be based, and add it to newRoom
+    newRoom->createCoreDoor(newDoorWall, &newDoorPoint, inDoor);//create the new door, around which the entire room is to be based, and add it to newRoom
     
     /*Make the room*/
     //dynamically generate a new rect, and create a room, from newDoor
@@ -547,7 +548,7 @@ bool CSDungeonLevel::createNewRoom(CSDungObj *inDoor, CSRoom *newRoom, int* newN
     /*Make a door/some doors*/
     //add a new door or three to newRoom, for the next iteration of createNewRoom
     if(newRoom->isHall())
-        newRoom->createNewDoor(REG_NULL);
+        newRoom->createNewDoor(inDoor->getRegion());
     else
     {
         newRandNum = _theDoorHand->getNewDoorQuantity(_maxNumDoors - (int)_levelRooms.size());//gets number of doors to create, based on how closed to the max we are

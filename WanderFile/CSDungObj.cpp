@@ -18,11 +18,11 @@ CSDungObj::CSDungObj()
     _owner = nullptr;
 }
 
-CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint inLoc, CSDungObj *inParent, CSDungObj *inConnect, CSRoom *inOwner)
+CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint *inLoc, CSDungObj *inParent, CSDungObj *inConnect, CSRoom *inOwner)
 {
     _objectType = inType;
     _objectRegion = inRegion;
-    _objectLoc = inLoc;
+    _objectLoc = *inLoc;
     
     setParent(inParent);
     _childObj = nullptr;

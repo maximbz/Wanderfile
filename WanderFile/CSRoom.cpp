@@ -59,7 +59,7 @@ void CSRoom::setRoomToConnect(CSRoom *inRoom)
 #pragma mark -
 #pragma mark Doers - Create/Delete Functions
 
-CSDungObj* CSRoom::createObject(objType inObjType, objReg inObjReg, CSPoint inObjLoc, CSDungObj *inParent, CSDungObj *inCon)
+CSDungObj* CSRoom::createObject(objType inObjType, objReg inObjReg, CSPoint *inObjLoc, CSDungObj *inParent, CSDungObj *inCon)
 {
     CSDungObj   *newObject = new CSDungObj(inObjType, inObjReg, inObjLoc, inParent, inCon, this);
     
@@ -67,6 +67,11 @@ CSDungObj* CSRoom::createObject(objType inObjType, objReg inObjReg, CSPoint inOb
     updateObjectNums();
     
     return newObject;
+}
+
+void CSRoom::createCoreDoor(objReg inReg, CSPoint *inPoint, CSDungObj *inDoor)
+{
+    createObject(OBJ_DOOR, inReg, inPoint, nullptr, inDoor);
 }
 
 void CSRoom::createNewDoor(objReg inReg)
@@ -83,15 +88,16 @@ void CSRoom::createNewDoor(objReg inReg)
     
     if(_isHall)//to the opposite wall for a hallway
     {
-        roomGenAxis.setAxisFromWall(getConnectedDoor()->getRegion());//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
-        nextDoorWall = getFacingWall(getConnectedDoor()->getRegion());
+        //if we're a hall, we always send in an objReg--the reg for this new door
+        roomGenAxis.setAxisFromWall(inReg);//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
+        nextDoorWall = inReg;
         
         newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), _roomRect.getWallLocPoint(nextDoorWall));
         newPoint.setAxisPoint(roomGenAxis.dim, _roomRect.topLeft.getAxisPoint(roomGenAxis.dim) + (HALL_SIZE / 2));
     }
     else//or to a random wall for a room
     {
-        if(inReg == REG_NULL)
+        if(inReg == REG_NULL)//we don't care which wall, as long as it's not already with-door
             do
             {
                 nextDoorWall = (objReg)_theRandHand->getNumber(&roomSideGen);
@@ -103,7 +109,7 @@ void CSRoom::createNewDoor(objReg inReg)
                         goodDoorLoc = false;
             }
             while(!goodDoorLoc);
-        else
+        else//used for createOuterDoor()
             nextDoorWall = inReg;
         
         //dynamically set the door loc to be along the chosen wall at a random point
@@ -116,7 +122,7 @@ void CSRoom::createNewDoor(objReg inReg)
         newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber(&doorLocGen));
     }
     
-    _theDoorHand->addDoor(createObject(OBJ_DOOR, nextDoorWall, newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
+    _theDoorHand->addDoor(createObject(OBJ_DOOR, nextDoorWall, &newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
     
     _theRandHand->clearRandomItems(RAND_ROOM);
 }
@@ -144,7 +150,7 @@ void CSRoom::createNewObject(objType inType)
             goodLoc = true;
     }
     
-    createObject(inType, REG_ROOM, objectLoc, nullptr, nullptr);
+    createObject(inType, REG_ROOM, &objectLoc, nullptr, nullptr);
     
     _theRandHand->clearRandomItems(RAND_ROOM);
 }
@@ -284,7 +290,7 @@ int CSRoom::connectToRoom(void)
         return RETURN_CODE_ABORT_GEN;
     
     newDoorPoint.setAxisPoint(hallwayAxis.dim, _roomToConnect->getRect()->getWallLocPoint(connectingWall));//slide newDoorPoint into roomToConnect, where the new door might be created
-    _roomToConnect->createObject(OBJ_DOOR, connectingWall, newDoorPoint, nullptr, unconnectedDoor);//now we've found a good spot for it, create a new door in _roomToConnect using newDoorPoint to match our unconnected door, and connect them to each other
+    _roomToConnect->createObject(OBJ_DOOR, connectingWall, &newDoorPoint, nullptr, unconnectedDoor);//now we've found a good spot for it, create a new door in _roomToConnect using newDoorPoint to match our unconnected door, and connect them to each other
     
     //we no longer have a room to connect to, or an unconnected door so let's reset our variables
     _theDoorHand->removeDoor(unconnectedDoor);
@@ -331,7 +337,7 @@ void CSRoom::updateRoomNum(int inNumDigits)
         powerResult = pow(10, loop - 1);
         newDigit = ((_roomNum / powerResult) % 10) + '0';//plus ascii offset
         
-        newRoomNum = createObject(OBJ_ROOM_NUM, REG_CORNER_TOP_LEFT, newDigitLoc, prevRoomNum, nullptr);//creates one's place and connect it to ten's place
+        newRoomNum = createObject(OBJ_ROOM_NUM, REG_CORNER_TOP_LEFT, &newDigitLoc, prevRoomNum, nullptr);//creates one's place and connect it to ten's place
         newRoomNum->setChar(newDigit);
         
         prevRoomNum = newRoomNum;

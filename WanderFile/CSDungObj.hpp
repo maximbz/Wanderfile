@@ -33,7 +33,7 @@ private:
     
 public:
     CSDungObj();
-    CSDungObj(objType, objReg, CSPoint, CSDungObj*, CSDungObj*, CSRoom*);
+    CSDungObj(objType, objReg, CSPoint *, CSDungObj *, CSDungObj *, CSRoom *);
     
     void setWasMoved(bool);
     void setChar(char);
