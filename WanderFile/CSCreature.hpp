@@ -11,24 +11,26 @@
 
 #include <stdio.h>
 #include "CSPoint.hpp"
+#include "CSDungObj.hpp"
 
 class CSCreature
 {
 private:
-    bool    _player;
-    CSPoint _loc;
+    bool        _player;
+    CSDungObj   _creatureObj;
     
 public:
     CSCreature();
-    CSCreature(bool, CSPoint);
+    CSCreature(bool, CSPoint *);
     
-    bool moveCreature(CSPoint);
+    void moveCreature(CSPoint *);
     
     void setIsPlayer(bool);
     void setLoc(CSPoint *);
     
     bool getIsPlayer(void);
     CSPoint* getLoc(void);
+    CSDungObj* getCreatureObj(void);
 };
 
 #endif /* CSCreature_hpp */

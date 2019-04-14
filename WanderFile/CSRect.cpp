@@ -186,10 +186,19 @@ void CSRect::slideRect(CSPoint inVector)
     botRight.y += inVector.y;
 }
 
-bool CSRect::doesContain(CSPoint inPoint)
+bool CSRect::doesRectContainPoint(CSPoint *inPoint)
 {
-    return (inPoint.x >= topLeft.x && inPoint.x <= botRight.x) && (inPoint.y >= topLeft.y && inPoint.y <= botRight.y);
+    return (inPoint->x >= topLeft.x && inPoint->x <= botRight.x) && (inPoint->y >= topLeft.y && inPoint->y <= botRight.y);
 }
+
+/*bool CSRect::doesWallContainPoint(objReg inReg, CSPoint *inPoint)
+{
+    CSAxis  wallAxis;
+    
+    wallAxis.setAxisFromWall(inReg);
+    
+    return inPoint->getAxisPoint(wallAxis.getPerpAxis()) == getWallLocPoint(inReg) && getWallRange(inReg).doesContain(inPoint->getAxisPoint(wallAxis.dim));
+}*/
 
 bool CSRect::doesRectContainWall(CSRect inRect, objReg inReg)
 {

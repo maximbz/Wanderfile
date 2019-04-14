@@ -22,7 +22,8 @@ CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint *inLoc, CSDungObj 
 {
     _objectType = inType;
     _objectRegion = inRegion;
-    _objectLoc = *inLoc;
+    if(inLoc != nullptr)
+        _objectLoc = *inLoc;
     
     setParent(inParent);
     _childObj = nullptr;
@@ -218,6 +219,8 @@ char CSDungObj::getChar(void)
     {
         case OBJ_ROOM_NUM:
             return _objChar;
+        case OBJ_CREATURE:
+            return _objChar;
         case OBJ_DOOR:
             return OPEN_DOOR_CHAR;
         case OBJ_STAIRS_UP:
@@ -235,6 +238,28 @@ char CSDungObj::getChar(void)
 objType CSDungObj::getType(void)
 {
     return _objectType;
+}
+
+bool CSDungObj::isPassable(void)
+{
+    switch(_objectType)
+    {
+        case OBJ_ROOM_NUM:
+            return true;
+        case OBJ_CREATURE:
+            return false;
+        case OBJ_DOOR:
+            return true;
+        case OBJ_STAIRS_UP:
+            return true;
+        case OBJ_STAIRS_DOWN:
+            return true;
+        case OBJ_TREASURE:
+            return false;
+        
+        default:
+            return true;
+    }
 }
 
 objReg CSDungObj::getRegion(void)

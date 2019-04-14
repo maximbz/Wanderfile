@@ -28,6 +28,7 @@ private:
     
     int             _levelNum, _maxNumDoors;
     string          _fileName;
+    CSPoint         _startingStairs;
     CSRect          _dungeonBounds;
     CSRoom          *_outerRooms[NUM_ROOM_WALLS];
     list<CSRoom *>  _levelRooms;
@@ -48,14 +49,19 @@ public:
     int saveDungeon(void);
     int loadDungeon(void);
     void deleteDungeon(void);
+    
     void updateDungeonBounds(CSRoom *);
     void updateRoomNums(void);
     void abortRoomGenPath(CSRoom *);
     void deleteRoom(CSRoom *);
     void replaceDoor(void);
     void slideRoom(int, int, int);
+    
+    void movePlayer(int inX, int inY);
+    
     void printWindow();
     
+    CSRoom* getRoomFromTile(CSPoint *);
     int getLevelNumber(void);
     int getNumRooms(void);
 };

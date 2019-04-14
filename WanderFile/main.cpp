@@ -58,7 +58,6 @@ int main(void)
         while(printLoop)
         {
             //printf("%d\n", numDungeons);
-            //printf("12345678 112345678 212345678 312345678 412345678 512345678 612345678 712345678 812345678 912345678 0\n");//pseudo-grid
             dungeon.printWindow();
                 
             printf("\n\nMove Player Chracter a - Left, d - Right, w - Up, s - Down.");
@@ -71,13 +70,13 @@ int main(void)
             if(menuSelectMatrix.x == 0)
             {
                 if(menuSelectMatrix.y == 0)
-                    theGame.slideGameWindow(-10, 0);
+                    dungeon.movePlayer(-1, 0);
                 if(menuSelectMatrix.y == 1)
-                    theGame.slideGameWindow(10, 0);
+                    dungeon.movePlayer(1, 0);
                 if(menuSelectMatrix.y == 2)
-                    theGame.slideGameWindow(0, -10);
+                    dungeon.movePlayer(0, -1);
                 if(menuSelectMatrix.y == 3)
-                    theGame.slideGameWindow(0, 10);
+                    dungeon.movePlayer(0, 1);
             }
             
             //main menu commands

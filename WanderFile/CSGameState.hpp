@@ -11,20 +11,22 @@
 
 #include <stdio.h>
 #include "CSRect.hpp"
+#include "CSCreature.hpp"
 
 class CSGameState
 {
 private:
-    CSRect  _gameWindow, _levelBounds;
-    bool    _printRoomNums, _breakForDebug;
+    bool        _printRoomNums, _breakForDebug;
+    CSRect      _gameWindow, _levelBounds;
+    CSCreature  _theplayer;
     
 public:
     CSGameState();
     
     void setGameWindow(CSRect);
     
-    void slideGameWindow(int, int);
-    void centerGameWindow(CSPoint);
+    void slideGameWindow(CSPoint *);
+    void centerGameWindow(CSPoint *);
     void toggleRoomNums(void);
     void toggleBreak(void);
     
@@ -32,6 +34,7 @@ public:
     CSRect getLevelBounds(void);
     bool getRoomNumsState(void);
     bool getBreakState(void);
+    CSCreature* getPlayer(void);
 };
 
 #endif /* CSGameState_hpp */

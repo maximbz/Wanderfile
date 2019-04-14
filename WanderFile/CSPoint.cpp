@@ -8,7 +8,11 @@
 
 #include "CSPoint.hpp"
 
-CSPoint::CSPoint(){}
+CSPoint::CSPoint()
+{
+    x = 0;
+    y = 0;
+}
 
 CSPoint::CSPoint(int inX, int inY)
 {

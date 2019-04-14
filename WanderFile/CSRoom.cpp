@@ -127,7 +127,7 @@ void CSRoom::createNewDoor(objReg inReg)
     _theRandHand->clearRandomItems(RAND_ROOM);
 }
 
-void CSRoom::createNewObject(objType inType)
+CSDungObj* CSRoom::createNewObject(objType inType)
 {
     bool            goodLoc = false;
     int             loop;
@@ -146,13 +146,13 @@ void CSRoom::createNewObject(objType inType)
             objectLoc.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
         }
         
-        if(checkForObject(objectLoc) == nullptr)
+        if(checkForObject(&objectLoc) == nullptr)
             goodLoc = true;
     }
     
-    createObject(inType, REG_ROOM, &objectLoc, nullptr, nullptr);
-    
     _theRandHand->clearRandomItems(RAND_ROOM);
+    
+    return createObject(inType, REG_ROOM, &objectLoc, nullptr, nullptr);
 }
 
 void CSRoom::deleteRoom(void)
@@ -211,12 +211,15 @@ void CSRoom::deleteObject(CSDungObj *inObj)
 #pragma mark -
 #pragma mark Doers - Check/Edit Functions
 
-CSDungObj* CSRoom::checkForObject(CSPoint inLoc)
+CSDungObj* CSRoom::checkForObject(CSPoint *inLoc)
 {
     list<CSDungObj *>::iterator   listIter;
     
+    if(*_theGame->getPlayer()->getLoc() == *inLoc)
+        return _theGame->getPlayer()->getCreatureObj();
+    
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
-        if((*(*listIter)->getLoc()) == inLoc)
+        if(*(*listIter)->getLoc() == *inLoc)
             return (*listIter);
     
     return nullptr;
@@ -568,6 +571,22 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
     return true;//if we got this far, we're good
 }
 
+bool CSRoom::isTilePassable(CSPoint *inTile)
+{
+    CSDungObj   *tileObj;
+    
+    //check if there's an object at the tile
+    tileObj = checkForObject(inTile);
+    if(tileObj != nullptr)//if there is, return whether that object is passable
+        return tileObj->isPassable();
+    
+    //check whether there is a wall at the tile (if the new tile is in _roomRect but NOT in wallesRect)
+    if(_roomRect.doesRectContainPoint(inTile) && !getWallessRect().doesRectContainPoint(inTile))
+        return false;//if there is, we shall not pass!
+    
+    return true;//but odds are, yeah, totally, you can pass
+}
+
 #pragma mark -
 #pragma mark Doers - Graphics Functions
 
@@ -604,25 +623,25 @@ string CSRoom::printRoomRow(CSRange printRange, int rowToPrint)
     //use rowToPrint to determine which horizontal line of the room to print
     if(rowToPrint == _roomRect.topLeft.y || rowToPrint == _roomRect.botRight.y)//print top or bottom wall
         for(tileToPrint.x = leftPrintBound; tileToPrint.x <= rightPrintBound; tileToPrint.x++)
-            printString += assumeChar(checkForObject(tileToPrint), WALL_CHAR);//send in the tile we wish to print and the tile we assume to be there, checkForObject will return the assumed tile or any overridden tile, based on room info, and append it to printString
+            printString += assumeChar(checkForObject(&tileToPrint), WALL_CHAR);//send in the tile we wish to print and the tile we assume to be there, checkForObject will return the assumed tile or any overridden tile, based on room info, and append it to printString
     else//print the left wall, guts of the room, and right wall
     {
         //print left wall/door
         if(_roomRect.getWidth() > 0 && printLeftWall)
         {
             tileToPrint.x = _roomRect.topLeft.x;
-            printString += assumeChar(checkForObject(tileToPrint), WALL_CHAR);
+            printString += assumeChar(checkForObject(&tileToPrint), WALL_CHAR);
         }
         
         //print floor and/or objects
         for(tileToPrint.x = leftPrintBound + printLeftWall; tileToPrint.x <= rightPrintBound - printRightWall; tileToPrint.x++)//inset by 1 on each side for the walls
-            printString += assumeChar(checkForObject(tileToPrint), FLOOR_CHAR);
+            printString += assumeChar(checkForObject(&tileToPrint), FLOOR_CHAR);
         
         //print right wall/door
         if(_roomRect.getWidth() > 1 && printRightWall)//left wall and right wall
         {
             tileToPrint.x = _roomRect.botRight.x;
-            printString += assumeChar(checkForObject(tileToPrint), WALL_CHAR);
+            printString += assumeChar(checkForObject(&tileToPrint), WALL_CHAR);
         }
     }
     

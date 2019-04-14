@@ -7,13 +7,12 @@
 //
 
 #include <fstream>
-#include "CSRandomList.hpp"
 #include "CSDungeonLevel.hpp"
-#include "CSRoomProx.hpp"
 #include "CSDungObj.hpp"
 #include "CSAxis.hpp"
 #include "CSPoint.hpp"
 #include "CSLine.hpp"
+#include "CSRandomList.hpp"
 
 #pragma mark Constructors
 
@@ -62,8 +61,8 @@ void CSDungeonLevel::createDungeon(void)
             if(goodRoom)//if that also worked, add it to the room list
             {
                 _levelRooms.push_back(newRoom);
-                //updateRoomNums();
-                //_theGame->centerGameWindow(newRoom->getRect()->getCenterPoint());
+                //updateRoomNums();//turns on room nums
+                //_theGame->centerGameWindow(&newRoom->getRect()->getCenterPoint());
                 //printWindow();
             }
             else
@@ -86,9 +85,11 @@ void CSDungeonLevel::createDungeon(void)
     createStairs();//add stairs based on top-most and bottom-most rooms
     createTreasure();
     //createMonsters();
+    _theGame->getPlayer()->setIsPlayer(true);
+    _theGame->getPlayer()->setLoc(&_startingStairs);
+    _theGame->centerGameWindow(&_startingStairs);
     
-    //clean up dungeon-creation
-    _theRandHand->clearRandomItems(RAND_DUNGEON);
+    _theRandHand->clearRandomItems(RAND_DUNGEON);//clean up dungeon-creation
 }
 
 int CSDungeonLevel::saveDungeon(void)
@@ -700,10 +701,7 @@ void CSDungeonLevel::deleteRoom(CSRoom *inRoom)
         }
         
         if(_levelRooms.size() > 0)//if we still have some rooms, let's center the game window on the now-last room
-        {
             lastRoom = _levelRooms.back();//now that there's fewer rooms in _levelRooms, we need to get the last room in _levelRooms again
-            _theGame->centerGameWindow(lastRoom->getRect()->getCenterPoint());
-        }
     }
     else
         roomToDelete = inRoom;
@@ -736,7 +734,7 @@ void CSDungeonLevel::createStairs()
     
     CSAxis          stairsOrientation((axis)_theRandHand->getNumber(&orientationSelector), (direction)_theRandHand->getNumber(&sideSelector));
     
-    _outerRooms[stairsOrientation.getReg()]->createNewObject(OBJ_STAIRS_UP);
+    _startingStairs = *_outerRooms[stairsOrientation.getReg()]->createNewObject(OBJ_STAIRS_UP)->getLoc();
     _outerRooms[getFacingWall(stairsOrientation.getReg())]->createNewObject(OBJ_STAIRS_DOWN);
 }
 
@@ -768,6 +766,36 @@ void CSDungeonLevel::createTreasure()
     }
 }
 
+
+#pragma mark -
+#pragma mark Doers - GamePlay Functions
+
+void CSDungeonLevel::movePlayer(int inX, int inY)
+{
+    CSPoint movementVect(inX, inY), newLoc;
+    CSRoom  *movementRoom;
+    
+    newLoc = *_theGame->getPlayer()->getLoc() + movementVect;
+    movementRoom = getRoomFromTile(&newLoc);
+    
+    if(movementRoom == nullptr)//if we're trying to leave a room, stop the movement
+        return;
+    else
+    {
+        if(movementRoom->isTilePassable(&newLoc))//if the tile is passable
+        {
+            //move the player
+            _theGame->getPlayer()->moveCreature(&movementVect);
+            
+            //eventually create a rect around the player that doesn't move the entire window unless the player leaves the rect, like Mario camera logic
+            //if player is at the edge of its camera-move rect...
+            //slideGameWindow(&movementVect);
+            _theGame->centerGameWindow(_theGame->getPlayer()->getLoc());
+        }
+    }
+}
+
+
 #pragma mark -
 #pragma mark Doers - Graphics Functions
 
@@ -777,18 +805,23 @@ void CSDungeonLevel::printWindow()
 
     CSPoint charToPrint;
     CSRange printRange;
-    int     spaceCounter;
+    int     loop, spaceCounter;
     
     list<CSRoom *>              windowRooms, rowRooms;
     list<CSRoom *>::iterator    listIter;
     
     if(_theGame->getBreakState())
-        spaceCounter = 0;//leave a break point here for debug
+        loop = 0;//leave a break point here for debug
     
     //loop through all of the Dungeon's Rooms and if any part of them is within the window, add them to the windowRooms vector
     for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
         if(((*listIter)->getRect()->topLeft.y <= _theGame->getGameWindow().botRight.y && (*listIter)->getRect()->botRight.y >= _theGame->getGameWindow().topLeft.y) && ((*listIter)->getRect()->topLeft.x <= _theGame->getGameWindow().botRight.x && (*listIter)->getRect()->botRight.x >= _theGame->getGameWindow().topLeft.x))
             windowRooms.push_back(*listIter);
+    
+    //clear screen first
+    for(loop = 0; loop < 80; loop++)
+        printf("\n");
+    //printf("12345678 112345678 212345678 312345678 412345678 512345678 612345678 712345678 812345678 912345678 0\n");//pseudo-grid
     
     //slide down from the top of the window to the bottom
     for(charToPrint.y = _theGame->getGameWindow().topLeft.y; charToPrint.y <= _theGame->getGameWindow().botRight.y; charToPrint.y++)
@@ -821,6 +854,17 @@ void CSDungeonLevel::printWindow()
 
 #pragma mark -
 #pragma mark Getters
+
+CSRoom* CSDungeonLevel::getRoomFromTile(CSPoint *inLoc)
+{
+    list<CSRoom *>::iterator    listIter;
+    
+    for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
+        if((*listIter)->getRect()->doesRectContainPoint(inLoc))
+            return *listIter;
+    
+    return nullptr;
+}
 
 int CSDungeonLevel::getLevelNumber(void)
 {

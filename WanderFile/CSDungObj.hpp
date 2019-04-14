@@ -53,6 +53,7 @@ public:
     char getChar(void);
     int getNum(void);
     objType getType(void);
+    bool isPassable(void);
     objReg getRegion(void);
     CSPoint* getLoc(void);
     CSRoom* getOwner(void);

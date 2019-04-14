@@ -24,7 +24,8 @@ enum objType//dungeon object types
     OBJ_ROOM_NUM,
     OBJ_STAIRS_UP,
     OBJ_STAIRS_DOWN,
-    OBJ_TREASURE
+    OBJ_TREASURE,
+    OBJ_CREATURE
 };
 
 enum objReg//dungeon object regions

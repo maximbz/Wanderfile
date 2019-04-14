@@ -8,34 +8,37 @@
 
 #include "CSCreature.hpp"
 
-CSCreature::CSCreature(void)
+CSCreature::CSCreature(void) : _creatureObj(OBJ_CREATURE, REG_ROOM, nullptr, nullptr, nullptr, nullptr)
 {
     
 }
 
-CSCreature::CSCreature(bool inPlayer, CSPoint inLoc)
+CSCreature::CSCreature(bool inPlayer, CSPoint *inLoc) : _creatureObj(OBJ_CREATURE, REG_ROOM, inLoc, nullptr, nullptr, nullptr)
 {
     _player = inPlayer;
-    _loc = inLoc;
+    
+    if(_player)
+        _creatureObj.setChar(PLAYER_CHAR);
 }
 
 
-bool CSCreature::moveCreature(CSPoint inVect)
+void CSCreature::moveCreature(CSPoint *inVect)
 {
-    //check if we can move, based on what's in the tile we'd move into
-    
-    return true;
+    _creatureObj.slideObject(*inVect);
 }
 
 
 void CSCreature::setIsPlayer(bool inPlayer)
 {
     _player = inPlayer;
+    
+    if(_player)
+        _creatureObj.setChar(PLAYER_CHAR);
 }
 
 void CSCreature::setLoc(CSPoint *inLoc)
 {
-    _loc = *inLoc;
+    _creatureObj.setLoc(*inLoc);
 }
 
 
@@ -46,5 +49,10 @@ bool CSCreature::getIsPlayer(void)
 
 CSPoint* CSCreature::getLoc(void)
 {
-    return &_loc;
+    return _creatureObj.getLoc();
+}
+
+CSDungObj* CSCreature::getCreatureObj(void)
+{
+    return &_creatureObj;
 }

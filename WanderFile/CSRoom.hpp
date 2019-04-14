@@ -37,7 +37,7 @@ private:
     CSRoom              *_roomToConnect;
 
     CSDungObj* createObject(objType, objReg, CSPoint *, CSDungObj *, CSDungObj *);
-    CSDungObj* checkForObject(CSPoint);
+    CSDungObj* checkForObject(CSPoint *);
     
 public:    
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
@@ -49,7 +49,7 @@ public:
     
     void createCoreDoor(objReg, CSPoint *, CSDungObj*);
     void createNewDoor(objReg);
-    void createNewObject(objType);
+    CSDungObj* createNewObject(objType);
     void removeConnection(CSRoom *);
     void deleteRoom(void);
     void deleteObject(int);
@@ -64,6 +64,7 @@ public:
     bool isWallPointFree(CSPoint, objReg, CSDungObj *);
     bool slideRoom(CSPoint);
     bool slideWall(objReg, int);
+    bool isTilePassable(CSPoint *);
     
     char assumeChar(CSDungObj *, char);
     string printRoomRow(CSRange, int);

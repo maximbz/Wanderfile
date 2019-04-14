@@ -13,8 +13,6 @@
 #include "WanderFile.h"
 #include "CSRange.hpp"
 
-//using namespace std;
-
 class CSRandomRange
 {
 private:

@@ -17,6 +17,8 @@ CSGameState::CSGameState()
     _levelBounds.setPoints(0, 0, LEVEL_BOUND_RIGHT, LEVEL_BOUND_BOTTOM);
     
     _gameWindow.setPoints((LEVEL_BOUND_RIGHT / 2) - (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) - (WINDOW_BOUND_BOTTOM / 2), (LEVEL_BOUND_RIGHT / 2) + (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) + (WINDOW_BOUND_BOTTOM / 2));
+    
+    _theplayer.setIsPlayer(true);
 }
 
 void CSGameState::setGameWindow(CSRect inRect)
@@ -25,30 +27,33 @@ void CSGameState::setGameWindow(CSRect inRect)
 }
 
 
-void CSGameState::slideGameWindow(int inXDist, int inYDist)
+void CSGameState::slideGameWindow(CSPoint *inVect)
 {
-    if((_gameWindow.topLeft.x > 1 && inXDist < 0) || (_gameWindow.botRight.x < _levelBounds.botRight.x && inXDist > 0))
-    {
-        _gameWindow.topLeft.x += inXDist;
-        _gameWindow.botRight.x += inXDist;
-    }
+    int     loop;
+    CSPoint dimVect;
     
-    if((_gameWindow.topLeft.y > 1 && inYDist < 0) || (_gameWindow.botRight.y < _levelBounds.botRight.y && inYDist > 0))
+    for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
     {
-        _gameWindow.topLeft.y += inYDist;
-        _gameWindow.botRight.y += inYDist;
+        if((_gameWindow.topLeft.getAxisPoint((axis)loop) > 1 && inVect->getAxisPoint((axis)loop) < 0) ||
+           (_gameWindow.botRight.getAxisPoint((axis)loop) < _levelBounds.botRight.getAxisPoint((axis)loop) && inVect->getAxisPoint((axis)loop) > 0))
+        {
+            dimVect.setAxisPoint((axis)loop, inVect->getAxisPoint((axis)loop));
+            _gameWindow.slideRect(dimVect);
+        }
+        
+        dimVect.setPoints(0, 0);
     }
     
     printf("Game Window: %d, %d - %d, %d\n", _gameWindow.topLeft.x, _gameWindow.topLeft.y, _gameWindow.botRight.x, _gameWindow.botRight.y);
 }
 
-void CSGameState::centerGameWindow(CSPoint inPoint)
+void CSGameState::centerGameWindow(CSPoint *inPoint)
 {
     bool    topLeftAnchor = true;
     
     //center on in point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
     
-    _gameWindow.topLeft.x =  inPoint.x - (WINDOW_BOUND_RIGHT / 2);
+    _gameWindow.topLeft.x =  inPoint->x - (WINDOW_BOUND_RIGHT / 2);
     if(_gameWindow.topLeft.x < 0)
         _gameWindow.topLeft.x = 0;
     else if(_gameWindow.botRight.x > _levelBounds.botRight.x)
@@ -57,7 +62,7 @@ void CSGameState::centerGameWindow(CSPoint inPoint)
         topLeftAnchor = false;
     }
     
-    _gameWindow.topLeft.y = inPoint.y - (WINDOW_BOUND_BOTTOM / 2);
+    _gameWindow.topLeft.y = inPoint->y - (WINDOW_BOUND_BOTTOM / 2);
     if(_gameWindow.topLeft.y < 0)
         _gameWindow.topLeft.y = 0;
     else if(_gameWindow.botRight.y > _levelBounds.botRight.y)
@@ -112,8 +117,7 @@ bool CSGameState::getBreakState(void)
     return _breakForDebug;
 }
 
-
-
-
-
-
+CSCreature* CSGameState::getPlayer(void)
+{
+    return &_theplayer;
+}
