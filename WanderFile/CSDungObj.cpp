@@ -155,7 +155,7 @@ bool CSDungObj::slideDoor(CSPoint inVector)
     
     //if the door is attempting to be slid along the para axis, within the wall...
     if(inVector.getAxisPoint(wallAxis.dim) != 0)
-        goodLoc = _owner->isWallPointFree(newLoc, _objectRegion, this);//check that newDoorLoc is in free-wall. We're okay with with hallway walls, since we'll necessarily be checking a spot for the door that's in a wall.
+        goodLoc = _owner->isWallPointFree(&newLoc, _objectRegion, this);//check that newDoorLoc is in free-wall. We're okay with with hallway walls, since we'll necessarily be checking a spot for the door that's in a wall.
     
     //if the intended location is within any free-wall range, we set ourselves to it and return that we were successful
     if(goodLoc)

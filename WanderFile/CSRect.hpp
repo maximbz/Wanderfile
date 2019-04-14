@@ -23,26 +23,26 @@ public:
     CSPoint topLeft, botRight;
     
     CSRect();
-    CSRect(CSPoint, CSPoint);
+    CSRect(CSPoint *, CSPoint *);
     CSRect(int, int, int, int);
     
-    void setPoints(CSPoint, CSPoint);
+    void setPoints(CSPoint *, CSPoint *);
     void setPoints(int, int, int, int);
-    void setTopLeft(CSPoint);
+    void setTopLeft(CSPoint *);
     void setTopLeft(int, int);
-    void setBotRight(CSPoint);
+    void setBotRight(CSPoint *);
     void setBotRight(int, int);
     
     //dynamic (Irish) setters
     bool setWallLoc(objReg, int);//set the point, or perpendicular axis, based on incomingWall
-    void setWallRange(objReg, CSRange);//start and end points based on incomingWall
-    void setCorner(direction, CSPoint);//topLeftor botRight
+    void setWallRange(objReg, CSRange *);//start and end points based on incomingWall
+    void setCorner(direction, CSPoint *);//topLeftor botRight
     
     void calculateArea(void);
-    void slideRect(CSPoint);
+    void slideRect(CSPoint *);
     bool doesRectContainPoint(CSPoint *);
     //bool doesWallContainPoint(objReg, CSPoint *);
-    bool doesRectContainWall(CSRect, objReg);
+    bool doesRectContainWall(CSRect *, objReg);
     
     int getWidth(void);
     int getHeight(void);

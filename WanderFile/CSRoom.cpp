@@ -23,7 +23,7 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
     _roomNum = BAD_DATA;
 }
 
-CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSPoint inTopLeft, CSPoint inBotRight)
+CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSPoint *inTopLeft, CSPoint *inBotRight)
 {
     _theGame = inGame;
     _theRandHand = inRandHand;
@@ -32,8 +32,8 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
     _roomToConnect = nullptr;
     _roomNum = BAD_DATA;
     
-    _roomRect.topLeft = inTopLeft;
-    _roomRect.botRight = inBotRight;
+    _roomRect.topLeft = *inTopLeft;
+    _roomRect.botRight = *inBotRight;
 }
 
 
@@ -230,7 +230,7 @@ int CSRoom::connectToRoom(void)
     bool        goodConnect = false;
     int         loop;
     objReg      wallToConnect, connectingWall;
-    CSPoint     newDoorPoint, testPoint;
+    CSPoint     newDoorPoint, testPoint, tempPoint;
     CSLine      sharedOverlap;
     CSAxis      hallwayAxis;
     CSRoom      *connectedRoom;
@@ -275,7 +275,7 @@ int CSRoom::connectToRoom(void)
     //if the point in the roomToConnect doesn't work, slide along the walls until you find a point that does, testing both connected rooms at each slide point
     for(loop = 0; loop < sharedOverlap.getSize(); loop++)
     {
-        goodConnect = _roomToConnect->isWallPointFree(testPoint, connectingWall, nullptr) && connectedRoom->isWallPointFree(testPoint, wallToConnect, doorToIgnore);
+        goodConnect = _roomToConnect->isWallPointFree(&testPoint, connectingWall, nullptr) && connectedRoom->isWallPointFree(&testPoint, wallToConnect, doorToIgnore);
         if(goodConnect)
             break;
         
@@ -286,8 +286,9 @@ int CSRoom::connectToRoom(void)
     if(!goodConnect)//if we've gone a whole loop through the wall and we still can't connect
         return RETURN_CODE_ABORT_GEN;
     
-    //now that we have a good connection point, try the slide. If it works, set our new door point to the successful test point 
-    if(slideRoom(testPoint - newDoorPoint))
+    //now that we have a good connection point, try the slide. If it works, set our new door point to the successful test point
+    tempPoint = testPoint - newDoorPoint;
+    if(slideRoom(&tempPoint))
         newDoorPoint = testPoint;
     else
         return RETURN_CODE_ABORT_GEN;
@@ -401,7 +402,7 @@ CSDungObj* CSRoom::getConnectedDoor(void)
     return nullptr;
 }
 
-bool CSRoom::isWallPointFree(CSPoint inPoint, objReg inWall, CSDungObj *doorToMove)
+bool CSRoom::isWallPointFree(CSPoint *inPoint, objReg inWall, CSDungObj *doorToMove)
 {
     CSAxis  wallAxis;
     
@@ -410,8 +411,8 @@ bool CSRoom::isWallPointFree(CSPoint inPoint, objReg inWall, CSDungObj *doorToMo
     wallAxis.setAxisFromWall(inWall);
     
     //if inPoint is on either corner, or is outside the wall range alltogether...
-    if(inPoint.getAxisPoint(wallAxis.dim) <= getRect()->getWallStartPoint(inWall) ||
-       inPoint.getAxisPoint(wallAxis.dim) >= getRect()->getWallEndPoint(inWall))
+    if(inPoint->getAxisPoint(wallAxis.dim) <= getRect()->getWallStartPoint(inWall) ||
+       inPoint->getAxisPoint(wallAxis.dim) >= getRect()->getWallEndPoint(inWall))
         return false;
     
     //check every door on inWall
@@ -425,19 +426,19 @@ bool CSRoom::isWallPointFree(CSPoint inPoint, objReg inWall, CSDungObj *doorToMo
             continue;
         
         //if inPoint is where inWall has a connected door
-        if(inPoint.getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim))
+        if(inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim))
             return false;
         
         //if inPoint aligns with one of the walls of a connected hallway
-        if(inPoint.getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) - (HALL_SIZE / 2) ||
-           inPoint.getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) + (HALL_SIZE / 2))
+        if(inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) - (HALL_SIZE / 2) ||
+           inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) + (HALL_SIZE / 2))
            return false;
     }
     
     return true;
 }
 
-bool CSRoom::slideRoom(CSPoint inVector)
+bool CSRoom::slideRoom(CSPoint *inVector)
 {
     CSDungObj   *connectedDoor;
     CSRect      oldRoomLoc;
@@ -468,7 +469,7 @@ bool CSRoom::slideRoom(CSPoint inVector)
         slideAxis.setAxisFromWall((*listIter)->getRegion());
         
         //if this is a para room-door...
-        if(!_isHall && (inVector.getAxisPoint(slideAxis.dim) != 0))
+        if(!_isHall && (inVector->getAxisPoint(slideAxis.dim) != 0))
             success = (((*listIter)->getLoc()->getAxisPoint(slideAxis.dim) > _roomRect.getWallStartPoint((*listIter)->getRegion())) &&
                        ((*listIter)->getLoc()->getAxisPoint(slideAxis.dim) < _roomRect.getWallEndPoint((*listIter)->getRegion())));//no doors are moving along their wall, so rather than using the freeWall system, let's only check if this door is still between the wall's corners, now that the room has moved around it
         else//else, this is a perp or para hall-door, or a perp room-door
@@ -476,7 +477,7 @@ bool CSRoom::slideRoom(CSPoint inVector)
             //try to slide the door's connected door (in the adjacent room), and if it worked, add it to the slidDoors vector
             connectedDoor = (*listIter)->getConnect();
             
-            success = connectedDoor->slideDoor(inVector);
+            success = connectedDoor->slideDoor(*inVector);
             if(success)
                 slidDoors.push_back(connectedDoor);
         }
@@ -493,9 +494,9 @@ bool CSRoom::slideRoom(CSPoint inVector)
         else//only non-halls care about this
         {
             //only one axis in the vector could ever be 0 (otherwise, we wouldn't be sliding at all)
-            if(inVector.x == 0)
+            if(inVector->x == 0)
                 slideAxis.dim = AXIS_VERT;
-            else if(inVector.y == 0)
+            else if(inVector->y == 0)
                 slideAxis.dim = AXIS_HORIZ;
         }
         
@@ -506,13 +507,13 @@ bool CSRoom::slideRoom(CSPoint inVector)
             
             if(((_isHall || (!_isHall && roomAxis.dim != slideAxis.dim) || (*listIter)->getConnect() == nullptr)) &&
                !(*listIter)->getWasMoved())
-                (*listIter)->slideObject(inVector);
+                (*listIter)->slideObject(*inVector);
         }
     }
     else//but if any doors failed their slide, we undo what we have done
     {
         for(vectIter = slidDoors.begin(); vectIter != slidDoors.end(); vectIter++)//go through the vector of doors that did let us slide them
-            (*vectIter)->slideDoor(inVector * -1);//and undo the slide
+            (*vectIter)->slideDoor(*inVector * -1);//and undo the slide
         
         if(!_isHall)
             _roomRect = oldRoomLoc;//undo the room's slide
@@ -564,7 +565,7 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
     
     //don't let the room be squished to nothing
     if(newRoomRect.getDim(wallAxis.getPerpAxis()) >= narrowest)
-        _roomRect.setPoints(newRoomRect.topLeft, newRoomRect.botRight);
+        _roomRect.setPoints(&newRoomRect.topLeft, &newRoomRect.botRight);
     else
         return false;
     
@@ -598,7 +599,7 @@ char CSRoom::assumeChar(CSDungObj *inObj, char inChar)
         return inObj->getChar();
 }
 
-string CSRoom::printRoomRow(CSRange printRange, int rowToPrint)
+string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
 {
     int     leftPrintBound, rightPrintBound;
     CSPoint tileToPrint;
@@ -606,17 +607,17 @@ string CSRoom::printRoomRow(CSRange printRange, int rowToPrint)
     bool    printLeftWall, printRightWall;
     
     //deteremine what part of the room is visible within the window, and set bounds accordingly
-    if(printRange.getMin() < _roomRect.topLeft.x)
+    if(printRange->getMin() < _roomRect.topLeft.x)
         leftPrintBound = _roomRect.topLeft.x;
     else
-        leftPrintBound = printRange.getMin();
-    printLeftWall = printRange.getMin() < _roomRect.topLeft.x;
+        leftPrintBound = printRange->getMin();
+    printLeftWall = printRange->getMin() < _roomRect.topLeft.x;
     
-    if(printRange.getMax() > _roomRect.botRight.x)
+    if(printRange->getMax() > _roomRect.botRight.x)
         rightPrintBound = _roomRect.botRight.x;
     else
-        rightPrintBound = printRange.getMax();
-    printRightWall = printRange.getMax() > _roomRect.botRight.x;
+        rightPrintBound = printRange->getMax();
+    printRightWall = printRange->getMax() > _roomRect.botRight.x;
     
     tileToPrint.y = rowToPrint;
     

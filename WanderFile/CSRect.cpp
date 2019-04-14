@@ -14,10 +14,10 @@ CSRect::CSRect()
 {
 }
 
-CSRect::CSRect(CSPoint inTopLeft, CSPoint inBotRight)
+CSRect::CSRect(CSPoint *inTopLeft, CSPoint *inBotRight)
 {
-    topLeft = inTopLeft;
-    botRight = inBotRight;
+    topLeft = *inTopLeft;
+    botRight = *inBotRight;
     
     calculateArea();
 }
@@ -42,17 +42,17 @@ void CSRect::setPoints(int inLeft, int inTop, int inRight, int inBot)
     calculateArea();
 }
 
-void CSRect::setPoints(CSPoint inTopLeft, CSPoint inBotRight)
+void CSRect::setPoints(CSPoint *inTopLeft, CSPoint *inBotRight)
 {
-    topLeft = inTopLeft;
-    botRight = inBotRight;
+    topLeft = *inTopLeft;
+    botRight = *inBotRight;
     
     calculateArea();
 }
 
-void CSRect::setTopLeft(CSPoint inTopLeft)
+void CSRect::setTopLeft(CSPoint *inTopLeft)
 {
-    topLeft = inTopLeft;
+    topLeft = *inTopLeft;
     
     calculateArea();
 }
@@ -64,9 +64,9 @@ void CSRect::setTopLeft(int inLeft, int inTop)
     calculateArea();
 }
 
-void CSRect::setBotRight(CSPoint inBotRight)
+void CSRect::setBotRight(CSPoint *inBotRight)
 {
-    botRight = inBotRight;
+    botRight = *inBotRight;
     
     calculateArea();
 }
@@ -126,19 +126,19 @@ bool CSRect::setWallLoc(objReg inWall, int inLocPoint)
     }
 }
 
-void CSRect::setWallRange(objReg inWall, CSRange inRange)
+void CSRect::setWallRange(objReg inWall, CSRange *inRange)
 {
     switch(inWall)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
-            topLeft.x = inRange.getMin();
-            botRight.x = inRange.getMax();
+            topLeft.x = inRange->getMin();
+            botRight.x = inRange->getMax();
             break;
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
-            topLeft.y = inRange.getMin();
-            botRight.y = inRange.getMax();
+            topLeft.y = inRange->getMin();
+            botRight.y = inRange->getMax();
             break;
             
         default:
@@ -148,15 +148,15 @@ void CSRect::setWallRange(objReg inWall, CSRange inRange)
     calculateArea();
 }
 
-void CSRect::setCorner(direction inDir, CSPoint inPoint)
+void CSRect::setCorner(direction inDir, CSPoint *inPoint)
 {
     switch(inDir)
     {
         case DIR_UP_LEFT:
-            topLeft = inPoint;
+            topLeft = *inPoint;
             break;
         case DIR_DOWN_RIGHT:
-            botRight = inPoint;
+            botRight = *inPoint;
             break;
             
         default:
@@ -177,13 +177,13 @@ void CSRect::calculateArea(void)
     _rectHeight = (botRight.y + 1) - topLeft.y;
 }
 
-void CSRect::slideRect(CSPoint inVector)
+void CSRect::slideRect(CSPoint *inVect)
 {
-    topLeft.x += inVector.x;
-    botRight.x += inVector.x;
+    topLeft.x += inVect->x;
+    botRight.x += inVect->x;
     
-    topLeft.y += inVector.y;
-    botRight.y += inVector.y;
+    topLeft.y += inVect->y;
+    botRight.y += inVect->y;
 }
 
 bool CSRect::doesRectContainPoint(CSPoint *inPoint)
@@ -200,19 +200,19 @@ bool CSRect::doesRectContainPoint(CSPoint *inPoint)
     return inPoint->getAxisPoint(wallAxis.getPerpAxis()) == getWallLocPoint(inReg) && getWallRange(inReg).doesContain(inPoint->getAxisPoint(wallAxis.dim));
 }*/
 
-bool CSRect::doesRectContainWall(CSRect inRect, objReg inReg)
+bool CSRect::doesRectContainWall(CSRect *inRect, objReg inReg)
 {
     int     wallLoc, clockWallLoc, countclockWallLoc;
     CSAxis  wallAxis;
     
-    wallLoc = inRect.getWallLocPoint(inReg);
-    clockWallLoc = inRect.getWallLocPoint(getClockWall(inReg));
-    countclockWallLoc = inRect.getWallLocPoint(getCountclockWall(inReg));
+    wallLoc = inRect->getWallLocPoint(inReg);
+    clockWallLoc = inRect->getWallLocPoint(getClockWall(inReg));
+    countclockWallLoc = inRect->getWallLocPoint(getCountclockWall(inReg));
     wallAxis.setAxisFromWall(inReg);
     
     if(getWallRange(getClockWall(inReg)).doesContain(wallLoc) &&//if inRect's left wall is in the range of this rect's top wall
-       inRect.topLeft.getAxisPoint(wallAxis.dim) <= botRight.getAxisPoint(wallAxis.dim) &&//and inRect's topLeft wall is less than this rect's botRight wall
-       inRect.botRight.getAxisPoint(wallAxis.dim) >= topLeft.getAxisPoint(wallAxis.dim))//and inRect's botRight wall is greater than this rect's topLeft wall
+       inRect->topLeft.getAxisPoint(wallAxis.dim) <= botRight.getAxisPoint(wallAxis.dim) &&//and inRect's topLeft wall is less than this rect's botRight wall
+       inRect->botRight.getAxisPoint(wallAxis.dim) >= topLeft.getAxisPoint(wallAxis.dim))//and inRect's botRight wall is greater than this rect's topLeft wall
         return true;
     else
         return false;
@@ -394,8 +394,9 @@ CSRect& CSRect::operator=(const CSRect &inRect)
 CSRect CSRect::operator+(const CSPoint &inVector)
 {
     CSRect  tempRect = *this;
+    CSPoint vect = inVector;
     
-    tempRect.slideRect(inVector);
+    tempRect.slideRect(&vect);
     tempRect.calculateArea();
     
     return tempRect;

@@ -224,14 +224,14 @@ CSRoom* CSDungeonLevel::createFirstRoom(void)
     //random location for the seed room
     newPoint.x = (_theGame->getLevelBounds().botRight.x / 2) - (_theRandHand->getNumber(&roomSizeGen) / 2);
     newPoint.y = (_theGame->getLevelBounds().botRight.y / 2) - ((_theRandHand->getNumber(&roomSizeGen) / 2) / 2);//rooms look taller than they are because of ascii output, so we halve room height gens to make squarer looking rooms
-    newRoom->getRect()->setTopLeft(newPoint);
+    newRoom->getRect()->setTopLeft(&newPoint);
     
     //random size for the seed room
     newPoint.x = _theRandHand->getNumber(&roomSizeGen);
     newPoint.x += newRoom->getRect()->topLeft.x;
     newPoint.y = _theRandHand->getNumber(&roomSizeGen) / 2;//halve height due to asymmetry of ascii output
     newPoint.y += newRoom->getRect()->topLeft.y;
-    newRoom->getRect()->setBotRight(newPoint);
+    newRoom->getRect()->setBotRight(&newPoint);
     
     //finishing touches
     newRoom->setHallState(false);
@@ -286,7 +286,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
         newPoint.slidePointViaAxis(roomGenAxis.dim, (HALL_SIZE / 2) * roomGenAxis.getDirOffset());//slide along newDoorWall to create the rects's nearest point (to the right of newDoor, from the perspective of someone walking into newRoom)
     else//if the new room is a normal room
         newPoint.slidePointViaAxis(roomGenAxis.dim, (ROOM_SIZE_MIN / 2) * roomGenAxis.getDirOffset());//slide along newDoorWall to create the rects's nearest point (to the right of newDoor, from the perspective of someone walking into newRoom)
-    roomGenRect[(int)REG_ROOM_CORE].setCorner(roomGenAxis.dir, newPoint);
+    roomGenRect[(int)REG_ROOM_CORE].setCorner(roomGenAxis.dir, &newPoint);
     
     if(!inRoom->isHall())//if newRoom is a hallway
     {
@@ -298,7 +298,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
         newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), ROOM_SIZE_MIN * roomGenAxis.getOppDirOffset());//add or subtract ROOM_SIZE_MIN to get opposite wall
         newPoint.setAxisPoint(roomGenAxis.dim, newPoint.getAxisPoint(roomGenAxis.dim) - (ROOM_SIZE_MIN * roomGenAxis.getDirOffset()));//set opposite, perpendicular wall adjacent to newDoor the other way (to the left of newDoor and across the room, from the perspective of someone walking into newRoom)
     }
-    roomGenRect[(int)REG_ROOM_CORE].setCorner(roomGenAxis.getOppDir(), newPoint);
+    roomGenRect[(int)REG_ROOM_CORE].setCorner(roomGenAxis.getOppDir(), &newPoint);
     
     //check if the boundries of the level are closer to inDoor than the min room size
     for(loop = 0; loop < NUM_ROOM_WALLS; loop++)//check each region rect
@@ -318,7 +318,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
     
     //check every existing room's opposite wall to see if one intersects with the "core-rect"
     for(roomListIter = _levelRooms.begin(); roomListIter != _levelRooms.end(); roomListIter++)
-        if(roomGenRect[REG_ROOM_CORE].doesRectContainWall(*(*roomListIter)->getRect(), newDoorWall))//if it intersect with any room...
+        if(roomGenRect[REG_ROOM_CORE].doesRectContainWall((*roomListIter)->getRect(), newDoorWall))//if it intersect with any room...
         {
             //set up a range to see how close this offending room is from newRoom's door
             rangeRectAxis.setAxisFromWall(getFacingWall(newDoorWall));
@@ -344,31 +344,31 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
     newPoint = newDoorPoint;
     newPoint.slidePointViaAxis(roomGenAxis.dim, ((ROOM_SIZE_MIN / 2) * roomGenAxis.getDirOffset()));
     newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PERP) * roomGenAxis.getOppDirOffset());
-    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), newPoint);
+    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), &newPoint);
     newPoint = newDoorPoint;
     newPoint.slidePointViaAxis(roomGenAxis.dim, (roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PARA) / 2) * roomGenAxis.getDirOffset());
     //perpdim doesn't need to be changed
-    roomGenRect[loop].setCorner(roomGenAxis.dir, newPoint);
+    roomGenRect[loop].setCorner(roomGenAxis.dir, &newPoint);
     
     loop = (int)getFacingWall(roomGenAxis.getReg());//across from newDoorWall
     newPoint = newDoorPoint;
     newPoint.slidePointViaAxis(roomGenAxis.dim, (roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PARA) / 2) * roomGenAxis.getOppDirOffset());
     newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PERP) * roomGenAxis.getOppDirOffset());
-    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), newPoint);
+    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), &newPoint);
     newPoint = newDoorPoint;
     newPoint.slidePointViaAxis(roomGenAxis.dim, (roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PARA) / 2) * roomGenAxis.getDirOffset());
     newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), (ROOM_SIZE_MIN * roomGenAxis.getOppDirOffset()));
-    roomGenRect[loop].setCorner(roomGenAxis.dir, newPoint);
+    roomGenRect[loop].setCorner(roomGenAxis.dir, &newPoint);
     
     loop = (int)getFacingWall(roomGenAxis.getPerpReg());//opposite reg from perp reg attatched by dir from newDoorWall
     newPoint = newDoorPoint;
     newPoint.slidePointViaAxis(roomGenAxis.dim, ((roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PARA) / 2) * roomGenAxis.getOppDirOffset()));
     newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), roomGenAxis.getAxisMod(ROOM_SIZE_MAX, PERP) * roomGenAxis.getOppDirOffset());
-    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), newPoint);
+    roomGenRect[loop].setCorner(roomGenAxis.getOppDir(), &newPoint);
     newPoint = newDoorPoint;
     newPoint.slidePointViaAxis(roomGenAxis.dim, ((ROOM_SIZE_MIN / 2) * roomGenAxis.getOppDirOffset()));
     //perpdim doesn't need to be changed
-    roomGenRect[loop].setCorner(roomGenAxis.dir, newPoint);
+    roomGenRect[loop].setCorner(roomGenAxis.dir, &newPoint);
 
     //any reg rects that are beyond level bounds, set back within level bounds
     for(loop = 0; loop < NUM_ROOM_WALLS; loop++)//check each region rect
@@ -397,7 +397,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
                 continue;
             
             //any reg rects that this room intersects, set true
-            if(roomGenRect[loop].doesRectContainWall(*(*roomListIter)->getRect(), getFacingWall((objReg)loop)))
+            if(roomGenRect[loop].doesRectContainWall((*roomListIter)->getRect(), getFacingWall((objReg)loop)))
             {
                 regToSlide[0] = (objReg)loop;//if only one reg intersects, we'll catch it here
                 roomIntersects[loop] = true;//if multiple reg's intersect, we decide below, and overwrite the previous line
@@ -521,7 +521,7 @@ bool CSDungeonLevel::createNewRoom(CSDungObj *inDoor, CSRoom *newRoom, int* newN
         newRandNum = _theRandHand->getNumber(&newRoom->getWallGenRanges()[(int)roomGenAxis.getPerpReg()]);
         newPoint.setAxisPoint(roomGenAxis.dim, newRandNum);
     }
-    newRoom->getRect()->setCorner(roomGenAxis.dir, newPoint);//create the closer corner of the new room
+    newRoom->getRect()->setCorner(roomGenAxis.dir, &newPoint);//create the closer corner of the new room
     
     if(newRoom->isHall())
     {
@@ -543,7 +543,7 @@ bool CSDungeonLevel::createNewRoom(CSDungObj *inDoor, CSRoom *newRoom, int* newN
         newRandNum = _theRandHand->getNumber(&newRoom->getWallGenRanges()[(int)getFacingWall(roomGenAxis.getPerpReg())]);
         newPoint.setAxisPoint(roomGenAxis.dim, newRandNum);
     }
-    newRoom->getRect()->setCorner(roomGenAxis.getOppDir(), newPoint);//create the further away corner of the new room
+    newRoom->getRect()->setCorner(roomGenAxis.getOppDir(), &newPoint);//create the further away corner of the new room
     
     
     /*Make a door/some doors*/
@@ -719,7 +719,7 @@ void CSDungeonLevel::slideRoom(int inRoomNum, int inXDist, int inYDist)//for dev
         if((*listIter)->getRoomNum() == inRoomNum)
             break;
     
-    (*listIter)->slideRoom(slideVector);
+    (*listIter)->slideRoom(&slideVector);
     
     //once the slide is complete, check for any collisions. If there are, do the inverse slide
 }
@@ -842,7 +842,7 @@ void CSDungeonLevel::printWindow()
                 printf("%c", EMPTY_CHAR);
             
             printRange.setRange(_theGame->getGameWindow().topLeft.x, _theGame->getGameWindow().botRight.x);
-            printf("%s", (*listIter)->printRoomRow(printRange, charToPrint.y).c_str());
+            printf("%s", (*listIter)->printRoomRow(&printRange, charToPrint.y).c_str());
             charToPrint.x = (*listIter)->getRect()->botRight.x + 1;//move to the other side of the room to continue the row
         }
         

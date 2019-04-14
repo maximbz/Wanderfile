@@ -41,7 +41,7 @@ private:
     
 public:    
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
-    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSPoint, CSPoint);
+    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSPoint *, CSPoint *);
     
     void setHallState(bool);
     void setRoomNum(int);
@@ -61,13 +61,13 @@ public:
     CSDungObj* getUnconnectedDoor(void);
     CSDungObj* getConnectedDoor(void);//only for hallways
     CSDungObj* getDoorConnectedToRoom(CSRoom *);
-    bool isWallPointFree(CSPoint, objReg, CSDungObj *);
-    bool slideRoom(CSPoint);
+    bool isWallPointFree(CSPoint *, objReg, CSDungObj *);
+    bool slideRoom(CSPoint *);
     bool slideWall(objReg, int);
     bool isTilePassable(CSPoint *);
     
     char assumeChar(CSDungObj *, char);
-    string printRoomRow(CSRange, int);
+    string printRoomRow(CSRange *, int);
     string printRoomToFile(void);
     
     bool isHall(void);

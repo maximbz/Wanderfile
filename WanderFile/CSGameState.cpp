@@ -38,7 +38,7 @@ void CSGameState::slideGameWindow(CSPoint *inVect)
            (_gameWindow.botRight.getAxisPoint((axis)loop) < _levelBounds.botRight.getAxisPoint((axis)loop) && inVect->getAxisPoint((axis)loop) > 0))
         {
             dimVect.setAxisPoint((axis)loop, inVect->getAxisPoint((axis)loop));
-            _gameWindow.slideRect(dimVect);
+            _gameWindow.slideRect(&dimVect);
         }
         
         dimVect.setPoints(0, 0);
