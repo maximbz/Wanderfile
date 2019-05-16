@@ -56,6 +56,7 @@ const float NUM_DOORS_LEVEL_RATE = 2;//rate at which doors increase per level
 const float DOOR_GEN_SLOW_POINT = .7;
 const int   ONE_DOOR_CHANCES = 30;
 const int   NO_TREASURE_CHANCES = 30;
+const float MONSTER_RATE = .2;
 
 //divide heights in half due to how ascii printing looks
 const int   ROOM_SIZE_MIN = 2;
@@ -148,20 +149,5 @@ inline objReg getNextReg(objReg inReg)//rotate to next region for next for iter
 }
 
 #endif /* RandomRooms_h */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

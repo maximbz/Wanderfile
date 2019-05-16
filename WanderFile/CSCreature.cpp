@@ -41,6 +41,36 @@ void CSCreature::setLoc(CSPoint *inLoc)
     _creatureObj.setLoc(*inLoc);
 }
 
+void CSCreature::setHP(int inHP)
+{
+    _hp = inHP;
+}
+
+void CSCreature::setAtk(int inAtk)
+{
+    _atk = inAtk;
+}
+
+void CSCreature::setAC(int inAC)
+{
+    _ac = inAC;
+}
+
+void CSCreature::setXP(int inXP)
+{
+    _xp = inXP;
+}
+
+void CSCreature::setName(string inName)
+{
+    _name = inName;
+}
+
+void CSCreature::setAppearing(CSRange *inRange)
+{
+    _appearing = *inRange;
+}
+
 
 bool CSCreature::getIsPlayer(void)
 {
@@ -50,6 +80,11 @@ bool CSCreature::getIsPlayer(void)
 CSPoint* CSCreature::getLoc(void)
 {
     return _creatureObj.getLoc();
+}
+
+bool CSCreature::getAppearing(int inLevel)
+{
+    return _appearing.doesContain(inLevel);
 }
 
 CSDungObj* CSCreature::getCreatureObj(void)

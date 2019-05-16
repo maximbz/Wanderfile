@@ -75,7 +75,7 @@ public:
     CSRandomRange* getWallGenRanges(void);
     list<CSDungObj *>* getObjects(void);
     CSRect* getRect(void);
-    CSRect getWallessRect(void);
+    void getWallessRect(CSRect &);
     CSRoom* getRoomToConnect(void);
 };
 

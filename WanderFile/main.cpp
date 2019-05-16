@@ -41,9 +41,9 @@ int main(void)
     gameOptions.push_back('b');
     gameOptions.push_back('q');
     
-    menuSelection.addCharVect(slideOptions);
-    menuSelection.addCharVect(mainModeOptions);
-    menuSelection.addCharVect(gameOptions);
+    menuSelection.addCharVect(&slideOptions);
+    menuSelection.addCharVect(&mainModeOptions);
+    menuSelection.addCharVect(&gameOptions);
     
     //loop
     while(gameLoop)
@@ -64,7 +64,7 @@ int main(void)
             printf("\nOR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit?\n");
             
             menuSelection.toggleCharOption(1, true);//turn main mode on
-            menuSelectMatrix = menuSelection.getUserCharAnswer();
+            menuSelection.getUserCharAnswer(menuSelectMatrix);
             
             //directions
             if(menuSelectMatrix.x == 0)
@@ -106,6 +106,8 @@ int main(void)
         dungeon.deleteDungeon();
         
     }
+    
+    theGame.cleanUpGameState();
     
     return 0;
 }

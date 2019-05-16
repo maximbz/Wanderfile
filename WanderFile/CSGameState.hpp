@@ -10,6 +10,7 @@
 #define CSGameState_hpp
 
 #include <stdio.h>
+#include <list>
 #include "CSRect.hpp"
 #include "CSCreature.hpp"
 
@@ -20,21 +21,25 @@ private:
     CSRect      _gameWindow, _levelBounds;
     CSCreature  _theplayer;
     
+    list<CSCreature*>   _monsterManual;
+    
 public:
     CSGameState();
     
     void setGameWindow(CSRect);
-    
+    int loadMonsterManual(void);
+    void cleanUpGameState(void);
     void slideGameWindow(CSPoint *);
     void centerGameWindow(CSPoint *);
     void toggleRoomNums(void);
     void toggleBreak(void);
     
-    CSRect getGameWindow(void);
-    CSRect getLevelBounds(void);
+    CSRect* getGameWindow(void);
+    CSRect* getLevelBounds(void);
     bool getRoomNumsState(void);
     bool getBreakState(void);
     CSCreature* getPlayer(void);
+    int getLevelMonsters(int, list<CSCreature *> &);
 };
 
 #endif /* CSGameState_hpp */

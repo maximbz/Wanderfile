@@ -131,16 +131,20 @@ CSDungObj* CSRoom::createNewObject(objType inType)
 {
     bool            goodLoc = false;
     int             loop;
+    CSRange         dimRange;
     CSPoint         objectLoc;
+    CSRect          wallessRect;
     CSRandomRange   dimLocPoint;
     
     dimLocPoint.setRandType(RAND_ROOM);
+    getWallessRect(wallessRect);
     
     while(!goodLoc)
     {
         for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
         {
-            dimLocPoint.setRange(getWallessRect().getAxisRange((axis)loop));
+            wallessRect.getAxisRange((axis)loop, dimRange);
+            dimLocPoint.setRange(dimRange);
             _theRandHand->addRandomRange(dimLocPoint);
             
             objectLoc.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
@@ -308,12 +312,15 @@ void CSRoom::updateRoomNum(int inNumDigits)
     int             loop, powerResult;
     char            newDigit;
     CSPoint         newDigitLoc;
+    CSRect          wallessRect;
     CSDungObj       *newRoomNum, *prevRoomNum = nullptr;
     
     list<CSDungObj *>::iterator  listIter = _objects.begin();
     
     if(inNumDigits == _roomNumDigits)
         return;
+    
+    getWallessRect(wallessRect);
     
     //remove old room number objects
     while(listIter != _objects.end())
@@ -334,9 +341,9 @@ void CSRoom::updateRoomNum(int inNumDigits)
     for(loop = 1; loop <= inNumDigits; loop++)
     {
         if(vertHall)
-            newDigitLoc.setPoints(getWallessRect().topLeft.x, (getWallessRect().topLeft.y + inNumDigits) - loop);//inset from top & left walls by 1 tile
+            newDigitLoc.setPoints(wallessRect.topLeft.x, (wallessRect.topLeft.y + inNumDigits) - loop);//inset from top & left walls by 1 tile
         else
-            newDigitLoc.setPoints((getWallessRect().topLeft.x + inNumDigits) - loop, getWallessRect().topLeft.y);//inset from top & left walls by 1 tile
+            newDigitLoc.setPoints((wallessRect.topLeft.x + inNumDigits) - loop, wallessRect.topLeft.y);//inset from top & left walls by 1 tile
         
         powerResult = pow(10, loop - 1);
         newDigit = ((_roomNum / powerResult) % 10) + '0';//plus ascii offset
@@ -574,6 +581,7 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
 
 bool CSRoom::isTilePassable(CSPoint *inTile)
 {
+    CSRect      wallessRect;
     CSDungObj   *tileObj;
     
     //check if there's an object at the tile
@@ -582,7 +590,8 @@ bool CSRoom::isTilePassable(CSPoint *inTile)
         return tileObj->isPassable();
     
     //check whether there is a wall at the tile (if the new tile is in _roomRect but NOT in wallesRect)
-    if(_roomRect.doesRectContainPoint(inTile) && !getWallessRect().doesRectContainPoint(inTile))
+    getWallessRect(wallessRect);
+    if(_roomRect.doesRectContainPoint(inTile) && !wallessRect.doesRectContainPoint(inTile))
         return false;//if there is, we shall not pass!
     
     return true;//but odds are, yeah, totally, you can pass
@@ -696,21 +705,20 @@ CSRect* CSRoom::getRect(void)
     return &_roomRect;
 }
 
-CSRect CSRoom::getWallessRect(void)
+void CSRoom::getWallessRect(CSRect &inRect)
 {
     int     newWallLoc, loop;
     CSAxis  wallAxis;
-    CSRect  insetRect = _roomRect;
+    
+    inRect = _roomRect;
     
     for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
     {
         wallAxis.setAxisFromWall((objReg)loop);
-        newWallLoc = insetRect.getWallLocPoint((objReg)loop);
+        newWallLoc = inRect.getWallLocPoint((objReg)loop);
         newWallLoc += 1 * wallAxis.getOppDirOffset();//increase on top/left, decreases on bot/right--thus always sliding in from wall
-        insetRect.setWallLoc((objReg)loop, newWallLoc);
+        inRect.setWallLoc((objReg)loop, newWallLoc);
     }
-    
-    return insetRect;
 }
 
 CSRoom* CSRoom::getRoomToConnect(void)

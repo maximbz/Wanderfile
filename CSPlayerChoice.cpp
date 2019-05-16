@@ -11,8 +11,6 @@
 #include <cstdio>
 #include <cmath>
 
-using namespace std;
-
 
 #pragma mark -
 #pragma mark Constructors
@@ -21,31 +19,31 @@ CSPlayerChoice::CSPlayerChoice()
 {
 }
 
-CSPlayerChoice::CSPlayerChoice(CSRange inRange)
+CSPlayerChoice::CSPlayerChoice(CSRange *inRange)
 {
     _hasInt = true;
     _hasChar = false;
     
-    _intRange = inRange;
+    _intRange = *inRange;
 }
 
-CSPlayerChoice::CSPlayerChoice(vector<char> inCharOptions)
+CSPlayerChoice::CSPlayerChoice(vector<char> *inCharOptions)
 {
     _hasInt = false;
     _hasChar = true;
     
-    _charOptions.push_back(inCharOptions);
+    _charOptions.push_back(*inCharOptions);
     _charOptionStates.push_back(true);
 }
 
-CSPlayerChoice::CSPlayerChoice(CSRange inRange, vector<char> inCharOptions)
+CSPlayerChoice::CSPlayerChoice(CSRange inRange, vector<char> *inCharOptions)
 {
     _hasInt = true;
     _hasChar = true;
     
     _intRange = inRange;
     
-    _charOptions.push_back(inCharOptions);
+    _charOptions.push_back(*inCharOptions);
     _charOptionStates.push_back(true);
 }
 
@@ -53,14 +51,14 @@ CSPlayerChoice::CSPlayerChoice(CSRange inRange, vector<char> inCharOptions)
 #pragma mark -
 #pragma mark Setters
 
-void CSPlayerChoice::setIntRange(CSRange inRange)
+void CSPlayerChoice::setIntRange(CSRange *inRange)
 {
-    _intRange = inRange;
+    _intRange = *inRange;
 }
 
-void CSPlayerChoice::addCharVect(vector<char> inCharOptions)
+void CSPlayerChoice::addCharVect(vector<char> *inCharOptions)
 {
-    _charOptions.push_back(inCharOptions);
+    _charOptions.push_back(*inCharOptions);
     _charOptionStates.push_back(true);
 }
 
@@ -73,11 +71,54 @@ void CSPlayerChoice::toggleCharOption(int inCharOption, bool inState)
 #pragma mark -
 #pragma mark Doers
 
-CSPoint CSPlayerChoice::getUserCharAnswer(void)
+
+void CSPlayerChoice::printOptions(void)
+{
+    int loop, subloop;
+    
+    //go through vector and print it, formatted
+    for(loop = 0;loop < _charOptions.size(); loop++)
+    {
+        if(!_charOptionStates[loop])//don't check char option sets that have been turned off
+            continue;
+        
+        for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
+        {
+            printf("%c", _charOptions[loop][subloop]);
+            if(subloop < _charOptions[loop].size() - 1)//if not last loop
+                printf(", ");
+        }
+        
+        if(loop < _charOptions.size() - 1)//if not last loop
+            printf(", ");
+    }
+    printf(")  ");
+}
+
+void CSPlayerChoice::parseResponse(string &inResponse, CSPoint &inPoint)
+{
+    int     loop, subloop;
+    
+    for(loop = 0; loop < _charOptions.size(); loop++)
+    {
+        if(!_charOptionStates[loop])//don't check char option sets that have been turned off
+            continue;
+        
+        for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
+            if(inResponse[0] == _charOptions[loop][subloop])
+            {
+                inPoint.setPoints(loop, subloop);
+                loop = (int)_charOptions.size();//get us out of the outer loop
+                break;
+            }
+    }
+}
+
+void CSPlayerChoice::getUserCharAnswer(CSPoint &inPoint)
 {
     string  userResponse(4, ' ');
     bool    goodResponse = false;
-    CSPoint responseMatrix;
+    CSPoint responseMatrix(BAD_DATA, BAD_DATA);
     
     while(!goodResponse)
     {
@@ -85,13 +126,13 @@ CSPoint CSPlayerChoice::getUserCharAnswer(void)
         printOptions();
         scanf("%c", &userResponse[0]);
         
-        responseMatrix = parseResponse(userResponse);//go through again and determine if user input matches any of the chars
+        parseResponse(userResponse, responseMatrix);//go through again and determine if user input matches any of the chars
         
         if(responseMatrix.x != BAD_DATA && responseMatrix.y != BAD_DATA)
             goodResponse = true;
     }
     
-    return responseMatrix;
+    inPoint = responseMatrix;
 }
 
 int CSPlayerChoice::getUserIntAnswer(void)
@@ -110,7 +151,7 @@ int CSPlayerChoice::getUserIntAnswer(void)
     return userResponse;
 }
 
-CSPoint CSPlayerChoice::getUserMixedAnswer(void)
+void CSPlayerChoice::getUserMixedAnswer(CSPoint &inPoint)
 {
     int     loop, loopSize, subloop;
     string  userResponse(4, ' ');
@@ -125,7 +166,7 @@ CSPoint CSPlayerChoice::getUserMixedAnswer(void)
         scanf("%s", &userResponse[0]);
         
         //check if the first character of userResponse matches any of the charOptions
-        responseMatrix = parseResponse(userResponse);
+        parseResponse(userResponse, responseMatrix);
         if(responseMatrix.x != BAD_DATA && responseMatrix.y != BAD_DATA)
             goodResponse = true;
         
@@ -172,57 +213,7 @@ CSPoint CSPlayerChoice::getUserMixedAnswer(void)
         }
     }
     
-    return responseMatrix;
+    inPoint = responseMatrix;
 }
-
-void CSPlayerChoice::printOptions(void)
-{
-    int loop, subloop;
-    
-    //go through vector and print it, formatted
-    for(loop = 0;loop < _charOptions.size(); loop++)
-    {
-        if(!_charOptionStates[loop])//don't check char option sets that have been turned off
-            continue;
-        
-        for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
-        {
-            printf("%c", _charOptions[loop][subloop]);
-            if(subloop < _charOptions[loop].size() - 1)//if not last loop
-                printf(", ");
-        }
-        
-        if(loop < _charOptions.size() - 1)//if not last loop
-            printf(", ");
-    }
-    printf(")  ");
-}
-
-CSPoint CSPlayerChoice::parseResponse(string &inResponse)
-{
-    int     loop, subloop;
-    CSPoint responseMatrix(BAD_DATA, BAD_DATA);
-    
-    for(loop = 0; loop < _charOptions.size(); loop++)
-    {
-        if(!_charOptionStates[loop])//don't check char option sets that have been turned off
-            continue;
-        
-        for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
-            if(inResponse[0] == _charOptions[loop][subloop])
-            {
-                responseMatrix.setPoints(loop, subloop);
-                loop = (int)_charOptions.size();//get us out of the outer loop
-                break;
-            }
-    }
-    
-    return responseMatrix;
-}
-
-
-
-
-
 
 

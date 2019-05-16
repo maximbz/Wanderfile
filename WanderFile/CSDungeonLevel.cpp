@@ -42,7 +42,7 @@ void CSDungeonLevel::createDungeon(void)
     CSDungObj       *nextDoor;
     int             newDoorNumQty[4] = {0,0,0,0};
     
-    _dungeonBounds.setPoints((_theGame->getLevelBounds().botRight.x / 2), (_theGame->getLevelBounds().botRight.y / 2), -(_theGame->getLevelBounds().botRight.x / 2), (_theGame->getLevelBounds().botRight.y / 2));
+    _dungeonBounds.setPoints((_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2), -(_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2));
     
     while(makeRooms)
     {
@@ -62,7 +62,9 @@ void CSDungeonLevel::createDungeon(void)
             {
                 _levelRooms.push_back(newRoom);
                 //updateRoomNums();//turns on room nums
-                //_theGame->centerGameWindow(&newRoom->getRect()->getCenterPoint());
+                //CSPoint   centerPoint;
+                //&newRoom->getRect()->getCenterPoint(centerPoint);
+                //_theGame->centerGameWindow(centerPoint);
                 //printWindow();
             }
             else
@@ -84,7 +86,7 @@ void CSDungeonLevel::createDungeon(void)
     //populate dungeon!
     createStairs();//add stairs based on top-most and bottom-most rooms
     createTreasure();
-    //createMonsters();
+    createMonsters();
     _theGame->getPlayer()->setIsPlayer(true);
     _theGame->getPlayer()->setLoc(&_startingStairs);
     _theGame->centerGameWindow(&_startingStairs);
@@ -222,8 +224,8 @@ CSRoom* CSDungeonLevel::createFirstRoom(void)
     _theRandHand->addRandomRange(roomSizeGen);
     
     //random location for the seed room
-    newPoint.x = (_theGame->getLevelBounds().botRight.x / 2) - (_theRandHand->getNumber(&roomSizeGen) / 2);
-    newPoint.y = (_theGame->getLevelBounds().botRight.y / 2) - ((_theRandHand->getNumber(&roomSizeGen) / 2) / 2);//rooms look taller than they are because of ascii output, so we halve room height gens to make squarer looking rooms
+    newPoint.x = (_theGame->getLevelBounds()->botRight.x / 2) - (_theRandHand->getNumber(&roomSizeGen) / 2);
+    newPoint.y = (_theGame->getLevelBounds()->botRight.y / 2) - ((_theRandHand->getNumber(&roomSizeGen) / 2) / 2);//rooms look taller than they are because of ascii output, so we halve room height gens to make squarer looking rooms
     newRoom->getRect()->setTopLeft(&newPoint);
     
     //random size for the seed room
@@ -250,6 +252,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
     CSAxis          roomGenAxis, rangeRectAxis;
     CSPoint         newPoint, newDoorPoint;
     CSLine          distToRoom;
+    CSRange         levelRange;
     CSRect          roomGenRect[NUM_ROOM_WALLS + 1];//center and each wall
     CSRoom          *inRoom;
     CSRandomRange   roomSideGen(RAND_ROOM, REG_WALL_LEFT, REG_WALL_BOT), hallLengthGen(RAND_ROOM, ROOM_SIZE_MIN, HALL_LENGTH_MAX);
@@ -307,8 +310,9 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
             continue;
         
         rangeRectAxis.setAxisFromWall((objReg)loop);
+        _theGame->getLevelBounds()->getWallRange(getClockWall((objReg)loop), levelRange);
         
-        if(!_theGame->getLevelBounds().getWallRange(getClockWall((objReg)loop)).doesContain(roomGenRect[(int)REG_ROOM_CORE].getWallLocPoint((objReg)loop)))//if the core rect is beyond level bounds...
+        if(!levelRange.doesContain(roomGenRect[(int)REG_ROOM_CORE].getWallLocPoint((objReg)loop)))//if the core rect is beyond level bounds...
         {
             //abort room gen--destroy this room and if this one wasn't a hallway, the previous one (and destroy the door that leads to that hallway)
             abortRoomGenPath(inRoom);
@@ -377,10 +381,11 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
             continue;
         
         rangeRectAxis.setAxisFromWall((objReg)loop);
+        _theGame->getLevelBounds()->getWallRange(getClockWall((objReg)loop), levelRange);
         
         //any reg rects that are beyond level bounds, set back within level bounds
-        if(!_theGame->getLevelBounds().getWallRange(getClockWall((objReg)loop)).doesContain(roomGenRect[loop].getWallLocPoint((objReg)loop)))
-            roomGenRect[loop].setWallLoc((objReg)loop, _theGame->getLevelBounds().getWallLocPoint((objReg)loop) - rangeRectAxis.getDirOffset());
+        if(!levelRange.doesContain(roomGenRect[loop].getWallLocPoint((objReg)loop)))
+            roomGenRect[loop].setWallLoc((objReg)loop, _theGame->getLevelBounds()->getWallLocPoint((objReg)loop) - rangeRectAxis.getDirOffset());
     }
     
     //check each room to see if it intersects with any of the three region rects. If it does, we pull that rect inward, to ensure the new room won't intersect any current rooms
@@ -642,12 +647,12 @@ void CSDungeonLevel::replaceDoor(void)
     newestRoom->createNewDoor(REG_NULL);
 }
 
-void CSDungeonLevel::createOuterDoor()
+void CSDungeonLevel::createOuterDoor(void)
 {
-    int     loop, closestDistToCenter = _theGame->getLevelBounds().botRight.x * _theGame->getLevelBounds().botRight.y;
+    int     loop, closestDistToCenter = _theGame->getLevelBounds()->botRight.x * _theGame->getLevelBounds()->botRight.y;
     objReg  closestRegToCenter = REG_WALL_LEFT;
     CSAxis  loopAxis;
-    CSPoint levelCenter(_theGame->getLevelBounds().botRight.x / 2, _theGame->getLevelBounds().botRight.y / 2);
+    CSPoint levelCenter(_theGame->getLevelBounds()->botRight.x / 2, _theGame->getLevelBounds()->botRight.y / 2);
     CSLine  centerToEdge;
     
     for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
@@ -724,7 +729,7 @@ void CSDungeonLevel::slideRoom(int inRoomNum, int inXDist, int inYDist)//for dev
     //once the slide is complete, check for any collisions. If there are, do the inverse slide
 }
 
-void CSDungeonLevel::createStairs()
+void CSDungeonLevel::createStairs(void)
 {
     CSRandomRange   orientationSelector(RAND_DUNGEON, AXIS_HORIZ, AXIS_VERT),
                     sideSelector(RAND_DUNGEON, DIR_UP_LEFT, DIR_DOWN_RIGHT);
@@ -738,7 +743,7 @@ void CSDungeonLevel::createStairs()
     _outerRooms[getFacingWall(stairsOrientation.getReg())]->createNewObject(OBJ_STAIRS_DOWN);
 }
 
-void CSDungeonLevel::createTreasure()
+void CSDungeonLevel::createTreasure(void)
 {
     int             loop, subLoop, subLoopTotal;
     vector<int>     oddsVect;
@@ -764,6 +769,11 @@ void CSDungeonLevel::createTreasure()
         for(subLoop = 0; subLoop < subLoopTotal; subLoop++)
             (*listIter)->createNewObject(OBJ_TREASURE);
     }
+}
+
+void CSDungeonLevel::createMonsters(void)
+{
+    _theGame->getLevelMonsters(_levelNum, _levelMonsters);
 }
 
 
@@ -799,7 +809,7 @@ void CSDungeonLevel::movePlayer(int inX, int inY)
 #pragma mark -
 #pragma mark Doers - Graphics Functions
 
-void CSDungeonLevel::printWindow()
+void CSDungeonLevel::printWindow(void)
 {
     //draw from file, based on visable range
 
@@ -815,7 +825,7 @@ void CSDungeonLevel::printWindow()
     
     //loop through all of the Dungeon's Rooms and if any part of them is within the window, add them to the windowRooms vector
     for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
-        if(((*listIter)->getRect()->topLeft.y <= _theGame->getGameWindow().botRight.y && (*listIter)->getRect()->botRight.y >= _theGame->getGameWindow().topLeft.y) && ((*listIter)->getRect()->topLeft.x <= _theGame->getGameWindow().botRight.x && (*listIter)->getRect()->botRight.x >= _theGame->getGameWindow().topLeft.x))
+        if(((*listIter)->getRect()->topLeft.y <= _theGame->getGameWindow()->botRight.y && (*listIter)->getRect()->botRight.y >= _theGame->getGameWindow()->topLeft.y) && ((*listIter)->getRect()->topLeft.x <= _theGame->getGameWindow()->botRight.x && (*listIter)->getRect()->botRight.x >= _theGame->getGameWindow()->topLeft.x))
             windowRooms.push_back(*listIter);
     
     //clear screen first
@@ -824,7 +834,7 @@ void CSDungeonLevel::printWindow()
     //printf("12345678 112345678 212345678 312345678 412345678 512345678 612345678 712345678 812345678 912345678 0\n");//pseudo-grid
     
     //slide down from the top of the window to the bottom
-    for(charToPrint.y = _theGame->getGameWindow().topLeft.y; charToPrint.y <= _theGame->getGameWindow().botRight.y; charToPrint.y++)
+    for(charToPrint.y = _theGame->getGameWindow()->topLeft.y; charToPrint.y <= _theGame->getGameWindow()->botRight.y; charToPrint.y++)
     {
         //loop through windowRooms and determine if any are on this row
         for(listIter = windowRooms.begin(); listIter != windowRooms.end(); listIter++)
@@ -833,7 +843,7 @@ void CSDungeonLevel::printWindow()
         
         rowRooms.sort(_roomComparator);
         
-        charToPrint.x = _theGame->getGameWindow().topLeft.x;
+        charToPrint.x = _theGame->getGameWindow()->topLeft.x;
         
         //loop through rowRooms and draw them, starting with the space before them
         for(listIter = rowRooms.begin(); listIter != rowRooms.end(); listIter++)
@@ -841,7 +851,7 @@ void CSDungeonLevel::printWindow()
             for(spaceCounter = 0; spaceCounter < (*listIter)->getRect()->topLeft.x - charToPrint.x; spaceCounter++)
                 printf("%c", EMPTY_CHAR);
             
-            printRange.setRange(_theGame->getGameWindow().topLeft.x, _theGame->getGameWindow().botRight.x);
+            printRange.setRange(_theGame->getGameWindow()->topLeft.x, _theGame->getGameWindow()->botRight.x);
             printf("%s", (*listIter)->printRoomRow(&printRange, charToPrint.y).c_str());
             charToPrint.x = (*listIter)->getRect()->botRight.x + 1;//move to the other side of the room to continue the row
         }

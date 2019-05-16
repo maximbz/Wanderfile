@@ -6,8 +6,14 @@
 //  Copyright © 2017 Maxim Boschert-Zielsdorf. All rights reserved.
 //
 
+#include <fstream>
+#include <sstream>
+#include <iostream>
 #include "CSGameState.hpp"
 #include "WanderFile.h"
+#include "CSRange.hpp"
+
+using namespace std;
 
 CSGameState::CSGameState()
 {
@@ -19,6 +25,8 @@ CSGameState::CSGameState()
     _gameWindow.setPoints((LEVEL_BOUND_RIGHT / 2) - (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) - (WINDOW_BOUND_BOTTOM / 2), (LEVEL_BOUND_RIGHT / 2) + (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) + (WINDOW_BOUND_BOTTOM / 2));
     
     _theplayer.setIsPlayer(true);
+    if(loadMonsterManual())
+        printf("Monsters did not load. Is the file 'MonsterManual.txt' missing?\n");
 }
 
 void CSGameState::setGameWindow(CSRect inRect)
@@ -26,6 +34,120 @@ void CSGameState::setGameWindow(CSRect inRect)
     _gameWindow = inRect;
 }
 
+
+int CSGameState::loadMonsterManual(void)
+{
+    bool        key, monsterComplete = false;
+    int         loop, intFromStr;
+    ifstream    inputFile;
+    string      inputString, keyString, valueString;
+    CSCreature  *newMonster;
+    
+    vector<string >            fileData;
+    vector<string >::iterator  vectIter;
+    
+    //open the file and check for errors
+    inputFile.open("MonsterManual.txt");
+    if(inputFile.fail())
+    {
+        perror(inputString.c_str());
+        return 1;
+    }
+    
+    //pull each line of the file into stringVect
+    while(getline(inputFile, inputString))
+        fileData.push_back(inputString);
+    
+    newMonster = new CSCreature(false, nullptr);//make a new monster
+    
+    //each for loop is a line in fileData
+    for(vectIter = fileData.begin(); vectIter != fileData.end(); vectIter++)
+    {
+        key = true;
+        keyString = "";
+        valueString = "";
+        inputString = *vectIter;
+        intFromStr = 0;
+        
+        //if we're midway through fileData, and the previous loop finished a monster
+        if(monsterComplete)
+        {
+            newMonster = new CSCreature(false, nullptr);//make a new monster
+            monsterComplete = false;
+        }
+        
+        //parse through fileData string and populate key and value strings
+        for(loop = 0; loop < inputString.size(); loop++)
+        {
+            if(inputString[loop] == ';')//if we hit a semi-colon...
+            {
+                _monsterManual.push_back(newMonster);//complete the monster
+                monsterComplete = true;//set the next loop up to start a new monster
+                continue;
+            }
+            else if(inputString[loop] != ':')
+            {
+                if(key)
+                    keyString += inputString[loop];
+                else
+                    valueString += inputString[loop];
+            }
+            else
+                key = false;
+        }
+        
+        //parse through fileData string and populate this new monster
+        stringstream    strToInt(valueString);
+        strToInt >> intFromStr;
+        
+        if(keyString == "Name")
+            newMonster->setName(valueString);
+        else if(keyString == "HP")
+            newMonster->setHP(intFromStr);
+        else if(keyString == "Atk")
+            newMonster->setAtk(intFromStr);
+        else if(keyString == "AC")
+            newMonster->setAC(intFromStr);
+        else if(keyString == "XP")
+            newMonster->setXP(intFromStr);
+        else if(keyString == "Appear")
+        {
+            bool    min = true;
+            int     rangeMin = 1, rangeMax = 1;
+            CSRange levelRange;
+            
+            //loop through range (the content of valueString)
+            for(loop = 0; loop < valueString.size(); loop++)
+            {
+                if(valueString[loop] == '-')//switch from determining min to determining max
+                    min = false;
+                else
+                {
+                    intFromStr = valueString[loop] - '0';//convert char to int by subtracting ascii offset
+                    if(min)
+                        rangeMin = intFromStr;
+                    else
+                        rangeMax = intFromStr;
+                }
+            }
+            
+            levelRange.setRange(rangeMin, rangeMax);
+            newMonster->setAppearing(&levelRange);
+        }
+    }
+    
+    return 0;
+}
+
+void CSGameState::cleanUpGameState(void)
+{
+    list<CSCreature *>::iterator    listIter = _monsterManual.begin();
+    
+    while(listIter != _monsterManual.end())
+        listIter = _monsterManual.erase(listIter);//new iterator properly goes through the list, now with fewer entries
+    
+    _monsterManual.clear();
+}
 
 void CSGameState::slideGameWindow(CSPoint *inVect)
 {
@@ -97,14 +219,14 @@ void CSGameState::toggleBreak(void)
 }
 
 
-CSRect CSGameState::getGameWindow(void)
+CSRect* CSGameState::getGameWindow(void)
 {
-    return _gameWindow;
+    return &_gameWindow;
 }
 
-CSRect CSGameState::getLevelBounds(void)
+CSRect* CSGameState::getLevelBounds(void)
 {
-    return _levelBounds;
+    return &_levelBounds;
 }
 
 bool CSGameState::getRoomNumsState(void)
@@ -120,4 +242,19 @@ bool CSGameState::getBreakState(void)
 CSCreature* CSGameState::getPlayer(void)
 {
     return &_theplayer;
+}
+
+int CSGameState::getLevelMonsters(int inLevel, list<CSCreature *> &inMonsterList)
+{
+    CSCreature  *theCreature;
+    list<CSCreature *>::iterator    listIter;
+    
+    for(listIter = _monsterManual.begin(); listIter != _monsterManual.end(); listIter++)
+        if((*listIter)->getAppearing(inLevel))
+        {
+            theCreature = *listIter;
+            inMonsterList.push_back(theCreature);
+        }
+    
+    return (int)inMonsterList.size();
 }

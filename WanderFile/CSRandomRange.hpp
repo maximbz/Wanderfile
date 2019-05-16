@@ -30,7 +30,7 @@ public:
     void setRangeMax(int);
     
     randType getRandType(void);
-    CSRange getRange(void);
+    CSRange* getRange(void);
     int getRangeMin(void);
     int getRangeMax(void);
 };

@@ -52,9 +52,9 @@ randType CSRandomRange::getRandType(void)
     return _randType;
 }
 
-CSRange CSRandomRange::getRange(void)
+CSRange* CSRandomRange::getRange(void)
 {
-    return _range;
+    return &_range;
 }
 
 int CSRandomRange::getRangeMin(void)

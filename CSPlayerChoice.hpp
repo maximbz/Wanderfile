@@ -25,21 +25,20 @@ private:
     
 public:
     CSPlayerChoice();
-    CSPlayerChoice(CSRange);
-    CSPlayerChoice(vector<char>);
-    CSPlayerChoice(CSRange, vector<char>);
+    CSPlayerChoice(CSRange *);
+    CSPlayerChoice(vector<char> *);
+    CSPlayerChoice(CSRange, vector<char> *);
     
-    void setIntRange(CSRange);
-    void addCharVect(vector<char>);
+    void setIntRange(CSRange *);
+    void addCharVect(vector<char> *);
     void toggleCharOption(int, bool);
     
-    CSPoint getUserCharAnswer(void);
-    int getUserIntAnswer(void);
-    CSPoint getUserMixedAnswer(void);
     void printOptions(void);
-    CSPoint parseResponse(string &);
+    void parseResponse(string &, CSPoint &);
     
-    //will we need getters?
+    void getUserCharAnswer(CSPoint &);
+    int getUserIntAnswer(void);
+    void getUserMixedAnswer(CSPoint &);
 };
 
 #endif /* CSPlayerChoice_hpp */

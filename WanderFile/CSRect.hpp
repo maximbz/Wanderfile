@@ -47,15 +47,15 @@ public:
     int getWidth(void);
     int getHeight(void);
     int getDim(axis);//get heidth or width of room
-    CSPoint getCenterPoint(void);
+    void getCenterPoint(CSPoint &);
     
     //dynamic getters
     CSPoint* getCorner(direction);//topLeft or botRight from direction UP_LEFT or DOWN_RIGHT
     int getWallStartPoint(objReg);//top or left
     int getWallEndPoint(objReg);//bottom or right
     int getWallLocPoint(objReg);//x or y of entire wall
-    CSRange getWallRange(objReg);//start and end based on incomingWall
-    CSRange getAxisRange(axis);//start and end based on incomingAxis
+    void getWallRange(objReg, CSRange &);//start and end based on incomingWall
+    void getAxisRange(axis, CSRange &);//start and end based on incomingAxis
     
     //operators?!
     CSRect& operator=(const CSRect&);

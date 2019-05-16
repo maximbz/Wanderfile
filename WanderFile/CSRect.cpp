@@ -204,13 +204,15 @@ bool CSRect::doesRectContainWall(CSRect *inRect, objReg inReg)
 {
     int     wallLoc, clockWallLoc, countclockWallLoc;
     CSAxis  wallAxis;
+    CSRange wallRange;
     
     wallLoc = inRect->getWallLocPoint(inReg);
     clockWallLoc = inRect->getWallLocPoint(getClockWall(inReg));
     countclockWallLoc = inRect->getWallLocPoint(getCountclockWall(inReg));
     wallAxis.setAxisFromWall(inReg);
+    getWallRange(getClockWall(inReg), wallRange);
     
-    if(getWallRange(getClockWall(inReg)).doesContain(wallLoc) &&//if inRect's left wall is in the range of this rect's top wall
+    if(wallRange.doesContain(wallLoc) &&//if inRect's left wall is in the range of this rect's top wall
        inRect->topLeft.getAxisPoint(wallAxis.dim) <= botRight.getAxisPoint(wallAxis.dim) &&//and inRect's topLeft wall is less than this rect's botRight wall
        inRect->botRight.getAxisPoint(wallAxis.dim) >= topLeft.getAxisPoint(wallAxis.dim))//and inRect's botRight wall is greater than this rect's topLeft wall
         return true;
@@ -247,14 +249,10 @@ int CSRect::getDim(axis inDim)
     }
 }
 
-CSPoint CSRect::getCenterPoint(void)
+void CSRect::getCenterPoint(CSPoint &inPoint)
 {
-    CSPoint outgoingPoint;
-    
-    outgoingPoint.x = topLeft.x + (_rectWidth / 2);
-    outgoingPoint.y = topLeft.y + (_rectHeight / 2);
-    
-    return outgoingPoint;
+    inPoint.x = topLeft.x + (_rectWidth / 2);
+    inPoint.y = topLeft.y + (_rectHeight / 2);
 }
 
 CSPoint* CSRect::getCorner(direction inDir)
@@ -338,29 +336,25 @@ int CSRect::getWallLocPoint(objReg inWall)
     }
 }
 
-CSRange CSRect::getWallRange(objReg inWall)
+void CSRect::getWallRange(objReg inWall, CSRange &inRange)
 {
-    CSRange outgoingRange;
-    
     switch(inWall)
     {
         case REG_WALL_TOP:
         case REG_WALL_BOT:
-            outgoingRange.setRange(topLeft.x,botRight.x);
+            inRange.setRange(topLeft.x,botRight.x);
             break;
         case REG_WALL_LEFT:
         case REG_WALL_RIGHT:
-            outgoingRange.setRange(topLeft.y,botRight.y);
+            inRange.setRange(topLeft.y,botRight.y);
             break;
             
         default:
-            outgoingRange.setRange(BAD_DATA,BAD_DATA);
+            inRange.setRange(BAD_DATA,BAD_DATA);
     }
-    
-    return outgoingRange;
 }
 
-CSRange CSRect::getAxisRange(axis inAxis)
+void CSRect::getAxisRange(axis inAxis, CSRange &inRange)
 {
     objReg  regFromDim;
     
@@ -377,7 +371,7 @@ CSRange CSRect::getAxisRange(axis inAxis)
             regFromDim = REG_NULL;
     }
     
-    return getWallRange(regFromDim);
+    getWallRange(regFromDim, inRange);
 }
 
 #pragma mark -

@@ -22,17 +22,18 @@
 class CSDungeonLevel
 {
 private:
-    CSRandomHandler *_theRandHand;
-    CSDoorHandler   *_theDoorHand;
-    CSGameState     *_theGame;
+    CSRandomHandler     *_theRandHand;
+    CSDoorHandler       *_theDoorHand;
+    CSGameState         *_theGame;
     
-    int             _levelNum, _maxNumDoors;
-    string          _fileName;
-    CSPoint         _startingStairs;
-    CSRect          _dungeonBounds;
-    CSRoom          *_outerRooms[NUM_ROOM_WALLS];
-    list<CSRoom *>  _levelRooms;
-    CSRoomSorter    _roomComparator;
+    int                 _levelNum, _maxNumDoors;
+    string              _fileName;
+    CSPoint             _startingStairs;
+    CSRect              _dungeonBounds;
+    CSRoom              *_outerRooms[NUM_ROOM_WALLS];
+    list<CSRoom *>      _levelRooms;
+    CSRoomSorter        _roomComparator;
+    list<CSCreature *>  _levelMonsters;
     
     //void indexRooms(list<CSRoom*>*);
     CSRoom* createFirstRoom(void);
@@ -41,6 +42,7 @@ private:
     void createOuterDoor(void);
     void createStairs(void);
     void createTreasure(void);
+    void createMonsters(void);
     
 public:
     CSDungeonLevel(CSRandomHandler *, CSGameState *, CSDoorHandler *, int);
