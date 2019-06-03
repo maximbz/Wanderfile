@@ -129,34 +129,35 @@ void CSRoom::createNewDoor(objReg inReg)
 
 CSDungObj* CSRoom::createNewObject(objType inType)
 {
-    bool            goodLoc = false;
-    int             loop;
-    CSRange         dimRange;
+    bool            passable;
     CSPoint         objectLoc;
-    CSRect          wallessRect;
-    CSRandomRange   dimLocPoint;
     
-    dimLocPoint.setRandType(RAND_ROOM);
-    getWallessRect(wallessRect);
-    
-    while(!goodLoc)
+    switch(inType)
     {
-        for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
-        {
-            wallessRect.getAxisRange((axis)loop, dimRange);
-            dimLocPoint.setRange(dimRange);
-            _theRandHand->addRandomRange(dimLocPoint);
-            
-            objectLoc.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
-        }
-        
-        if(checkForObject(&objectLoc) == nullptr)
-            goodLoc = true;
+        case OBJ_CREATURE:
+            passable = true;
+            break;
+        case OBJ_TREASURE:
+            passable = false;
+            break;
+        default:
+            passable = true;
+            break;
     }
     
-    _theRandHand->clearRandomItems(RAND_ROOM);
+    getGoodRoomPoint(objectLoc, passable);
     
     return createObject(inType, REG_ROOM, &objectLoc, nullptr, nullptr);
+}
+
+void CSRoom::addNewMonster(CSDungObj *inObj)
+{
+    _objects.push_back(inObj);
+}
+
+void CSRoom::removeMonster(CSDungObj *inObj)
+{
+    _objects.remove(inObj);
 }
 
 void CSRoom::deleteRoom(void)
@@ -173,7 +174,8 @@ void CSRoom::deleteRoom(void)
             if((*objectIter)->getConnect() != nullptr)
                 _theDoorHand->addDoor((*objectIter)->getConnect());
         }
-        (*objectIter)->deleteObject();
+        if((*objectIter)->getType() != OBJ_CREATURE)//creature objects are deleted by DungeonLevel
+            (*objectIter)->deleteObject();
         objectIter = _objects.erase(objectIter);//new iterator properly goes through the list, now with fewer entries
     }
     
@@ -409,6 +411,67 @@ CSDungObj* CSRoom::getConnectedDoor(void)
     return nullptr;
 }
 
+bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
+{
+    bool            goodLoc = false;
+    int             loop, loopCounter = 0;
+    CSAxis          adjacentAxis;
+    CSRange         dimRange;
+    CSPoint         adjacentLoc;
+    CSRect          wallessRect;
+    CSRandomRange   dimLocPoint;
+    
+    dimLocPoint.setRandType(RAND_ROOM);
+    getWallessRect(wallessRect);
+    
+    while(!goodLoc)
+    {
+        for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
+        {
+            wallessRect.getAxisRange((axis)loop, dimRange);
+            dimLocPoint.setRange(dimRange);
+            _theRandHand->addRandomRange(dimLocPoint);
+            
+            inPoint.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
+        }
+        
+        if(checkForObject(&inPoint) == nullptr)//make sure no objects already exists at this location
+            goodLoc = true;
+        
+        loopCounter++;
+        if(loopCounter >= 5)//semi-arbitrary limit
+            return false;
+    }
+    
+    if(!isPassable)//if this object type is impassable...
+    {
+        do//we check if any doors are adjacent and if so, we keep trying
+        {
+            //check the 4 adjacent tiles for doors
+            for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
+            {
+                adjacentAxis.setAxisFromWall((objReg)loop);
+                adjacentLoc = inPoint;
+                adjacentLoc.slidePointViaAxis(adjacentAxis.dim, 1 * adjacentAxis.getDirOffset());
+                
+                if(checkForObject(&adjacentLoc) != nullptr)
+                    if(checkForObject(&adjacentLoc)->getType() == OBJ_DOOR)
+                    {
+                        goodLoc = false;
+                        break;//we are next to a door
+                    }
+            }
+            
+            //if we got this far we are good
+            goodLoc = true;
+        }
+        while(!goodLoc);
+    }
+    
+    _theRandHand->clearRandomItems(RAND_ROOM);
+    return true;
+}
+
 bool CSRoom::isWallPointFree(CSPoint *inPoint, objReg inWall, CSDungObj *doorToMove)
 {
     CSAxis  wallAxis;
@@ -615,7 +678,7 @@ string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
     string  printString = "";
     bool    printLeftWall, printRightWall;
     
-    //deteremine what part of the room is visible within the window, and set bounds accordingly
+    //determine what part of the room is visible within the window, and set bounds accordingly
     if(printRange->getMin() < _roomRect.topLeft.x)
         leftPrintBound = _roomRect.topLeft.x;
     else

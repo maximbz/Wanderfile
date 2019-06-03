@@ -14,6 +14,7 @@
 #include <list>
 #include "CSPoint.hpp"
 #include "CSRange.hpp"
+#include "CSMonsterClass.hpp"
 #include "CSDungObj.hpp"
 
 using namespace std;
@@ -24,32 +25,26 @@ private:
     bool        _player;
     int         _hp, _atk, _ac, _xp;
     string      _name;
-    CSRange     _appearing;
     CSDungObj   _creatureObj;
     
 public:
     CSCreature();
     CSCreature(bool, CSPoint *);
+    CSCreature(CSPoint *, CSMonsterClass *);
     
     void moveCreature(CSPoint *);
     
     void setIsPlayer(bool);
     void setLoc(CSPoint *);
-    void setHP(int);
-    void setAtk(int);
-    void setAC(int);
-    void setXP(int);
-    void setName(string);
-    void setAppearing(CSRange *);
+    void changeHP(int);
+    void killCreature(void);
+    bool doesPlayerHit(int);
+    int attackPlayer(void);
     
     bool getIsPlayer(void);
     CSPoint* getLoc(void);
-    int getHP(void);
-    int getAtk(void);
-    int getAC(void);
     int getXP(void);
     string getName(void);
-    bool getAppearing(int);
     
     CSDungObj* getCreatureObj(void);
 };

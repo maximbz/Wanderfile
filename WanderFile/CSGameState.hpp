@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <list>
 #include "CSRect.hpp"
+#include "CSMonsterClass.hpp"
 #include "CSCreature.hpp"
 
 class CSGameState
@@ -21,7 +22,7 @@ private:
     CSRect      _gameWindow, _levelBounds;
     CSCreature  _theplayer;
     
-    list<CSCreature*>   _monsterManual;
+    list<CSMonsterClass *>   _monsterManual;
     
 public:
     CSGameState();
@@ -39,7 +40,7 @@ public:
     bool getRoomNumsState(void);
     bool getBreakState(void);
     CSCreature* getPlayer(void);
-    int getLevelMonsters(int, list<CSCreature *> &);
+    int getLevelMonsterManual(int, list<CSMonsterClass *> &);
 };
 
 #endif /* CSGameState_hpp */

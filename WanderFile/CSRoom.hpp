@@ -50,6 +50,8 @@ public:
     void createCoreDoor(objReg, CSPoint *, CSDungObj*);
     void createNewDoor(objReg);
     CSDungObj* createNewObject(objType);
+    void addNewMonster(CSDungObj *);
+    void removeMonster(CSDungObj *);
     void removeConnection(CSRoom *);
     void deleteRoom(void);
     void deleteObject(int);
@@ -61,6 +63,7 @@ public:
     CSDungObj* getUnconnectedDoor(void);
     CSDungObj* getConnectedDoor(void);//only for hallways
     CSDungObj* getDoorConnectedToRoom(CSRoom *);
+    bool getGoodRoomPoint(CSPoint &, bool);
     bool isWallPointFree(CSPoint *, objReg, CSDungObj *);
     bool slideRoom(CSPoint *);
     bool slideWall(objReg, int);

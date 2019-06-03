@@ -37,11 +37,13 @@ void CSGameState::setGameWindow(CSRect inRect)
 
 int CSGameState::loadMonsterManual(void)
 {
-    bool        key, monsterComplete = false;
-    int         loop, intFromStr;
-    ifstream    inputFile;
-    string      inputString, keyString, valueString;
-    CSCreature  *newMonster;
+    bool            key, min;
+    char            newChar = '!';
+    int             loop, intFromStr, rangeMin = 1, rangeMax = 1, newHP = 0, newAtk = 0, newAC = 0, newXP = 0;
+    ifstream        inputFile;
+    string          inputString, keyString, valueString, newName;
+    CSRange         newAppearing;
+    CSMonsterClass  *newMonsterClass;
     
     vector<string >            fileData;
     vector<string >::iterator  vectIter;
@@ -58,34 +60,30 @@ int CSGameState::loadMonsterManual(void)
     while(getline(inputFile, inputString))
         fileData.push_back(inputString);
     
-    newMonster = new CSCreature(false, nullptr);//make a new monster
-    
     //each for loop is a line in fileData
     for(vectIter = fileData.begin(); vectIter != fileData.end(); vectIter++)
     {
         key = true;
+        min = true;
         keyString = "";
         valueString = "";
         inputString = *vectIter;
         intFromStr = 0;
-        
-        //if we're midway through fileData, and the previous loop finished a monster
-        if(monsterComplete)
-        {
-            newMonster = new CSCreature(false, nullptr);//make a new monster
-            monsterComplete = false;
-        }
         
         //parse through fileData string and populate key and value strings
         for(loop = 0; loop < inputString.size(); loop++)
         {
             if(inputString[loop] == ';')//if we hit a semi-colon...
             {
-                _monsterManual.push_back(newMonster);//complete the monster
-                monsterComplete = true;//set the next loop up to start a new monster
+                newMonsterClass = new CSMonsterClass(newChar, newHP, newAtk, newAC, newXP, newName, &newAppearing);//make a new monster
+                _monsterManual.push_back(newMonsterClass);//complete the monster
+                
+                newChar = '!';
+                rangeMin = 1;
+                rangeMax = 1;
                 continue;
             }
-            else if(inputString[loop] != ':')
+            else if(inputString[loop] != ':')//switch from key to value input
             {
                 if(key)
                     keyString += inputString[loop];
@@ -100,24 +98,21 @@ int CSGameState::loadMonsterManual(void)
         stringstream    strToInt(valueString);
         strToInt >> intFromStr;
         
-        if(keyString == "Name")
-            newMonster->setName(valueString);
+        if(keyString == "Char")
+            newChar = valueString[0];
         else if(keyString == "HP")
-            newMonster->setHP(intFromStr);
+            newHP = intFromStr;
         else if(keyString == "Atk")
-            newMonster->setAtk(intFromStr);
+            newAtk = intFromStr;
         else if(keyString == "AC")
-            newMonster->setAC(intFromStr);
+            newAC = intFromStr;
         else if(keyString == "XP")
-            newMonster->setXP(intFromStr);
+            newXP = intFromStr;
+        else if(keyString == "Name")
+            newName = valueString;
         else if(keyString == "Appear")
         {
-            bool    min = true;
-            int     rangeMin = 1, rangeMax = 1;
-            CSRange levelRange;
-            
-            //loop through range (the content of valueString)
-            for(loop = 0; loop < valueString.size(); loop++)
+            for(loop = 0; loop < valueString.size(); loop++)//loop through range (the content of valueString)
             {
                 if(valueString[loop] == '-')//switch from determining min to determining max
                     min = false;
@@ -131,8 +126,7 @@ int CSGameState::loadMonsterManual(void)
                 }
             }
             
-            levelRange.setRange(rangeMin, rangeMax);
-            newMonster->setAppearing(&levelRange);
+            newAppearing.setRange(rangeMin, rangeMax);
         }
     }
     
@@ -141,7 +135,7 @@ int CSGameState::loadMonsterManual(void)
 
 void CSGameState::cleanUpGameState(void)
 {
-    list<CSCreature *>::iterator    listIter = _monsterManual.begin();
+    list<CSMonsterClass *>::iterator    listIter = _monsterManual.begin();
     
     while(listIter != _monsterManual.end())
         listIter = _monsterManual.erase(listIter);//new iterator properly goes through the list, now with fewer entries
@@ -244,16 +238,16 @@ CSCreature* CSGameState::getPlayer(void)
     return &_theplayer;
 }
 
-int CSGameState::getLevelMonsters(int inLevel, list<CSCreature *> &inMonsterList)
+int CSGameState::getLevelMonsterManual(int inLevel, list<CSMonsterClass *> &inMonsterList)
 {
-    CSCreature  *theCreature;
-    list<CSCreature *>::iterator    listIter;
+    CSMonsterClass  *theMonster;
+    list<CSMonsterClass *>::iterator    listIter;
     
     for(listIter = _monsterManual.begin(); listIter != _monsterManual.end(); listIter++)
         if((*listIter)->getAppearing(inLevel))
         {
-            theCreature = *listIter;
-            inMonsterList.push_back(theCreature);
+            theMonster = *listIter;
+            inMonsterList.push_back(theMonster);
         }
     
     return (int)inMonsterList.size();

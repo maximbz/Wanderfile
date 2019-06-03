@@ -139,12 +139,19 @@ int CSDungeonLevel::loadDungeon(void)
 
 void CSDungeonLevel::deleteDungeon(void)
 {
-    list<CSRoom *>::iterator    listIter = _levelRooms.begin();
+    list<CSRoom *>::iterator    roomListIter = _levelRooms.begin();
+    list<CSCreature *>::iterator monsterListIter = _levelMonsters.begin();
     
-    while(listIter != _levelRooms.end())
+    while(roomListIter != _levelRooms.end())
     {
-        (*listIter)->deleteRoom();
-        listIter = _levelRooms.erase(listIter);//new iterator properly goes through the list, now with fewer entries
+        (*roomListIter)->deleteRoom();
+        roomListIter = _levelRooms.erase(roomListIter);//new iterator properly goes through the list, now with fewer entries
+    }
+    
+    while(monsterListIter != _levelMonsters.end())
+    {
+        //(*monsterListIter)->deleteMonster();
+        monsterListIter = _levelMonsters.erase(monsterListIter);//new iterator properly goes through the list, now with fewer entries
     }
     
     _levelRooms.clear();
@@ -751,6 +758,7 @@ void CSDungeonLevel::createTreasure(void)
     
     list<CSRoom *>::iterator    listIter;
    
+    //populate oddsVect
     for(loop = 1; loop < NUM_ROOM_WALLS; loop++)
     {
         subLoopTotal = NO_TREASURE_CHANCES / (pow(loop, 2));//30, 9, 4
@@ -761,7 +769,8 @@ void CSDungeonLevel::createTreasure(void)
     
     for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
     {
-        if((*listIter)->isHall())
+        //can't make a treasure chest in a hallway or a room as narrow as a hallway
+        if((*listIter)->isHall() || (*listIter)->getRect()->getWidth() <= ROOM_SIZE_MIN || (*listIter)->getRect()->getHeight() <= ROOM_SIZE_MIN)
             continue;
         
         subLoopTotal = _theRandHand->getNumber(&numNewTreasure);
@@ -773,7 +782,62 @@ void CSDungeonLevel::createTreasure(void)
 
 void CSDungeonLevel::createMonsters(void)
 {
-    _theGame->getLevelMonsters(_levelNum, _levelMonsters);
+    bool            goodMonsterRoom;
+    int             loop, monsterRoomNum, monsterListNum, monsterListCounter, numMonsters = _levelRooms.size() * MONSTER_RATE;
+    CSPoint         monsterLoc;
+    CSRoom          *monsterRoom = nullptr;
+    CSMonsterClass  *newMonsterClass = nullptr;
+    
+    list<CSMonsterClass *>              levelMonsterManual;
+    list<CSMonsterClass *>::iterator    monsterListIter;
+    list<CSRoom *>::iterator            roomListIter;
+    
+    _theGame->getLevelMonsterManual(_levelNum, levelMonsterManual);//get a list of all the Monster Classes that can appear in this dundeon level
+    
+    //these lists cover every element in their respective lists
+    CSRandomRange   roomList(RAND_DUNGEON, 0, (int)_levelRooms.size() - 1), monsterList(RAND_DUNGEON, 0, (int)levelMonsterManual.size() - 1);
+    _theRandHand->addRandomRange(roomList);
+    _theRandHand->addRandomRange(monsterList);
+    
+    //now place them
+    for(loop = 0; loop < numMonsters; loop++)
+    {
+        //get random room num, then get the room based on that num
+        goodMonsterRoom = false;
+        while(!goodMonsterRoom)
+        {
+            monsterRoomNum = _theRandHand->getNumber(&roomList);
+            for(roomListIter = _levelRooms.begin(); roomListIter != _levelRooms.end(); roomListIter++)
+                if((*roomListIter)->getRoomNum() == monsterRoomNum)
+                {
+                    monsterRoom = *roomListIter;
+                    break;
+                }
+            
+            goodMonsterRoom = monsterRoom->getGoodRoomPoint(monsterLoc, true);//get a tile in that room
+        }
+        
+        //get random monster from appropriate monster classes for this dungeon level
+        monsterListNum = _theRandHand->getNumber(&monsterList);
+        monsterListCounter = 0;
+        for(monsterListIter = levelMonsterManual.begin(); monsterListIter != levelMonsterManual.end(); monsterListIter++)
+        {
+            if(monsterListCounter == monsterListNum)
+            {
+                newMonsterClass = *monsterListIter;
+                break;
+            }
+            monsterListCounter++;
+        }
+        
+        if(newMonsterClass != nullptr)//we've randomly selected a monster class and a monster location
+        {
+            //so we place it!
+            CSCreature *newMonster = new CSCreature(&monsterLoc, newMonsterClass);
+            _levelMonsters.push_back(newMonster);
+            monsterRoom->addNewMonster(newMonster->getCreatureObj());
+        }
+    }
 }
 
 
@@ -803,6 +867,20 @@ void CSDungeonLevel::movePlayer(int inX, int inY)
             _theGame->centerGameWindow(_theGame->getPlayer()->getLoc());
         }
     }
+}
+
+bool CSDungeonLevel::checkForMonsterAtPoint(CSPoint *inPoint, CSDungObj *inObj)
+{
+    list<CSCreature *>::iterator    listIter;
+    
+    for(listIter = _levelMonsters.begin(); listIter != _levelMonsters.end(); listIter++)
+        if((*listIter)->getLoc() == inPoint)
+        {
+            inObj = (*listIter)->getCreatureObj();
+            return true;
+        }
+    
+    return false;
 }
 
 
