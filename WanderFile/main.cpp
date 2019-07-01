@@ -8,6 +8,7 @@
 
 #include <cstdio>
 #include <vector>
+#include <ncurses.h>
 #include "WanderFile.h"
 #include "CSPlayerChoice.hpp"
 #include "CSRandomHandler.hpp"
@@ -20,16 +21,27 @@ using namespace std;
 
 int main(void)
 {
-    CSRandomHandler theRandHand;
-    CSGameState     theGame;
-    CSDoorHandler   theDoorHand(&theRandHand);
-    CSDungeonLevel  dungeon(&theRandHand, &theGame, &theDoorHand, 1);
-    CSPlayerChoice  menuSelection;
-    vector<char>    gameOptions, slideOptions, mainModeOptions;
-    CSPoint         menuSelectMatrix;
-    CSRange         roomNumRange;
     bool            gameLoop = true, printLoop;
     int             numDungeons = -1;
+    vector<char>    gameOptions, slideOptions, mainModeOptions;
+    WINDOW          *menuWind;
+    CSPoint         menuSelectMatrix;
+    CSRange         roomNumRange;
+    CSPlayerChoice  menuSelection;
+    CSRandomHandler theRandHand;
+    CSDoorHandler   theDoorHand(&theRandHand);
+    CSGameState     theGame;
+    CSDungeonLevel  dungeon(&theRandHand, &theGame, &theDoorHand, 1);
+    
+    menuWind = newwin(MENU_BOUND_HEIGHT, theGame.getGameWindRect()->getWidth(), theGame.getGameWindRect()->getWidth(),
+                      theGame.getGameWindRect()->getHeight() + MENU_BOUND_HEIGHT);
+    menuWind = initscr();//initializes terminal to use ncurses
+    cbreak();//disable the buffering of typed characters by the TTY driver and get a character-at-a-time input
+    noecho();//keeps typed keys from automatically echoing to terminal
+    clear();
+    refresh();
+    curs_set(0);//set curse to be invisible
+    start_color();
     
     slideOptions.push_back('a');
     slideOptions.push_back('d');
@@ -60,11 +72,11 @@ int main(void)
             //printf("%d\n", numDungeons);
             dungeon.printWindow();
                 
-            printf("\n\nMove Player Chracter a - Left, d - Right, w - Up, s - Down.");
-            printf("\nOR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit?\n");
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM - MENU_BOUND_HEIGHT, 0, "\n\nMove Player Chracter a - Left, d - Right, w - Up, s - Down.");
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM - MENU_BOUND_HEIGHT + 1, 0, "\nOR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit?\n");
             
             menuSelection.toggleCharOption(1, true);//turn main mode on
-            menuSelection.getUserCharAnswer(menuSelectMatrix);
+            menuSelection.getUserCharAnswer(menuSelectMatrix, menuWind);
             
             //directions
             if(menuSelectMatrix.x == 0)
@@ -99,8 +111,6 @@ int main(void)
                     printLoop = false;
                 }
             }
-            
-            while (getchar() != '\n');//clear buffer
         }
         
         dungeon.deleteDungeon();

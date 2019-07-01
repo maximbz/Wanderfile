@@ -25,6 +25,7 @@
 		41A4A75F2169B9F3007B75A5 /* CSRandomList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41A4A75D2169B9F3007B75A5 /* CSRandomList.cpp */; };
 		41AB14EB229B3E5500D3B576 /* CSMonsterClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AB14E9229B3E5500D3B576 /* CSMonsterClass.cpp */; };
 		41B4254E2255CE5F00BFC5C6 /* CSCreature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41B4254C2255CE5F00BFC5C6 /* CSCreature.cpp */; };
+		41ECD92F22C567BF00734D00 /* libncurses.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 41ECD92E22C567BF00734D00 /* libncurses.tbd */; };
 		41EF157F1F964ABE002AF88C /* CSLine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41EF157D1F964ABE002AF88C /* CSLine.cpp */; };
 /* End PBXBuildFile section */
 
@@ -78,6 +79,7 @@
 		41AB14EA229B3E5500D3B576 /* CSMonsterClass.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CSMonsterClass.hpp; sourceTree = "<group>"; };
 		41B4254C2255CE5F00BFC5C6 /* CSCreature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSCreature.cpp; sourceTree = "<group>"; };
 		41B4254D2255CE5F00BFC5C6 /* CSCreature.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSCreature.hpp; sourceTree = "<group>"; };
+		41ECD92E22C567BF00734D00 /* libncurses.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libncurses.tbd; path = usr/lib/libncurses.tbd; sourceTree = SDKROOT; };
 		41EF157D1F964ABE002AF88C /* CSLine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CSLine.cpp; path = ../CSLine.cpp; sourceTree = "<group>"; };
 		41EF157E1F964ABE002AF88C /* CSLine.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = CSLine.hpp; path = ../CSLine.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -87,6 +89,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41ECD92F22C567BF00734D00 /* libncurses.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +101,7 @@
 			children = (
 				415D74411E38655C002AC908 /* WanderFile */,
 				415D74401E38655C002AC908 /* Products */,
+				41ECD92D22C567BE00734D00 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -152,6 +156,14 @@
 				419561871F6DD14600B6A03B /* CSAxis.cpp */,
 			);
 			path = WanderFile;
+			sourceTree = "<group>";
+		};
+		41ECD92D22C567BE00734D00 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				41ECD92E22C567BF00734D00 /* libncurses.tbd */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -347,6 +359,7 @@
 		415D74471E38655C002AC908 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"FRAMEWORK_SEARCH_PATHS[arch=*]" = /usr/local/include/;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -355,6 +368,7 @@
 		415D74481E38655C002AC908 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"FRAMEWORK_SEARCH_PATHS[arch=*]" = /usr/local/include/;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

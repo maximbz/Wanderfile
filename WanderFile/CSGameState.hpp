@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <list>
+#include <ncurses.h>
 #include "CSRect.hpp"
 #include "CSMonsterClass.hpp"
 #include "CSCreature.hpp"
@@ -19,8 +20,9 @@ class CSGameState
 {
 private:
     bool        _printRoomNums, _breakForDebug;
-    CSRect      _gameWindow, _levelBounds;
+    CSRect      _gameWindRect, _levelBounds;
     CSCreature  _theplayer;
+    WINDOW      *_gameWind;
     
     list<CSMonsterClass *>   _monsterManual;
     
@@ -35,7 +37,8 @@ public:
     void toggleRoomNums(void);
     void toggleBreak(void);
     
-    CSRect* getGameWindow(void);
+    WINDOW* getGameWindow(void);
+    CSRect* getGameWindRect(void);
     CSRect* getLevelBounds(void);
     bool getRoomNumsState(void);
     bool getBreakState(void);

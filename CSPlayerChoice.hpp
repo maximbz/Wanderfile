@@ -10,6 +10,7 @@
 #define CSPlayerChoice_hpp
 
 #include <vector>
+#include <ncurses.h>
 #include "CSRange.hpp"
 #include "CSPoint.hpp"
 
@@ -33,12 +34,12 @@ public:
     void addCharVect(vector<char> *);
     void toggleCharOption(int, bool);
     
-    void printOptions(void);
-    void parseResponse(string &, CSPoint &);
+    void printOptions(WINDOW *);
+    void parseResponse(char, CSPoint &);
     
-    void getUserCharAnswer(CSPoint &);
-    int getUserIntAnswer(void);
-    void getUserMixedAnswer(CSPoint &);
+    void getUserCharAnswer(CSPoint &, WINDOW *);
+    int getUserIntAnswer(WINDOW *);
+    void getUserMixedAnswer(CSPoint &, WINDOW *);
 };
 
 #endif /* CSPlayerChoice_hpp */

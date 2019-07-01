@@ -814,7 +814,8 @@ void CSDungeonLevel::createMonsters(void)
                     break;
                 }
             
-            goodMonsterRoom = monsterRoom->getGoodRoomPoint(monsterLoc, true);//get a tile in that room
+            if(!(*roomListIter)->isHall())
+                goodMonsterRoom = monsterRoom->getGoodRoomPoint(monsterLoc, true);//get a tile in that room
         }
         
         //get random monster from appropriate monster classes for this dungeon level
@@ -891,9 +892,11 @@ void CSDungeonLevel::printWindow(void)
 {
     //draw from file, based on visable range
 
+    int     loop, spaceCounter;
     CSPoint charToPrint;
     CSRange printRange;
-    int     loop, spaceCounter;
+    CSRect  *gameWindRect = _theGame->getGameWindRect();
+    WINDOW  *gameWind = _theGame->getGameWindow();
     
     list<CSRoom *>              windowRooms, rowRooms;
     list<CSRoom *>::iterator    listIter;
@@ -903,16 +906,17 @@ void CSDungeonLevel::printWindow(void)
     
     //loop through all of the Dungeon's Rooms and if any part of them is within the window, add them to the windowRooms vector
     for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
-        if(((*listIter)->getRect()->topLeft.y <= _theGame->getGameWindow()->botRight.y && (*listIter)->getRect()->botRight.y >= _theGame->getGameWindow()->topLeft.y) && ((*listIter)->getRect()->topLeft.x <= _theGame->getGameWindow()->botRight.x && (*listIter)->getRect()->botRight.x >= _theGame->getGameWindow()->topLeft.x))
+        if(((*listIter)->getRect()->topLeft.y <= gameWindRect->botRight.y && (*listIter)->getRect()->botRight.y >= gameWindRect->topLeft.y) && ((*listIter)->getRect()->topLeft.x <= gameWindRect->botRight.x && (*listIter)->getRect()->botRight.x >= gameWindRect->topLeft.x))
             windowRooms.push_back(*listIter);
     
     //clear screen first
-    for(loop = 0; loop < 80; loop++)
-        printf("\n");
+    //for(loop = 0; loop < 80; loop++)
+        //printf("\n");
+    werase(gameWind);
     //printf("12345678 112345678 212345678 312345678 412345678 512345678 612345678 712345678 812345678 912345678 0\n");//pseudo-grid
     
     //slide down from the top of the window to the bottom
-    for(charToPrint.y = _theGame->getGameWindow()->topLeft.y; charToPrint.y <= _theGame->getGameWindow()->botRight.y; charToPrint.y++)
+    for(charToPrint.y = gameWindRect->topLeft.y; charToPrint.y <= gameWindRect->botRight.y; charToPrint.y++)
     {
         //loop through windowRooms and determine if any are on this row
         for(listIter = windowRooms.begin(); listIter != windowRooms.end(); listIter++)
@@ -921,22 +925,24 @@ void CSDungeonLevel::printWindow(void)
         
         rowRooms.sort(_roomComparator);
         
-        charToPrint.x = _theGame->getGameWindow()->topLeft.x;
+        charToPrint.x = gameWindRect->topLeft.x;
         
         //loop through rowRooms and draw them, starting with the space before them
         for(listIter = rowRooms.begin(); listIter != rowRooms.end(); listIter++)
         {
             for(spaceCounter = 0; spaceCounter < (*listIter)->getRect()->topLeft.x - charToPrint.x; spaceCounter++)
-                printf("%c", EMPTY_CHAR);
+                waddch(gameWind, EMPTY_CHAR);
             
-            printRange.setRange(_theGame->getGameWindow()->topLeft.x, _theGame->getGameWindow()->botRight.x);
-            printf("%s", (*listIter)->printRoomRow(&printRange, charToPrint.y).c_str());
+            printRange.setRange(gameWindRect->topLeft.x, gameWindRect->botRight.x);
+            waddstr(gameWind, (*listIter)->printRoomRow(&printRange, charToPrint.y).c_str());
             charToPrint.x = (*listIter)->getRect()->botRight.x + 1;//move to the other side of the room to continue the row
         }
         
         rowRooms.clear();
-        printf("\n");
+        waddstr(gameWind, "\n");
     }
+    
+    wrefresh(gameWind);
 }
 
 

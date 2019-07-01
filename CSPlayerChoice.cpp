@@ -72,7 +72,7 @@ void CSPlayerChoice::toggleCharOption(int inCharOption, bool inState)
 #pragma mark Doers
 
 
-void CSPlayerChoice::printOptions(void)
+void CSPlayerChoice::printOptions(WINDOW *inWind)
 {
     int loop, subloop;
     
@@ -84,20 +84,20 @@ void CSPlayerChoice::printOptions(void)
         
         for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
         {
-            printf("%c", _charOptions[loop][subloop]);
+            waddch(inWind, _charOptions[loop][subloop]);
             if(subloop < _charOptions[loop].size() - 1)//if not last loop
-                printf(", ");
+                waddstr(inWind, ", ");
         }
         
         if(loop < _charOptions.size() - 1)//if not last loop
-            printf(", ");
+            waddstr(inWind, ", ");
     }
-    printf(")  ");
+    waddstr(inWind, ")  ");
 }
 
-void CSPlayerChoice::parseResponse(string &inResponse, CSPoint &inPoint)
+void CSPlayerChoice::parseResponse(char inResponse, CSPoint &inPoint)
 {
-    int     loop, subloop;
+    int loop, subloop;
     
     for(loop = 0; loop < _charOptions.size(); loop++)
     {
@@ -105,7 +105,7 @@ void CSPlayerChoice::parseResponse(string &inResponse, CSPoint &inPoint)
             continue;
         
         for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
-            if(inResponse[0] == _charOptions[loop][subloop])
+            if(inResponse == _charOptions[loop][subloop])
             {
                 inPoint.setPoints(loop, subloop);
                 loop = (int)_charOptions.size();//get us out of the outer loop
@@ -114,17 +114,18 @@ void CSPlayerChoice::parseResponse(string &inResponse, CSPoint &inPoint)
     }
 }
 
-void CSPlayerChoice::getUserCharAnswer(CSPoint &inPoint)
+void CSPlayerChoice::getUserCharAnswer(CSPoint &inPoint, WINDOW *inWind)
 {
-    string  userResponse(4, ' ');
+    char    userResponse;
     bool    goodResponse = false;
     CSPoint responseMatrix(BAD_DATA, BAD_DATA);
     
     while(!goodResponse)
     {
-        printf("(");//no leading parens in printOptions
-        printOptions();
-        scanf("%c", &userResponse[0]);
+        waddch(inWind, '(');//no leading parens in printOptions
+        printOptions(inWind);
+        userResponse = wgetch(inWind);
+        userResponse = tolower(userResponse);
         
         parseResponse(userResponse, responseMatrix);//go through again and determine if user input matches any of the chars
         
@@ -135,85 +136,28 @@ void CSPlayerChoice::getUserCharAnswer(CSPoint &inPoint)
     inPoint = responseMatrix;
 }
 
-int CSPlayerChoice::getUserIntAnswer(void)
+int CSPlayerChoice::getUserIntAnswer(WINDOW *inWind)
 {
     int     userResponse = BAD_DATA;
     bool    goodResponse = false;
+    string  rangeString;
     
     while(!goodResponse)
     {
-        printf("(%d - %d)", _intRange.getMin(), _intRange.getMax());
-        scanf("%d", &userResponse);
+        waddch(inWind, '(');
+        rangeString = to_string(_intRange.getMin());
+        waddstr(inWind, rangeString.c_str());
+        rangeString = to_string(_intRange.getMax());
+        waddstr(inWind, rangeString.c_str());
+        waddch(inWind, ')');
+        
+        userResponse = wgetch(inWind);
+        userResponse = tolower(userResponse);
         
         goodResponse = _intRange.doesContain(userResponse);
     }
     
     return userResponse;
-}
-
-void CSPlayerChoice::getUserMixedAnswer(CSPoint &inPoint)
-{
-    int     loop, loopSize, subloop;
-    string  userResponse(4, ' ');
-    bool    goodResponse = false;
-    CSPoint responseMatrix;
-    
-    while(!goodResponse)
-    {
-        printf("(%d - %d OR: ", _intRange.getMin(), _intRange.getMax());//print number range first
-        printOptions();//then go through vector and print it, formatted
-        
-        scanf("%s", &userResponse[0]);
-        
-        //check if the first character of userResponse matches any of the charOptions
-        parseResponse(userResponse, responseMatrix);
-        if(responseMatrix.x != BAD_DATA && responseMatrix.y != BAD_DATA)
-            goodResponse = true;
-        
-        //if not, is it within the range?
-        if(!goodResponse)
-        {
-            int     intPos = -1;
-            bool    intFound = false;
-            
-            loopSize = (int)strlen(userResponse.c_str());
-            
-            ////check the beginning of userResponse for an integer
-            for(loop = 0; loop < loopSize; loop++)
-            {
-                //loop through every digit, checking if it's at this index of userResponse
-                for(subloop = '0'; subloop <= '9'; subloop++)
-                    if(userResponse[loop] == subloop)
-                    {
-                        intFound = true;
-                        break;//we found a digit, no more need for searching
-                    }
-                
-                if(intFound)
-                    intPos++;
-                else
-                    break;//anytime we hit a char, we stop looking
-            }
-            
-            if(intFound)
-            {
-                int decimalPlace = 0;
-                responseMatrix.setPoints((int)_charOptions.size(), 0);//an int user response is treated as an additional char vector
-                
-                //takes the integer we found in userReponse and adds it to responseInt
-                for(loop = intPos; loop >= 0; loop--)//goes from the last number of the integer we found, leftward
-                {
-                    responseMatrix.y += (userResponse[loop] - '0') * pow(10, decimalPlace);//as we move right, we increase the power of ten
-                    decimalPlace++;//as we move left in the string, we must move right in the int
-                }
-                
-                //if it's actually a spot within the range, we can leave the while loop
-                goodResponse = _intRange.doesContain(responseMatrix.y);
-            }
-        }
-    }
-    
-    inPoint = responseMatrix;
 }
 
 
