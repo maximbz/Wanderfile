@@ -14,7 +14,19 @@
 Next Steps
 \f1\b0 \ulnone \
 \
-Non-hallway rooms should be able to generate attached non-hallway rooms occasionally (one in five?). This would be easy to make happen, but it would have broken consequences, as a lot of logic assumes we are always alternating between hallways and non-hallways\
+Make monsters move\
+	on your move (this will require changing where player movement is put, so both player and monsters can update)\
+	only monsters in your room or within 2 nearby rooms activate/update\
+	add an aggressiveness stat that determine how likely a monster is to move toward the player\
+\
+Create zone around player where window doesn\'92t recenter, so player can move a little without dragging the entire level (like Mario)\
+\
+Improve menu (stats, levelnum, menu, help, quit)\
+	figure out how to stow screens in ncurses and then recall them, for sub menus\
+	this will include small pop menus for \'93are you sure you want to quit?\'94\
+	\'93you are about to descend/ascend to level x. Continue?\'94\
+	and eventually a Battle Mode!!!\
+\
 \
 \
 output to file\
@@ -56,6 +68,9 @@ decrease visibility\
 traps\
 \
 shops\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 Non-hallway rooms should be able to generate attached non-hallway rooms occasionally (one in five?). This would be easy to make happen, but it would have broken consequences, as a lot of logic assumes we are always alternating between hallways and non-hallways\
 \
 multiple rooms combined\
 	make L shaped rooms, or square C shaped rooms\

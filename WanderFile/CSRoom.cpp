@@ -21,6 +21,7 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
     _roomNumDigits = 0;
     _roomToConnect = nullptr;
     _roomNum = BAD_DATA;
+    _numDoors = 0;
 }
 
 CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSPoint *inTopLeft, CSPoint *inBotRight)
@@ -31,6 +32,7 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
     _roomNumDigits = 0;
     _roomToConnect = nullptr;
     _roomNum = BAD_DATA;
+    _numDoors = 0;
     
     _roomRect.topLeft = *inTopLeft;
     _roomRect.botRight = *inBotRight;
@@ -72,6 +74,7 @@ CSDungObj* CSRoom::createObject(objType inObjType, objReg inObjReg, CSPoint *inO
 void CSRoom::createCoreDoor(objReg inReg, CSPoint *inPoint, CSDungObj *inDoor)
 {
     createObject(OBJ_DOOR, inReg, inPoint, nullptr, inDoor);
+    _numDoors++;
 }
 
 void CSRoom::createNewDoor(objReg inReg)
@@ -125,6 +128,7 @@ void CSRoom::createNewDoor(objReg inReg)
     _theDoorHand->addDoor(createObject(OBJ_DOOR, nextDoorWall, &newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
     
     _theRandHand->clearRandomItems(RAND_ROOM);
+    _numDoors++;
 }
 
 CSDungObj* CSRoom::createNewObject(objType inType)
@@ -437,15 +441,8 @@ bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
         
         if(checkForObject(&inPoint) == nullptr)//make sure no objects already exists at this location
             goodLoc = true;
-        
-        loopCounter++;
-        if(loopCounter >= 5)//semi-arbitrary limit
-            return false;
-    }
     
-    if(!isPassable)//if this object type is impassable...
-    {
-        do//we check if any doors are adjacent and if so, we keep trying
+        if(!isPassable)//if this object type is impassable...
         {
             //check the 4 adjacent tiles for doors
             for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
@@ -455,17 +452,17 @@ bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
                 adjacentLoc.slidePointViaAxis(adjacentAxis.dim, 1 * adjacentAxis.getDirOffset());
                 
                 if(checkForObject(&adjacentLoc) != nullptr)
-                    if(checkForObject(&adjacentLoc)->getType() == OBJ_DOOR)
+                    if(checkForObject(&adjacentLoc)->getType() == OBJ_DOOR)//we are next to a door
                     {
                         goodLoc = false;
-                        break;//we are next to a door
+                        break;
                     }
             }
-            
-            //if we got this far we are good
-            goodLoc = true;
         }
-        while(!goodLoc);
+        
+        loopCounter++;
+        if(loopCounter >= 5)//semi-arbitrary limit
+            return false;
     }
     
     _theRandHand->clearRandomItems(RAND_ROOM);
@@ -689,7 +686,7 @@ string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
         rightPrintBound = _roomRect.botRight.x;
     else
         rightPrintBound = printRange->getMax();
-    printRightWall = printRange->getMax() > _roomRect.botRight.x;
+    printRightWall = printRange->getMax() >= _roomRect.botRight.x;
     
     tileToPrint.y = rowToPrint;
     
@@ -789,4 +786,8 @@ CSRoom* CSRoom::getRoomToConnect(void)
     return _roomToConnect;
 }
 
+int CSRoom::getNumDoors(void)
+{
+    return _numDoors;
+}
 

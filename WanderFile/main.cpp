@@ -19,8 +19,18 @@
 using namespace std;
 
 
-int main(void)
+int main(int argc, const char * argv[])
 {
+    for (int argi = 1; argi < argc; argi++)
+    {
+        if (strcmp(argv[argi], "--debug-in-terminal") == 0)
+        {
+            printf("Debugging in terminal enabled\n");
+            getchar(); // Without this call debugging will be skipped
+            break;
+        }
+    }
+    
     bool            gameLoop = true, printLoop;
     int             numDungeons = -1;
     vector<char>    gameOptions, slideOptions, mainModeOptions;
@@ -33,8 +43,7 @@ int main(void)
     CSGameState     theGame;
     CSDungeonLevel  dungeon(&theRandHand, &theGame, &theDoorHand, 1);
     
-    menuWind = newwin(MENU_BOUND_HEIGHT, theGame.getGameWindRect()->getWidth(), theGame.getGameWindRect()->getWidth(),
-                      theGame.getGameWindRect()->getHeight() + MENU_BOUND_HEIGHT);
+    menuWind = newwin(MENU_BOUND_HEIGHT, theGame.getGameWindRect()->getWidth(), theGame.getGameWindRect()->getHeight() + 1, 0);
     menuWind = initscr();//initializes terminal to use ncurses
     cbreak();//disable the buffering of typed characters by the TTY driver and get a character-at-a-time input
     noecho();//keeps typed keys from automatically echoing to terminal
@@ -72,8 +81,8 @@ int main(void)
             //printf("%d\n", numDungeons);
             dungeon.printWindow();
                 
-            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM - MENU_BOUND_HEIGHT, 0, "\n\nMove Player Chracter a - Left, d - Right, w - Up, s - Down.");
-            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM - MENU_BOUND_HEIGHT + 1, 0, "\nOR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit?\n");
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, "Move Player Chracter a - Left, d - Right, w - Up, s - Down.");
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "OR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit.\n");
             
             menuSelection.toggleCharOption(1, true);//turn main mode on
             menuSelection.getUserCharAnswer(menuSelectMatrix, menuWind);
@@ -112,11 +121,8 @@ int main(void)
                 }
             }
         }
-        
         dungeon.deleteDungeon();
-        
     }
-    
     theGame.cleanUpGameState();
     
     return 0;

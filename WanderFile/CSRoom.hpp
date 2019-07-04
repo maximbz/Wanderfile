@@ -29,7 +29,7 @@ private:
     CSDoorHandler       *_theDoorHand;
     
     bool                _isHall;
-    int                 _roomNum, _roomNumDigits;
+    int                 _roomNum, _roomNumDigits, _numDoors;
     CSRandomRange       _wallGenLoc[NUM_ROOM_WALLS];
     CSRect              _roomRect;
     list<CSDungObj*>    _objects;
@@ -80,6 +80,7 @@ public:
     CSRect* getRect(void);
     void getWallessRect(CSRect &);
     CSRoom* getRoomToConnect(void);
+    int getNumDoors(void);
 };
 
 #endif /* CSRoom_hpp */

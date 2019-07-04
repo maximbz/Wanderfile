@@ -25,13 +25,13 @@ CSGameState::CSGameState()
     _gameWindRect.setPoints((LEVEL_BOUND_RIGHT / 2) - (WINDOW_BOUND_RIGHT / 2) + 1, (LEVEL_BOUND_BOTTOM / 2) - (WINDOW_BOUND_BOTTOM / 2) + 1,
                             (LEVEL_BOUND_RIGHT / 2) + (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) + (WINDOW_BOUND_BOTTOM / 2));
     
-    _gameWind = newwin(_gameWindRect.getHeight(), _gameWindRect.getWidth(), _gameWindRect.topLeft.x, _gameWindRect.topLeft.y);
+    _gameWind = newwin(_gameWindRect.getHeight(), _gameWindRect.getWidth(), 1, 1);
     _gameWind = initscr();//initializes terminal to use ncurses
     cbreak();//disable the buffering of typed characters by the TTY driver and get a character-at-a-time input
     noecho();//keeps typed keys from automatically echoing to terminal
     clear();
     refresh();
-    curs_set(0);//set curse to be invisible
+    curs_set(0);//set cursor to be invisible
     start_color();
     
     _theplayer.setIsPlayer(true);

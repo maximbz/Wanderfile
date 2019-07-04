@@ -104,7 +104,7 @@ void CSPlayerChoice::parseResponse(char inResponse, CSPoint &inPoint)
         if(!_charOptionStates[loop])//don't check char option sets that have been turned off
             continue;
         
-        for(subloop = 0;subloop < _charOptions[loop].size(); subloop++)
+        for(subloop = 0; subloop < _charOptions[loop].size(); subloop++)
             if(inResponse == _charOptions[loop][subloop])
             {
                 inPoint.setPoints(loop, subloop);
@@ -117,21 +117,14 @@ void CSPlayerChoice::parseResponse(char inResponse, CSPoint &inPoint)
 void CSPlayerChoice::getUserCharAnswer(CSPoint &inPoint, WINDOW *inWind)
 {
     char    userResponse;
-    bool    goodResponse = false;
     CSPoint responseMatrix(BAD_DATA, BAD_DATA);
     
-    while(!goodResponse)
-    {
-        waddch(inWind, '(');//no leading parens in printOptions
-        printOptions(inWind);
-        userResponse = wgetch(inWind);
-        userResponse = tolower(userResponse);
-        
-        parseResponse(userResponse, responseMatrix);//go through again and determine if user input matches any of the chars
-        
-        if(responseMatrix.x != BAD_DATA && responseMatrix.y != BAD_DATA)
-            goodResponse = true;
-    }
+    waddch(inWind, '(');//no leading parens in printOptions
+    printOptions(inWind);
+    userResponse = wgetch(inWind);
+    userResponse = tolower(userResponse);
+    
+    parseResponse(userResponse, responseMatrix);//go through again and determine if user input matches any of the chars
     
     inPoint = responseMatrix;
 }

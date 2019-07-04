@@ -755,6 +755,7 @@ void CSDungeonLevel::createTreasure(void)
     int             loop, subLoop, subLoopTotal;
     vector<int>     oddsVect;
     CSRandomList    numNewTreasure(RAND_DUNGEON);
+    CSRandomRange   numNewDeadEndTreasure;
     
     list<CSRoom *>::iterator    listIter;
    
@@ -766,16 +767,25 @@ void CSDungeonLevel::createTreasure(void)
             oddsVect.push_back(loop - 1);
     }
     numNewTreasure.addListToList(&oddsVect);
+    _theRandHand->addRandomList(numNewTreasure);
+    
+    numNewDeadEndTreasure.setRangeMax(1);
+    numNewDeadEndTreasure.setRandType(RAND_DUNGEON);
+    _theRandHand->addRandomRange(numNewDeadEndTreasure);
     
     for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
     {
-        //can't make a treasure chest in a hallway or a room as narrow as a hallway
-        if((*listIter)->isHall() || (*listIter)->getRect()->getWidth() <= ROOM_SIZE_MIN || (*listIter)->getRect()->getHeight() <= ROOM_SIZE_MIN)
+        //can't make a treasure chest in a hallway or a room as narrow as a hallway (which read as height or width 3)
+        if((*listIter)->isHall() || (*listIter)->getRect()->getWidth() <= ROOM_SIZE_MIN + 1 || (*listIter)->getRect()->getHeight() <= ROOM_SIZE_MIN + 1)
             continue;
         
-        subLoopTotal = _theRandHand->getNumber(&numNewTreasure);
+        //set the total number of treasure chests in this room. In order to make dead-end rooms more interesting, the odds of a treasure go up to 50/50
+        if((*listIter)->getNumDoors() == 1)
+            subLoopTotal = _theRandHand->getNumber(&numNewDeadEndTreasure);
+        else
+            subLoopTotal = _theRandHand->getNumber(&numNewTreasure);
         
-        for(subLoop = 0; subLoop < subLoopTotal; subLoop++)
+        for(subLoop = 0; subLoop < subLoopTotal; subLoop++)//make that many treasure chests
             (*listIter)->createNewObject(OBJ_TREASURE);
     }
 }
@@ -938,8 +948,10 @@ void CSDungeonLevel::printWindow(void)
             charToPrint.x = (*listIter)->getRect()->botRight.x + 1;//move to the other side of the room to continue the row
         }
         
+        if(charToPrint.x <= gameWindRect->botRight.x)
+            waddstr(gameWind, "\n");
+        
         rowRooms.clear();
-        waddstr(gameWind, "\n");
     }
     
     wrefresh(gameWind);

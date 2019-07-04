@@ -47,7 +47,7 @@ const int   RETURN_CODE_ABORT_GEN = 2;
 
 const int   LEVEL_BOUND_RIGHT = 600;
 const int   LEVEL_BOUND_BOTTOM = 600;
-const int   WINDOW_BOUND_RIGHT = 78;
+const int   WINDOW_BOUND_RIGHT = 79;
 const int   WINDOW_BOUND_BOTTOM = 20;
 const int   MENU_BOUND_HEIGHT = 2;
 
