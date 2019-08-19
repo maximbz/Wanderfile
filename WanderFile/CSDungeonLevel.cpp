@@ -87,8 +87,11 @@ void CSDungeonLevel::createDungeon(void)
     createStairs();//add stairs based on top-most and bottom-most rooms
     createTreasure();
     createMonsters();
+    
+    //make player happen
     _theGame->getPlayer()->setIsPlayer(true);
     _theGame->getPlayer()->setLoc(&_startingStairs);
+    _theGame->getPlayer()->setOwner(getRoomFromTile(&_startingStairs));
     _theGame->centerGameWindow(&_startingStairs);
     
     _theRandHand->clearRandomItems(RAND_DUNGEON);//clean up dungeon-creation
@@ -139,8 +142,10 @@ int CSDungeonLevel::loadDungeon(void)
 
 void CSDungeonLevel::deleteDungeon(void)
 {
-    list<CSRoom *>::iterator    roomListIter = _levelRooms.begin();
-    list<CSCreature *>::iterator monsterListIter = _levelMonsters.begin();
+    list<CSRoom *>::iterator        roomListIter = _levelRooms.begin();
+    //list<CSCreature *>::iterator    monsterListIter = _levelMonsters.begin();
+    
+    _theGame->getPlayer()->setNullOwner();
     
     while(roomListIter != _levelRooms.end())
     {
@@ -148,11 +153,11 @@ void CSDungeonLevel::deleteDungeon(void)
         roomListIter = _levelRooms.erase(roomListIter);//new iterator properly goes through the list, now with fewer entries
     }
     
-    while(monsterListIter != _levelMonsters.end())
+    /*while(monsterListIter != _levelMonsters.end())
     {
         //(*monsterListIter)->deleteMonster();
         monsterListIter = _levelMonsters.erase(monsterListIter);//new iterator properly goes through the list, now with fewer entries
-    }
+    }*/
     
     _levelRooms.clear();
     _dungeonBounds.setPoints(BAD_DATA, BAD_DATA, -BAD_DATA, -BAD_DATA);
@@ -812,7 +817,7 @@ void CSDungeonLevel::createMonsters(void)
     //now place them
     for(loop = 0; loop < numMonsters; loop++)
     {
-        //get random room num, then get the room based on that num
+        //get random room num, get the room based on that num, then get random location within that room
         goodMonsterRoom = false;
         while(!goodMonsterRoom)
         {
@@ -844,9 +849,9 @@ void CSDungeonLevel::createMonsters(void)
         if(newMonsterClass != nullptr)//we've randomly selected a monster class and a monster location
         {
             //so we place it!
-            CSCreature *newMonster = new CSCreature(&monsterLoc, newMonsterClass);
-            _levelMonsters.push_back(newMonster);
-            monsterRoom->addNewMonster(newMonster->getCreatureObj());
+            CSCreature *newMonster = new CSCreature(&monsterLoc, newMonsterClass, monsterRoom, _theRandHand);
+            //_levelMonsters.push_back(newMonster);
+            monsterRoom->addObject(newMonster);
         }
     }
 }
@@ -857,30 +862,43 @@ void CSDungeonLevel::createMonsters(void)
 
 void CSDungeonLevel::movePlayer(int inX, int inY)
 {
-    CSPoint movementVect(inX, inY), newLoc;
-    CSRoom  *movementRoom;
+    bool        roomChange = false;
+    CSPoint     movementVect(inX, inY), newLoc;
+    CSRoom      *movementRoom;
+    
+    list<CSRoom *>              roomsToUpdate;
+    list<CSRoom *>::iterator    roomIter;
+    list<CSDungObj *>::iterator objIter;
     
     newLoc = *_theGame->getPlayer()->getLoc() + movementVect;
     movementRoom = getRoomFromTile(&newLoc);
     
-    if(movementRoom == nullptr)//if we're trying to leave a room, stop the movement
-        return;
-    else
-    {
-        if(movementRoom->isTilePassable(&newLoc))//if the tile is passable
-        {
-            //move the player
-            _theGame->getPlayer()->moveCreature(&movementVect);
-            
-            //eventually create a rect around the player that doesn't move the entire window unless the player leaves the rect, like Mario camera logic
-            //if player is at the edge of its camera-move rect...
-            //slideGameWindow(&movementVect);
-            _theGame->centerGameWindow(_theGame->getPlayer()->getLoc());
-        }
-    }
+    _theGame->getPlayer()->moveCreature(&movementVect);//move the player
+    
+    //eventually create a rect around the player that doesn't move the entire window unless the player leaves the rect, like Mario camera logic
+    //if player is at the edge of its camera-move rect...
+    //slideGameWindow(&movementVect);
+    _theGame->centerGameWindow(_theGame->getPlayer()->getLoc());
+    
+    //add the current room and all connected rooms to the list of rooms to update monsters in
+    roomsToUpdate.push_back(movementRoom);
+    for(objIter = movementRoom->getObjects()->begin(); objIter != movementRoom->getObjects()->end(); objIter++)
+        if((*objIter)->getType() == OBJ_DOOR)
+            roomsToUpdate.push_back((*objIter)->getConnect()->getOwner());
+    
+    //for every room we want to update monsters in
+    for(roomIter = roomsToUpdate.begin(); roomIter != roomsToUpdate.end(); roomIter++)
+        for(objIter = (*roomIter)->getObjects()->begin(); objIter != (*roomIter)->getObjects()->end(); objIter++)//for every monster in that room
+            if((*objIter)->getType() == OBJ_CREATURE && !(*objIter)->getIsPlayer())
+            {
+                roomChange = (*objIter)->updateObject();
+                if(roomChange)
+                    break;
+            }
+                
 }
 
-bool CSDungeonLevel::checkForMonsterAtPoint(CSPoint *inPoint, CSDungObj *inObj)
+/*bool CSDungeonLevel::checkForMonsterAtPoint(CSPoint *inPoint, CSDungObj *inObj)
 {
     list<CSCreature *>::iterator    listIter;
     
@@ -892,7 +910,7 @@ bool CSDungeonLevel::checkForMonsterAtPoint(CSPoint *inPoint, CSDungObj *inObj)
         }
     
     return false;
-}
+}*/
 
 
 #pragma mark -

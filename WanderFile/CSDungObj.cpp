@@ -52,9 +52,9 @@ void CSDungObj::setNum(int inObjNum)
     _objNum = inObjNum;
 }
 
-void CSDungObj::setLoc(CSPoint inLoc)
+void CSDungObj::setLoc(CSPoint *inLoc)
 {
-    _objectLoc = inLoc;
+    _objectLoc = *inLoc;
 }
 
 void CSDungObj::setParent(CSDungObj *inParent)
@@ -87,6 +87,15 @@ void CSDungObj::setConnect(CSDungObj *inConnect)
             inConnect->setConnect(this);
 }
 
+void CSDungObj::setOwner(CSRoom *inOwner)
+{
+    if(_owner != nullptr)
+        _owner->removeObject(this);
+    inOwner->addObject(this);
+    
+    _owner = inOwner;
+}
+
 
 #pragma mark -
 #pragma mark Doers
@@ -108,7 +117,7 @@ void CSDungObj::slideObject(CSPoint inVector)
     else
     {
         _wasMoved = true;
-        setLoc(newLoc);
+        setLoc(&newLoc);
         
         if(_childObj != nullptr)
             _childObj->slideObject(inVector);
@@ -196,6 +205,11 @@ void CSDungObj::deleteObject(void)
         _connect->setConnect(nullptr);
     
     delete this;
+}
+
+bool CSDungObj::updateObject(void)
+{
+    return false;
 }
 
 
@@ -292,7 +306,10 @@ CSRoom* CSDungObj::getOwner(void)
     return _owner;
 }
 
-
+bool CSDungObj::getIsPlayer(void)
+{
+    return false;
+}
 
 
 

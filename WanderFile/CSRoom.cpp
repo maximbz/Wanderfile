@@ -58,6 +58,7 @@ void CSRoom::setRoomToConnect(CSRoom *inRoom)
     _roomToConnect = inRoom;
 }
 
+
 #pragma mark -
 #pragma mark Doers - Create/Delete Functions
 
@@ -154,14 +155,18 @@ CSDungObj* CSRoom::createNewObject(objType inType)
     return createObject(inType, REG_ROOM, &objectLoc, nullptr, nullptr);
 }
 
-void CSRoom::addNewMonster(CSDungObj *inObj)
+void CSRoom::addObject(CSDungObj *inObj)//for objects (usually cxreatures) entering the room
 {
     _objects.push_back(inObj);
+    
+    updateObjectNums();
 }
 
-void CSRoom::removeMonster(CSDungObj *inObj)
+void CSRoom::removeObject(CSDungObj *inObj)//for objects (usually monsters) leaving the room
 {
     _objects.remove(inObj);
+    
+    updateObjectNums();
 }
 
 void CSRoom::deleteRoom(void)
@@ -218,22 +223,9 @@ void CSRoom::deleteObject(CSDungObj *inObj)
         }
 }
 
-#pragma mark -
-#pragma mark Doers - Check/Edit Functions
 
-CSDungObj* CSRoom::checkForObject(CSPoint *inLoc)
-{
-    list<CSDungObj *>::iterator   listIter;
-    
-    if(*_theGame->getPlayer()->getLoc() == *inLoc)
-        return _theGame->getPlayer()->getCreatureObj();
-    
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
-        if(*(*listIter)->getLoc() == *inLoc)
-            return (*listIter);
-    
-    return nullptr;
-}
+#pragma mark -
+#pragma mark Doers
 
 int CSRoom::connectToRoom(void)
 {
@@ -266,7 +258,7 @@ int CSRoom::connectToRoom(void)
     
     newDoorPoint.setAxisPoint(hallwayAxis.dim, _roomToConnect->getRect()->getWallLocPoint(connectingWall));//slide newDoorPoint into roomToConnect, where the new door might be created
     newDoorPoint.slidePointViaAxis(hallwayAxis.dim, hallwayAxis.getOppDirOffset());//set newDoorPoint to be just outside of roomToConnect's facing wall
-    unconnectedDoor->setLoc(newDoorPoint);
+    unconnectedDoor->setLoc(&newDoorPoint);
     
     //set our open side to just before _roomToConnect (get wall that has unconnected door, get facing wall, connect to that wall). If doing so would have flipped the room inside out...
     if(!getRect()->setWallLoc(wallToConnect, newDoorPoint.getAxisPoint(hallwayAxis.dim)))
@@ -375,134 +367,6 @@ void CSRoom::updateObjectNums(void)
         (*objectIter)->setNum(count);
         count++;
     }
-}
-
-CSDungObj* CSRoom::getUnconnectedDoor(void)
-{
-    list<CSDungObj *>::iterator objListIter;
-    
-    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
-        if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect() == nullptr)//this is a door & it should connect to our new room
-            return *objListIter;
-    
-    return nullptr;
-}
-
-CSDungObj* CSRoom::getDoorConnectedToRoom(CSRoom *inRoom)
-{
-    list<CSDungObj *>::iterator objListIter;
-    
-    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
-    {
-        if((*objListIter)->getConnect() == nullptr)
-            continue;
-        
-        if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect()->getOwner() == inRoom)
-            return *objListIter;
-    }
-    
-    return nullptr;
-}
-
-CSDungObj* CSRoom::getConnectedDoor(void)
-{
-    list<CSDungObj *>::iterator objListIter;
-    
-    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
-        if((*objListIter)->getType() == OBJ_DOOR && ((*objListIter)->getConnect() != nullptr))//this is a door & it should connect to our new room
-            return (*objListIter);
-    
-    return nullptr;
-}
-
-bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
-{
-    bool            goodLoc = false;
-    int             loop, loopCounter = 0;
-    CSAxis          adjacentAxis;
-    CSRange         dimRange;
-    CSPoint         adjacentLoc;
-    CSRect          wallessRect;
-    CSRandomRange   dimLocPoint;
-    
-    dimLocPoint.setRandType(RAND_ROOM);
-    getWallessRect(wallessRect);
-    
-    while(!goodLoc)
-    {
-        for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
-        {
-            wallessRect.getAxisRange((axis)loop, dimRange);
-            dimLocPoint.setRange(dimRange);
-            _theRandHand->addRandomRange(dimLocPoint);
-            
-            inPoint.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
-        }
-        
-        if(checkForObject(&inPoint) == nullptr)//make sure no objects already exists at this location
-            goodLoc = true;
-    
-        if(!isPassable)//if this object type is impassable...
-        {
-            //check the 4 adjacent tiles for doors
-            for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
-            {
-                adjacentAxis.setAxisFromWall((objReg)loop);
-                adjacentLoc = inPoint;
-                adjacentLoc.slidePointViaAxis(adjacentAxis.dim, 1 * adjacentAxis.getDirOffset());
-                
-                if(checkForObject(&adjacentLoc) != nullptr)
-                    if(checkForObject(&adjacentLoc)->getType() == OBJ_DOOR)//we are next to a door
-                    {
-                        goodLoc = false;
-                        break;
-                    }
-            }
-        }
-        
-        loopCounter++;
-        if(loopCounter >= 5)//semi-arbitrary limit
-            return false;
-    }
-    
-    _theRandHand->clearRandomItems(RAND_ROOM);
-    return true;
-}
-
-bool CSRoom::isWallPointFree(CSPoint *inPoint, objReg inWall, CSDungObj *doorToMove)
-{
-    CSAxis  wallAxis;
-    
-    list<CSDungObj*>::iterator  objectIter;
-    
-    wallAxis.setAxisFromWall(inWall);
-    
-    //if inPoint is on either corner, or is outside the wall range alltogether...
-    if(inPoint->getAxisPoint(wallAxis.dim) <= getRect()->getWallStartPoint(inWall) ||
-       inPoint->getAxisPoint(wallAxis.dim) >= getRect()->getWallEndPoint(inWall))
-        return false;
-    
-    //check every door on inWall
-    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
-    {
-        int objectNum;
-        objectNum = (*objectIter)->getNum();
-        
-        //skip doors on other walls, non-doors, or the door we're moving that's leading to this wall check
-        if((*objectIter)->getType() != OBJ_DOOR || (*objectIter)->getRegion() != inWall || (*objectIter) == doorToMove)
-            continue;
-        
-        //if inPoint is where inWall has a connected door
-        if(inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim))
-            return false;
-        
-        //if inPoint aligns with one of the walls of a connected hallway
-        if(inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) - (HALL_SIZE / 2) ||
-           inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) + (HALL_SIZE / 2))
-           return false;
-    }
-    
-    return true;
 }
 
 bool CSRoom::slideRoom(CSPoint *inVector)
@@ -639,23 +503,6 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
     return true;//if we got this far, we're good
 }
 
-bool CSRoom::isTilePassable(CSPoint *inTile)
-{
-    CSRect      wallessRect;
-    CSDungObj   *tileObj;
-    
-    //check if there's an object at the tile
-    tileObj = checkForObject(inTile);
-    if(tileObj != nullptr)//if there is, return whether that object is passable
-        return tileObj->isPassable();
-    
-    //check whether there is a wall at the tile (if the new tile is in _roomRect but NOT in wallesRect)
-    getWallessRect(wallessRect);
-    if(_roomRect.doesRectContainPoint(inTile) && !wallessRect.doesRectContainPoint(inTile))
-        return false;//if there is, we shall not pass!
-    
-    return true;//but odds are, yeah, totally, you can pass
-}
 
 #pragma mark -
 #pragma mark Doers - Graphics Functions
@@ -666,6 +513,31 @@ char CSRoom::assumeChar(CSDungObj *inObj, char inChar)
         return inChar;
     else
         return inObj->getChar();
+}
+
+CSDungObj* CSRoom::checkForObjectToDraw(CSPoint *inLoc)//finds and returns a creature or an object or nothing
+{
+    CSDungObj   *objectToDraw = nullptr;
+    
+    list<CSDungObj *>           objectsInTile;
+    list<CSDungObj *>::iterator listIter;
+    
+    //if(*_theGame->getPlayer()->getLoc() == *inLoc)//player supercedes inanimate objects
+        //return _theGame->getPlayer();
+    
+    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+        if(*(*listIter)->getLoc() == *inLoc)
+            objectsInTile.push_back(*listIter);
+    
+    //if both a creature and an object are found, make sure the creature supercedes the object
+    for(listIter = objectsInTile.begin(); listIter != objectsInTile.end(); listIter++)
+    {
+        objectToDraw = *listIter;
+        if((*listIter)->getType() == OBJ_CREATURE)
+            break;
+    }
+    
+    return objectToDraw;//if nothing was found, this will be null
 }
 
 string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
@@ -693,25 +565,25 @@ string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
     //use rowToPrint to determine which horizontal line of the room to print
     if(rowToPrint == _roomRect.topLeft.y || rowToPrint == _roomRect.botRight.y)//print top or bottom wall
         for(tileToPrint.x = leftPrintBound; tileToPrint.x <= rightPrintBound; tileToPrint.x++)
-            printString += assumeChar(checkForObject(&tileToPrint), WALL_CHAR);//send in the tile we wish to print and the tile we assume to be there, checkForObject will return the assumed tile or any overridden tile, based on room info, and append it to printString
+            printString += assumeChar(checkForObjectToDraw(&tileToPrint), WALL_CHAR);//send in the tile we wish to print and the char we assume to be there, checkForObjectToDraw will return the assumed tile or any overridden tile, based on room info, and assumeChar will find the correct char for that object. Finally, we append it to printString.
     else//print the left wall, guts of the room, and right wall
     {
         //print left wall/door
         if(_roomRect.getWidth() > 0 && printLeftWall)
         {
             tileToPrint.x = _roomRect.topLeft.x;
-            printString += assumeChar(checkForObject(&tileToPrint), WALL_CHAR);
+            printString += assumeChar(checkForObjectToDraw(&tileToPrint), WALL_CHAR);
         }
         
         //print floor and/or objects
         for(tileToPrint.x = leftPrintBound + printLeftWall; tileToPrint.x <= rightPrintBound - printRightWall; tileToPrint.x++)//inset by 1 on each side for the walls
-            printString += assumeChar(checkForObject(&tileToPrint), FLOOR_CHAR);
+            printString += assumeChar(checkForObjectToDraw(&tileToPrint), FLOOR_CHAR);
         
         //print right wall/door
         if(_roomRect.getWidth() > 1 && printRightWall)//left wall and right wall
         {
             tileToPrint.x = _roomRect.botRight.x;
-            printString += assumeChar(checkForObject(&tileToPrint), WALL_CHAR);
+            printString += assumeChar(checkForObjectToDraw(&tileToPrint), WALL_CHAR);
         }
     }
     
@@ -734,6 +606,177 @@ string CSRoom::printRoomToFile(void)
     outputString += "\n";
     
     return outputString;
+}
+
+
+#pragma mark -
+#pragma mark Complex Check Functions
+
+CSDungObj* CSRoom::getUnconnectedDoor(void)
+{
+    list<CSDungObj *>::iterator objListIter;
+    
+    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+        if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect() == nullptr)//this is a door & it should connect to our new room
+            return *objListIter;
+    
+    return nullptr;
+}
+
+CSDungObj* CSRoom::getConnectedDoor(void)
+{
+    list<CSDungObj *>::iterator objListIter;
+    
+    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+        if((*objListIter)->getType() == OBJ_DOOR && ((*objListIter)->getConnect() != nullptr))//this is a door & it should connect to our new room
+            return (*objListIter);
+    
+    return nullptr;
+}
+
+CSDungObj* CSRoom::getDoorConnectedToTile(CSPoint *inTile)
+{
+    CSDungObj   *objectAtTile = getObjectAtTile(inTile);
+    
+    if(objectAtTile != nullptr)
+        if(objectAtTile->getType() == OBJ_DOOR)
+            return objectAtTile->getConnect();
+    
+    return nullptr;
+}
+
+CSDungObj* CSRoom::getDoorConnectedToRoom(CSRoom *inRoom)
+{
+    list<CSDungObj *>::iterator objListIter;
+    
+    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+    {
+        if((*objListIter)->getConnect() == nullptr)
+            continue;
+        
+        if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect()->getOwner() == inRoom)
+            return *objListIter;
+    }
+    
+    return nullptr;
+}
+
+CSDungObj* CSRoom::getObjectAtTile(CSPoint *inTile)//finds and returns a CSDungObj, ignoring any creartures that might also be there
+{
+    list<CSDungObj *>::iterator listIter;
+    
+    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+        if(*(*listIter)->getLoc() == *inTile && (*listIter)->getType() != OBJ_CREATURE)
+            return *listIter;
+    
+    return nullptr;
+}
+
+bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
+{
+    bool            goodLoc = false;
+    int             loop, loopCounter = 0;
+    CSAxis          adjacentAxis;
+    CSRange         dimRange;
+    CSPoint         adjacentLoc;
+    CSRect          wallessRect;
+    CSRandomRange   dimLocPoint;
+    
+    dimLocPoint.setRandType(RAND_ROOM);
+    getWallessRect(wallessRect);
+    
+    while(!goodLoc)
+    {
+        for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
+        {
+            wallessRect.getAxisRange((axis)loop, dimRange);
+            dimLocPoint.setRange(dimRange);
+            _theRandHand->addRandomRange(dimLocPoint);
+            
+            inPoint.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
+        }
+        
+        if(getObjectAtTile(&inPoint) == nullptr)//make sure no objects already exists at this location
+            goodLoc = true;
+        
+        if(!isPassable)//if this object type is impassable...
+        {
+            //check the 4 adjacent tiles for doors
+            for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
+            {
+                adjacentAxis.setAxisFromWall((objReg)loop);
+                adjacentLoc = inPoint;
+                adjacentLoc.slidePointViaAxis(adjacentAxis.dim, 1 * adjacentAxis.getDirOffset());
+                
+                if(getObjectAtTile(&adjacentLoc) != nullptr)
+                    if(getObjectAtTile(&adjacentLoc)->getType() == OBJ_DOOR)//we are next to a door
+                    {
+                        goodLoc = false;
+                        break;
+                    }
+            }
+        }
+        
+        loopCounter++;
+        if(loopCounter >= 5)//semi-arbitrary limit
+            return false;
+    }
+    
+    _theRandHand->clearRandomItems(RAND_ROOM);
+    return true;
+}
+
+bool CSRoom::isWallPointFree(CSPoint *inPoint, objReg inWall, CSDungObj *doorToMove)
+{
+    CSAxis  wallAxis;
+    
+    list<CSDungObj*>::iterator  objectIter;
+    
+    wallAxis.setAxisFromWall(inWall);
+    
+    //if inPoint is on either corner, or is outside the wall range alltogether...
+    if(inPoint->getAxisPoint(wallAxis.dim) <= getRect()->getWallStartPoint(inWall) ||
+       inPoint->getAxisPoint(wallAxis.dim) >= getRect()->getWallEndPoint(inWall))
+        return false;
+    
+    //check every door on inWall
+    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
+    {
+        int objectNum;
+        objectNum = (*objectIter)->getNum();
+        
+        //skip doors on other walls, non-doors, or the door we're moving that's leading to this wall check
+        if((*objectIter)->getType() != OBJ_DOOR || (*objectIter)->getRegion() != inWall || (*objectIter) == doorToMove)
+            continue;
+        
+        //if inPoint is where inWall has a connected door
+        if(inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim))
+            return false;
+        
+        //if inPoint aligns with one of the walls of a connected hallway
+        if(inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) - (HALL_SIZE / 2) ||
+           inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) + (HALL_SIZE / 2))
+            return false;
+    }
+    
+    return true;
+}
+
+bool CSRoom::isTilePassable(CSPoint *inTile)
+{
+    CSRect      wallessRect;
+    CSDungObj   *tileObj;
+    
+    tileObj = checkForObjectToDraw(inTile);//check if there's an object or creature at this tile
+    if(tileObj != nullptr)//if there is, return whether that object is passable
+        return tileObj->isPassable();
+    
+    //check whether there is a wall at the tile (if the new tile is in _roomRect but NOT in wallesRect)
+    getWallessRect(wallessRect);
+    if(_roomRect.doesRectContainPoint(inTile) && !wallessRect.doesRectContainPoint(inTile))
+        return false;//if there is, we shall not pass!
+    
+    return true;//but odds are, yeah, totally, you can pass
 }
 
 

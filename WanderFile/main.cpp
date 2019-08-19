@@ -11,7 +11,7 @@
 #include <ncurses.h>
 #include "WanderFile.h"
 #include "CSPlayerChoice.hpp"
-#include "CSRandomHandler.hpp"
+#include "RandomHandler/CSRandomHandler.hpp"
 #include "CSDoorHandler.hpp"
 #include "CSDungeonLevel.hpp"
 #include "CSGameState.hpp"
@@ -80,8 +80,14 @@ int main(int argc, const char * argv[])
         {
             //printf("%d\n", numDungeons);
             dungeon.printWindow();
-                
-            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, "Move Player Chracter a - Left, d - Right, w - Up, s - Down.");
+            
+            //temp debug block to display player loc
+            string  outputStr = "Player Movement: a-Left, d-Right, w-Up, s-Down. Player Room: ";
+            int playerRoom;
+            playerRoom = theGame.getPlayer()->getOwner()->getRoomNum();
+            outputStr.append(to_string(playerRoom));
+            
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputStr.c_str());
             mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "OR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit.\n");
             
             menuSelection.toggleCharOption(1, true);//turn main mode on

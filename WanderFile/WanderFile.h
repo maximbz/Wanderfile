@@ -15,7 +15,8 @@ enum randType//categories of random ranges and lists
 {
     RAND_GAME,
     RAND_DUNGEON,
-    RAND_ROOM
+    RAND_ROOM,
+    RAND_MONSTER
 };
 
 enum objType//dungeon object types

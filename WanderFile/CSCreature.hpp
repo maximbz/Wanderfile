@@ -12,41 +12,44 @@
 #include <stdio.h>
 #include <string>
 #include <list>
-#include "CSPoint.hpp"
-#include "CSRange.hpp"
+#include "Geometry/CSPoint.hpp"
+#include "Geometry/CSRange.hpp"
 #include "CSMonsterClass.hpp"
 #include "CSDungObj.hpp"
+#include "RandomHandler/CSRandomHandler.hpp"
+//#include "RandomHandler/CSRandomRange.cpp"
 
 using namespace std;
 
-class CSCreature
+class CSCreature : public CSDungObj
 {
 private:
-    bool        _player;
-    int         _hp, _atk, _ac, _xp;
-    string      _name;
-    CSDungObj   _creatureObj;
+    bool            _player;
+    int             _hp, _atk, _ac, _xp;
+    string          _name;
+    CSRandomHandler *_theRandHand;
+    CSRandomRange   _moveDir;
     
 public:
     CSCreature();
-    CSCreature(bool, CSPoint *);
-    CSCreature(CSPoint *, CSMonsterClass *);
+    //CSCreature(bool, CSPoint *);
+    CSCreature(CSPoint *, CSMonsterClass *, CSRoom *, CSRandomHandler *);
+    void initCreature(void);
     
-    void moveCreature(CSPoint *);
+    bool moveCreature(CSPoint *);
     
     void setIsPlayer(bool);
-    void setLoc(CSPoint *);
+    void setNullOwner(void);
+    
     void changeHP(int);
     void killCreature(void);
     bool doesPlayerHit(int);
+    bool updateObject(void);
     int attackPlayer(void);
     
     bool getIsPlayer(void);
-    CSPoint* getLoc(void);
     int getXP(void);
     string getName(void);
-    
-    CSDungObj* getCreatureObj(void);
 };
 
 #endif /* CSCreature_hpp */

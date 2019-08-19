@@ -13,7 +13,7 @@
 #include <list>
 #include "WanderFile.h"
 #include "CSRandomHandler.hpp"
-#include "CSRandomList.hpp"
+//#include "CSRandomList.hpp"
 #include "CSDungObj.hpp"
 
 class CSDoorHandler

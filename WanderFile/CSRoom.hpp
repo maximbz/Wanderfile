@@ -37,7 +37,8 @@ private:
     CSRoom              *_roomToConnect;
 
     CSDungObj* createObject(objType, objReg, CSPoint *, CSDungObj *, CSDungObj *);
-    CSDungObj* checkForObject(CSPoint *);
+    CSDungObj* checkForObjectToDraw(CSPoint *);
+    char assumeChar(CSDungObj *, char);
     
 public:    
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
@@ -50,8 +51,8 @@ public:
     void createCoreDoor(objReg, CSPoint *, CSDungObj*);
     void createNewDoor(objReg);
     CSDungObj* createNewObject(objType);
-    void addNewMonster(CSDungObj *);
-    void removeMonster(CSDungObj *);
+    void addObject(CSDungObj *);
+    void removeObject(CSDungObj *);
     void removeConnection(CSRoom *);
     void deleteRoom(void);
     void deleteObject(int);
@@ -60,18 +61,20 @@ public:
     int connectToRoom(void);
     void updateRoomNum(int);
     void updateObjectNums(void);
-    CSDungObj* getUnconnectedDoor(void);
-    CSDungObj* getConnectedDoor(void);//only for hallways
-    CSDungObj* getDoorConnectedToRoom(CSRoom *);
-    bool getGoodRoomPoint(CSPoint &, bool);
-    bool isWallPointFree(CSPoint *, objReg, CSDungObj *);
     bool slideRoom(CSPoint *);
     bool slideWall(objReg, int);
-    bool isTilePassable(CSPoint *);
     
-    char assumeChar(CSDungObj *, char);
     string printRoomRow(CSRange *, int);
     string printRoomToFile(void);
+    
+    CSDungObj* getUnconnectedDoor(void);
+    CSDungObj* getConnectedDoor(void);//only for hallways
+    CSDungObj* getDoorConnectedToTile(CSPoint *);
+    CSDungObj* getDoorConnectedToRoom(CSRoom *);
+    CSDungObj* getObjectAtTile(CSPoint *);
+    bool getGoodRoomPoint(CSPoint &, bool);
+    bool isWallPointFree(CSPoint *, objReg, CSDungObj *);
+    bool isTilePassable(CSPoint *);
     
     bool isHall(void);
     int getRoomNum(void);

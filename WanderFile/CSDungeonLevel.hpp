@@ -59,7 +59,7 @@ public:
     void replaceDoor(void);
     void slideRoom(int, int, int);
     
-    bool checkForMonsterAtPoint(CSPoint *, CSDungObj *);
+    //bool checkForMonsterAtPoint(CSPoint *, CSDungObj *);
     void movePlayer(int inX, int inY);
     
     void printWindow();

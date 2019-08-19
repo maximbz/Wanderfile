@@ -80,8 +80,8 @@
 		41B4254C2255CE5F00BFC5C6 /* CSCreature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSCreature.cpp; sourceTree = "<group>"; };
 		41B4254D2255CE5F00BFC5C6 /* CSCreature.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSCreature.hpp; sourceTree = "<group>"; };
 		41ECD92E22C567BF00734D00 /* libncurses.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libncurses.tbd; path = usr/lib/libncurses.tbd; sourceTree = SDKROOT; };
-		41EF157D1F964ABE002AF88C /* CSLine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CSLine.cpp; path = ../CSLine.cpp; sourceTree = "<group>"; };
-		41EF157E1F964ABE002AF88C /* CSLine.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = CSLine.hpp; path = ../CSLine.hpp; sourceTree = "<group>"; };
+		41EF157D1F964ABE002AF88C /* CSLine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSLine.cpp; sourceTree = "<group>"; };
+		41EF157E1F964ABE002AF88C /* CSLine.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSLine.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,34 +116,58 @@
 		415D74411E38655C002AC908 /* WanderFile */ = {
 			isa = PBXGroup;
 			children = (
+				418BA03923074C0D00CC677B /* RandomHandler */,
+				418BA03823074BD600CC677B /* Sorters */,
+				418BA03A23074C2E00CC677B /* Geometry */,
 				415D746D1E386610002AC908 /* WanderFile.h */,
 				415D74421E38655C002AC908 /* main.cpp */,
 				415FA6C31F428514007D9263 /* CSPlayerChoice.hpp */,
 				415FA6C41F428514007D9263 /* CSPlayerChoice.cpp */,
-				415D74661E386610002AC908 /* CSRandomHandler.hpp */,
-				415D74651E386610002AC908 /* CSRandomHandler.cpp */,
-				415D74681E386610002AC908 /* CSRandomRange.hpp */,
-				415D74671E386610002AC908 /* CSRandomRange.cpp */,
-				41A4A75E2169B9F3007B75A5 /* CSRandomList.hpp */,
-				41A4A75D2169B9F3007B75A5 /* CSRandomList.cpp */,
 				4117F70121A21391007B0DE3 /* CSDoorHandler.hpp */,
 				4117F70021A21391007B0DE3 /* CSDoorHandler.cpp */,
 				415D74791E3DD2DE002AC908 /* CSGameState.hpp */,
 				415D74781E3DD2DE002AC908 /* CSGameState.cpp */,
 				41AB14EA229B3E5500D3B576 /* CSMonsterClass.hpp */,
 				41AB14E9229B3E5500D3B576 /* CSMonsterClass.cpp */,
-				41B4254D2255CE5F00BFC5C6 /* CSCreature.hpp */,
-				41B4254C2255CE5F00BFC5C6 /* CSCreature.cpp */,
 				415D74601E386610002AC908 /* CSDungeonLevel.hpp */,
 				415D745F1E386610002AC908 /* CSDungeonLevel.cpp */,
-				415D746C1E386610002AC908 /* CSRoomSorter.hpp */,
-				415D746B1E386610002AC908 /* CSRoomSorter.cpp */,
-				416558F41EF5B12B00226674 /* CSDungObjSorter.hpp */,
-				416558F31EF5B12B00226674 /* CSDungObjSorter.cpp */,
 				415D746A1E386610002AC908 /* CSRoom.hpp */,
 				415D74691E386610002AC908 /* CSRoom.cpp */,
 				415D74621E386610002AC908 /* CSDungObj.hpp */,
 				415D74611E386610002AC908 /* CSDungObj.cpp */,
+				41B4254D2255CE5F00BFC5C6 /* CSCreature.hpp */,
+				41B4254C2255CE5F00BFC5C6 /* CSCreature.cpp */,
+			);
+			path = WanderFile;
+			sourceTree = "<group>";
+		};
+		418BA03823074BD600CC677B /* Sorters */ = {
+			isa = PBXGroup;
+			children = (
+				415D746C1E386610002AC908 /* CSRoomSorter.hpp */,
+				415D746B1E386610002AC908 /* CSRoomSorter.cpp */,
+				416558F41EF5B12B00226674 /* CSDungObjSorter.hpp */,
+				416558F31EF5B12B00226674 /* CSDungObjSorter.cpp */,
+			);
+			path = Sorters;
+			sourceTree = "<group>";
+		};
+		418BA03923074C0D00CC677B /* RandomHandler */ = {
+			isa = PBXGroup;
+			children = (
+				415D74661E386610002AC908 /* CSRandomHandler.hpp */,
+				415D74651E386610002AC908 /* CSRandomHandler.cpp */,
+				415D74681E386610002AC908 /* CSRandomRange.hpp */,
+				415D74671E386610002AC908 /* CSRandomRange.cpp */,
+				41A4A75E2169B9F3007B75A5 /* CSRandomList.hpp */,
+				41A4A75D2169B9F3007B75A5 /* CSRandomList.cpp */,
+			);
+			path = RandomHandler;
+			sourceTree = "<group>";
+		};
+		418BA03A23074C2E00CC677B /* Geometry */ = {
+			isa = PBXGroup;
+			children = (
 				415D74761E3D524E002AC908 /* CSRect.hpp */,
 				415D74751E3D524E002AC908 /* CSRect.cpp */,
 				415D74641E386610002AC908 /* CSPoint.hpp */,
@@ -155,7 +179,7 @@
 				419561881F6DD14600B6A03B /* CSAxis.hpp */,
 				419561871F6DD14600B6A03B /* CSAxis.cpp */,
 			);
-			path = WanderFile;
+			path = Geometry;
 			sourceTree = "<group>";
 		};
 		41ECD92D22C567BE00734D00 /* Frameworks */ = {

@@ -32,6 +32,7 @@ public:
     void setGameWindow(CSRect);
     int loadMonsterManual(void);
     void cleanUpGameState(void);
+    
     void slideGameWindow(CSPoint *);
     void centerGameWindow(CSPoint *);
     void toggleRoomNums(void);

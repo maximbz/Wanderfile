@@ -19,7 +19,7 @@ class CSRoom;
 
 class CSDungObj
 {
-private:
+protected:
     bool        _wasMoved;
     char        _objChar;//only used to override default (or with room numbers)
     int         _objNum;
@@ -38,16 +38,18 @@ public:
     void setWasMoved(bool);
     void setChar(char);
     void setNum(int);
-    void setLoc(CSPoint);
-    void setParent(CSDungObj*);
-    void setChild(CSDungObj*);
-    void setConnect(CSDungObj*);
+    void setLoc(CSPoint *);
+    virtual void setOwner(CSRoom *);
+    void setParent(CSDungObj *);
+    void setChild(CSDungObj *);
+    void setConnect(CSDungObj *);
     
     void slideObject(CSPoint);
     bool slideDoor(CSPoint);
     bool checkForRegion(objReg);
     void removeConnect(void);
     void deleteObject(void);
+    virtual bool updateObject(void);
     
     bool getWasMoved(void);
     char getChar(void);
@@ -60,6 +62,7 @@ public:
     CSDungObj* getParent(void);
     CSDungObj* getConnect(void);
     CSDungObj* getChild(void);
+    virtual bool getIsPlayer(void);
 };
 
 #endif /* CSDungObj_hpp */
