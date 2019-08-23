@@ -33,7 +33,7 @@ private:
     CSRoom              *_outerRooms[NUM_ROOM_WALLS];
     list<CSRoom *>      _levelRooms;
     CSRoomSorter        _roomComparator;
-    list<CSCreature *>  _levelMonsters;
+    //list<CSCreature *>  _levelMonsters;
     
     //void indexRooms(list<CSRoom*>*);
     CSRoom* createFirstRoom(void);

@@ -895,7 +895,6 @@ void CSDungeonLevel::movePlayer(int inX, int inY)
                 if(roomChange)
                     break;
             }
-                
 }
 
 /*bool CSDungeonLevel::checkForMonsterAtPoint(CSPoint *inPoint, CSDungObj *inObj)

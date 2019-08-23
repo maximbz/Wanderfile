@@ -69,7 +69,6 @@ public:
     
     CSDungObj* getUnconnectedDoor(void);
     CSDungObj* getConnectedDoor(void);//only for hallways
-    CSDungObj* getDoorConnectedToTile(CSPoint *);
     CSDungObj* getDoorConnectedToRoom(CSRoom *);
     CSDungObj* getObjectAtTile(CSPoint *);
     bool getGoodRoomPoint(CSPoint &, bool);
@@ -84,6 +83,7 @@ public:
     void getWallessRect(CSRect &);
     CSRoom* getRoomToConnect(void);
     int getNumDoors(void);
+    CSGameState* getTheGame(void);
 };
 
 #endif /* CSRoom_hpp */

@@ -8,6 +8,7 @@
 
 #include "CSCreature.hpp"
 #include "CSRoom.hpp"
+#include "CSGameState.hpp"
 
 CSCreature::CSCreature(void)
 {
@@ -43,6 +44,7 @@ CSCreature::CSCreature(CSPoint *inLoc, CSMonsterClass *inMonsterClass, CSRoom *i
 
 void CSCreature::initCreature(void)
 {
+    _player = false;
     _objectType = OBJ_CREATURE;
     _objectRegion = REG_ROOM;
 }
@@ -50,23 +52,25 @@ void CSCreature::initCreature(void)
 
 bool CSCreature::moveCreature(CSPoint *inVect)
 {
-    bool    roomChange = false;
-    CSRoom  *newRoom;
-    CSPoint newPoint = _objectLoc;
+    bool        roomChange = false;
+    CSPoint     newPoint = _objectLoc;
+    CSRoom      *nextOwner = _owner;//assume that after this move, creature will still be owned by the same room
     
     newPoint = newPoint + *inVect;
     
-    if(!_owner->getRect()->doesRectContainPoint(&newPoint))//are we about to leave our owner room?
+    if(!_owner->getRect()->doesRectContainPoint(&newPoint))//are we about to leave our current owner room?
     {
         roomChange = true;
-        newRoom = _owner->getDoorConnectedToTile(&_objectLoc)->getOwner();//set our owner to the new room we'll enter
-        if(newRoom != nullptr)
-            setOwner(newRoom);
+        nextOwner = _owner->getObjectAtTile(&_objectLoc)->getConnect()->getOwner();//get the room connected to the door we're currently standing on
     }
+    
+    if(nextOwner->isTilePassable(&newPoint))//make sure the creaure can move to the tile it's trying to, whether they're leaving a room or not
+    {
+        if(roomChange)
+            setOwner(nextOwner);
         
-        
-    if(_owner->isTilePassable(&newPoint))//make sure the creaure can move to the tile it's trying to
         slideObject(*inVect);
+    }
     
     return roomChange;
 }
@@ -104,6 +108,9 @@ void CSCreature::killCreature(void)
 bool CSCreature::updateObject(void)
 {
     CSPoint moveVect(0,0);
+    
+    if(_owner->getTheGame()->getBreakState())
+        moveVect = moveVect;
     
     switch (_theRandHand->getNumber(&_moveDir))
     {

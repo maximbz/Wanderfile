@@ -634,17 +634,6 @@ CSDungObj* CSRoom::getConnectedDoor(void)
     return nullptr;
 }
 
-CSDungObj* CSRoom::getDoorConnectedToTile(CSPoint *inTile)
-{
-    CSDungObj   *objectAtTile = getObjectAtTile(inTile);
-    
-    if(objectAtTile != nullptr)
-        if(objectAtTile->getType() == OBJ_DOOR)
-            return objectAtTile->getConnect();
-    
-    return nullptr;
-}
-
 CSDungObj* CSRoom::getDoorConnectedToRoom(CSRoom *inRoom)
 {
     list<CSDungObj *>::iterator objListIter;
@@ -834,3 +823,8 @@ int CSRoom::getNumDoors(void)
     return _numDoors;
 }
 
+
+CSGameState* CSRoom::getTheGame(void)
+{
+    return _theGame;
+}
