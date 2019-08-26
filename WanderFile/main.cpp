@@ -43,6 +43,8 @@ int main(int argc, const char * argv[])
     CSGameState     theGame;
     CSDungeonLevel  dungeon(&theRandHand, &theGame, &theDoorHand, 1);
     
+    list<CSRoom *>::iterator    roomListIter;
+    
     menuWind = newwin(MENU_BOUND_HEIGHT, theGame.getGameWindRect()->getWidth(), theGame.getGameWindRect()->getHeight() + 1, 0);
     menuWind = initscr();//initializes terminal to use ncurses
     cbreak();//disable the buffering of typed characters by the TTY driver and get a character-at-a-time input
@@ -82,10 +84,12 @@ int main(int argc, const char * argv[])
             dungeon.printWindow();
             
             //temp debug block to display player loc
-            string  outputStr = "Player Movement: a-Left, d-Right, w-Up, s-Down. Player Room: ";
-            int playerRoom;
-            playerRoom = theGame.getPlayer()->getOwner()->getRoomNum();
-            outputStr.append(to_string(playerRoom));
+            string  outputStr = "Updated Rooms: ";//"Player Movement: a-Left, d-Right, w-Up, s-Down."
+            for(roomListIter = dungeon.roomsToUpdate.begin(); roomListIter != dungeon.roomsToUpdate.end(); roomListIter++)
+            {
+                outputStr.append(to_string((*roomListIter)->getRoomNum()));
+                outputStr.append(",");
+            }
             
             mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputStr.c_str());
             mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "OR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit.\n");

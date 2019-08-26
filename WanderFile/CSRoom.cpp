@@ -15,16 +15,18 @@
 
 CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand)
 {
-    _theGame = inGame;
-    _theRandHand = inRandHand;
-    _theDoorHand = inDoorHand;
-    _roomNumDigits = 0;
-    _roomToConnect = nullptr;
-    _roomNum = BAD_DATA;
-    _numDoors = 0;
+    roomInit(inGame, inRandHand, inDoorHand);
 }
 
 CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSPoint *inTopLeft, CSPoint *inBotRight)
+{
+    roomInit(inGame, inRandHand, inDoorHand);
+    
+    _roomRect.topLeft = *inTopLeft;
+    _roomRect.botRight = *inBotRight;
+}
+
+void CSRoom::roomInit(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand)
 {
     _theGame = inGame;
     _theRandHand = inRandHand;
@@ -33,9 +35,7 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
     _roomToConnect = nullptr;
     _roomNum = BAD_DATA;
     _numDoors = 0;
-    
-    _roomRect.topLeft = *inTopLeft;
-    _roomRect.botRight = *inBotRight;
+    _vertHall = false;
 }
 
 
@@ -45,6 +45,11 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
 void CSRoom::setHallState(bool inState)
 {
     _isHall = inState;
+}
+
+void CSRoom::setVertHallState(bool inState)
+{
+    _vertHall = inState;
 }
 
 void CSRoom::setRoomNum(int inRoomNum)
@@ -306,7 +311,6 @@ int CSRoom::connectToRoom(void)
 
 void CSRoom::updateRoomNum(int inNumDigits)
 {
-    bool            vertHall = false;
     int             loop, powerResult;
     char            newDigit;
     CSPoint         newDigitLoc;
@@ -331,14 +335,11 @@ void CSRoom::updateRoomNum(int inNumDigits)
         else
             listIter++;
     }
-
-    if(_isHall && _roomRect.getHeight() > _roomRect.getWidth())//the real way to determine this is to check whether top & bot walls have doors, which could easily be set up during room creation, if it matters that much
-        vertHall = true;
     
     //create room nums based on new number of digits
     for(loop = 1; loop <= inNumDigits; loop++)
     {
-        if(vertHall)
+        if(_vertHall)
             newDigitLoc.setPoints(wallessRect.topLeft.x, (wallessRect.topLeft.y + inNumDigits) - loop);//inset from top & left walls by 1 tile
         else
             newDigitLoc.setPoints((wallessRect.topLeft.x + inNumDigits) - loop, wallessRect.topLeft.y);//inset from top & left walls by 1 tile
@@ -655,7 +656,7 @@ CSDungObj* CSRoom::getObjectAtTile(CSPoint *inTile)//finds and returns a CSDungO
     list<CSDungObj *>::iterator listIter;
     
     for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
-        if(*(*listIter)->getLoc() == *inTile && (*listIter)->getType() != OBJ_CREATURE)
+        if(*(*listIter)->getLoc() == *inTile && (*listIter)->getType() != OBJ_CREATURE && (*listIter)->getType() != OBJ_ROOM_NUM)
             return *listIter;
     
     return nullptr;
@@ -753,19 +754,29 @@ bool CSRoom::isWallPointFree(CSPoint *inPoint, objReg inWall, CSDungObj *doorToM
 
 bool CSRoom::isTilePassable(CSPoint *inTile)
 {
+    bool        insideWalls;
     CSRect      wallessRect;
-    CSDungObj   *tileObj;
-    
-    tileObj = checkForObjectToDraw(inTile);//check if there's an object or creature at this tile
-    if(tileObj != nullptr)//if there is, return whether that object is passable
-        return tileObj->isPassable();
+    CSDungObj   *tileObj = nullptr;
     
     //check whether there is a wall at the tile (if the new tile is in _roomRect but NOT in wallesRect)
     getWallessRect(wallessRect);
-    if(_roomRect.doesRectContainPoint(inTile) && !wallessRect.doesRectContainPoint(inTile))
-        return false;//if there is, we shall not pass!
+    insideWalls = wallessRect.doesRectContainPoint(inTile);
     
-    return true;//but odds are, yeah, totally, you can pass
+    tileObj = checkForObjectToDraw(inTile);//check if there's an object or creature at this tile
+    if(tileObj != nullptr)//if there is, return whether that object is passable
+    {
+        if(tileObj->isPassable())
+        {
+            if(tileObj->getType() == OBJ_ROOM_NUM)
+                return insideWalls;
+            else
+                return true;
+        }
+        else
+            return false;
+    }
+    else
+        return insideWalls;
 }
 
 
@@ -775,6 +786,11 @@ bool CSRoom::isTilePassable(CSPoint *inTile)
 bool CSRoom::isHall(void)
 {
     return _isHall;
+}
+
+bool CSRoom::isVertHall(void)
+{
+    return _vertHall;
 }
 
 int CSRoom::getRoomNum(void)

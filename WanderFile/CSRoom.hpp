@@ -28,7 +28,7 @@ private:
     CSRandomHandler     *_theRandHand;
     CSDoorHandler       *_theDoorHand;
     
-    bool                _isHall;
+    bool                _isHall, _vertHall;
     int                 _roomNum, _roomNumDigits, _numDoors;
     CSRandomRange       _wallGenLoc[NUM_ROOM_WALLS];
     CSRect              _roomRect;
@@ -43,8 +43,10 @@ private:
 public:    
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSPoint *, CSPoint *);
+    void roomInit(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand);
     
     void setHallState(bool);
+    void setVertHallState(bool);
     void setRoomNum(int);
     void setRoomToConnect(CSRoom *);
     
@@ -76,6 +78,7 @@ public:
     bool isTilePassable(CSPoint *);
     
     bool isHall(void);
+    bool isVertHall(void);
     int getRoomNum(void);
     CSRandomRange* getWallGenRanges(void);
     list<CSDungObj *>* getObjects(void);

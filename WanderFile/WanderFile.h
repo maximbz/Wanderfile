@@ -59,6 +59,7 @@ const float DOOR_GEN_SLOW_POINT = .7;
 const int   ONE_DOOR_CHANCES = 30;
 const int   NO_TREASURE_CHANCES = 30;
 const float MONSTER_RATE = .3;
+const int   MOVE_CHECK_DIST = 3;//how many rooms out monsters get to move/update
 
 //divide heights in half due to how ascii printing looks
 const int   ROOM_SIZE_MIN = 2;

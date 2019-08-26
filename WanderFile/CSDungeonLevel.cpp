@@ -61,7 +61,7 @@ void CSDungeonLevel::createDungeon(void)
             if(goodRoom)//if that also worked, add it to the room list
             {
                 _levelRooms.push_back(newRoom);
-                //updateRoomNums();//turns on room nums
+                updateRoomNums();//turns on room nums
                 //CSPoint   centerPoint;
                 //&newRoom->getRect()->getCenterPoint(centerPoint);
                 //_theGame->centerGameWindow(centerPoint);
@@ -271,16 +271,14 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
     
     list<CSRoom *>::iterator    roomListIter;
     
+    if(inDoor == nullptr)
+        return false;//something's wrong
+    if(_theGame->getBreakState())
+        loop = 0;//leave break point for debug purposes.
     
     /*Setup our origin point*/
     
     //create a new location that will be the door in our new room, adjacent to the door we found in inRoom, then connect it to inRoom -- this point is continually referenced in room generation
-    
-    if(_theGame->getBreakState())
-        loop = 0;//leave break point for debug purposes.
-    
-    if(inDoor == nullptr)
-        return false;
     
     newDoorWall = getFacingWall(inDoor->getRegion());
     roomGenAxis.setAxisFromWall(newDoorWall);//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
@@ -292,18 +290,22 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
     
     /*Set up the region rects that act as random ranges*/
     
-    //if we're making a non-hallway:set the outer wall to room size max, then bring back in, if level walls are closer. Then bring in again if nearby rooms are closer. Thus, our new room can never overlap anything or go somewhere it shouldn't.
+    //if we're making a non-hallway: set the outer wall to room size max, then bring back in, if level walls are closer. Then bring in again if nearby rooms are closer. Thus, our new room can never overlap anything or go somewhere it shouldn't.
     //if we're making a hallway: set the one rect to the hallway max size, and if a room intersects it, the hallway changes modes to connect directly to that room. If we're outside level bounds, we cancel this hallway entirely
     
     //create the min room size rect, based on newDoor.loc, which determines whether a room can even be here in the first place.
     newPoint = newDoorPoint;
-    if(!inRoom->isHall())//if newRoom is a hallway
-        newPoint.slidePointViaAxis(roomGenAxis.dim, (HALL_SIZE / 2) * roomGenAxis.getDirOffset());//slide along newDoorWall to create the rects's nearest point (to the right of newDoor, from the perspective of someone walking into newRoom)
+    if(newRoom->isHall())//if newRoom is a hallway
+    {
+        newPoint.slidePointViaAxis(roomGenAxis.dim, (HALL_SIZE / 2) * roomGenAxis.getDirOffset());//slide along newDoorWall to create the rect's nearest point (to the right of newDoor, from the perspective of someone walking into newRoom)
+        if(inDoor->getRegion() == REG_WALL_TOP || inDoor->getRegion() == REG_WALL_BOT)
+            newRoom->setVertHallState(true);
+    }
     else//if the new room is a normal room
         newPoint.slidePointViaAxis(roomGenAxis.dim, (ROOM_SIZE_MIN / 2) * roomGenAxis.getDirOffset());//slide along newDoorWall to create the rects's nearest point (to the right of newDoor, from the perspective of someone walking into newRoom)
     roomGenRect[(int)REG_ROOM_CORE].setCorner(roomGenAxis.dir, &newPoint);
     
-    if(!inRoom->isHall())//if newRoom is a hallway
+    if(newRoom->isHall())//if newRoom is a hallway
     {
         newPoint.slidePointViaAxis(roomGenAxis.getPerpAxis(), HALL_LENGTH_MAX * roomGenAxis.getOppDirOffset());//add or subtract HALL_LENGTH_MAX to get opposite wall
         newPoint.setAxisPoint(roomGenAxis.dim, newPoint.getAxisPoint(roomGenAxis.dim) - (HALL_SIZE * roomGenAxis.getDirOffset()));//set opposite, perpendicular wall adjacent to newDoor the other way (to the left of newDoor and across the room, from the perspective of someone walking into newRoom)
@@ -741,6 +743,40 @@ void CSDungeonLevel::slideRoom(int inRoomNum, int inXDist, int inYDist)//for dev
     //once the slide is complete, check for any collisions. If there are, do the inverse slide
 }
 
+void CSDungeonLevel::addRoomsToList(list<CSRoom *> *roomList, CSRoom *startingRoom, int numRoomsOut)
+{
+    bool    alreadyAdded;
+    CSRoom  *newRoom;
+    
+    list<CSRoom *>::iterator    roomIter;
+    list<CSDungObj *>::iterator objIter;
+    
+    numRoomsOut--;
+    
+    for(objIter = startingRoom->getObjects()->begin(); objIter != startingRoom->getObjects()->end(); objIter++)
+        if((*objIter)->getType() == OBJ_DOOR)//it's a door
+        {
+            alreadyAdded = false;
+            newRoom = (*objIter)->getConnect()->getOwner();
+            
+            for(roomIter = roomList->begin(); roomIter != roomList->end(); roomIter++)//check our growing list
+                if(newRoom == (*roomIter))//is this new room already in there?
+                {
+                    alreadyAdded = true;
+                    break;
+                }
+            
+            if(!alreadyAdded)//if not, add it!
+            {
+                roomList->push_back(newRoom);
+                
+                if(numRoomsOut > 0)
+                    addRoomsToList(roomList, newRoom, numRoomsOut);//drop down a level and do it again
+            }
+        }
+}
+
+
 void CSDungeonLevel::createStairs(void)
 {
     CSRandomRange   orientationSelector(RAND_DUNGEON, AXIS_HORIZ, AXIS_VERT),
@@ -866,7 +902,8 @@ void CSDungeonLevel::movePlayer(int inX, int inY)
     CSPoint     movementVect(inX, inY), newLoc;
     CSRoom      *movementRoom;
     
-    list<CSRoom *>              roomsToUpdate;
+    //list<CSRoom *>              roomsToUpdate;
+    roomsToUpdate.clear();
     list<CSRoom *>::iterator    roomIter;
     list<CSDungObj *>::iterator objIter;
     
@@ -882,9 +919,10 @@ void CSDungeonLevel::movePlayer(int inX, int inY)
     
     //add the current room and all connected rooms to the list of rooms to update monsters in
     roomsToUpdate.push_back(movementRoom);
-    for(objIter = movementRoom->getObjects()->begin(); objIter != movementRoom->getObjects()->end(); objIter++)
-        if((*objIter)->getType() == OBJ_DOOR)
-            roomsToUpdate.push_back((*objIter)->getConnect()->getOwner());
+    addRoomsToList(&roomsToUpdate, movementRoom, MOVE_CHECK_DIST);//add all rooms, out 3 levels
+    
+    //roomsToUpdate.unique();//if necessary
+    
     
     //for every room we want to update monsters in
     for(roomIter = roomsToUpdate.begin(); roomIter != roomsToUpdate.end(); roomIter++)

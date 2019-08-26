@@ -45,6 +45,8 @@ private:
     void createMonsters(void);
     
 public:
+    list<CSRoom *>              roomsToUpdate;
+    
     CSDungeonLevel(CSRandomHandler *, CSGameState *, CSDoorHandler *, int);
     
     void createDungeon(void);
@@ -58,6 +60,7 @@ public:
     void deleteRoom(CSRoom *);
     void replaceDoor(void);
     void slideRoom(int, int, int);
+    void addRoomsToList(list<CSRoom *> *, CSRoom *, int);
     
     //bool checkForMonsterAtPoint(CSPoint *, CSDungObj *);
     void movePlayer(int inX, int inY);
