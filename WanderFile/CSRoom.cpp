@@ -374,7 +374,7 @@ bool CSRoom::slideRoom(CSPoint *inVector)
 {
     CSDungObj   *connectedDoor;
     CSRect      oldRoomLoc;
-    CSPoint     newLoc;
+    CSPoint     newLoc, newVect;
     CSAxis      slideAxis, roomAxis;
     bool        success = true;
     

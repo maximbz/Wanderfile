@@ -20,7 +20,7 @@ class CSGameState
 {
 private:
     bool        _printRoomNums, _breakForDebug;
-    CSRect      _gameWindRect, _levelBounds;
+    CSRect      _playerMoveRect, _gameWindRect, _levelBounds;
     CSCreature  _theplayer;
     WINDOW      *_gameWind;
     
@@ -33,12 +33,15 @@ public:
     int loadMonsterManual(void);
     void cleanUpGameState(void);
     
-    void slideGameWindow(CSPoint *);
+    void slideGameWindow(objReg);
     void centerGameWindow(CSPoint *);
+    void slidePlayerMoveRect(objReg);
+    void centerPlayerMoveRect(CSPoint *);
     void toggleRoomNums(void);
     void toggleBreak(void);
     
     WINDOW* getGameWindow(void);
+    CSRect* getPlayerMoveRect(void);
     CSRect* getGameWindRect(void);
     CSRect* getLevelBounds(void);
     bool getRoomNumsState(void);

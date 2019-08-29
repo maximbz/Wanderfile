@@ -50,6 +50,8 @@ const int   LEVEL_BOUND_RIGHT = 600;
 const int   LEVEL_BOUND_BOTTOM = 600;
 const int   WINDOW_BOUND_RIGHT = 79;
 const int   WINDOW_BOUND_BOTTOM = 20;
+const int   PLAYER_MOVE_BOUND_RIGHT = 45;
+const int   PLAYER_MOVE_BOUND_BOTTOM = 9;
 const int   MENU_BOUND_HEIGHT = 2;
 
 const int   NUM_ROOM_WALLS = 4;
@@ -136,6 +138,23 @@ inline objReg getCountclockWall(objReg inWall)
             printf("Error in WanderFile.h: Trying to return a clockwise wall of a null wall.\n");
             return REG_NULL;
     }
+}
+
+inline objReg getRegFromVect(int inX, int inY)
+{
+    if(inX > 0)
+        return REG_WALL_RIGHT;
+    else if(inX < 0)
+        return REG_WALL_LEFT;
+    else//x == 0
+    {
+        if(inY > 0)
+            return REG_WALL_BOT;
+        else if(inY < 0)
+            return REG_WALL_TOP;
+    }
+    
+    return REG_NULL;
 }
 
 inline objReg getNextReg(objReg inReg)//rotate to next region for next for iter

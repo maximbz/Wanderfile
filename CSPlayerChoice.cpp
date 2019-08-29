@@ -119,8 +119,10 @@ void CSPlayerChoice::getUserCharAnswer(CSPoint &inPoint, WINDOW *inWind)
     char    userResponse;
     CSPoint responseMatrix(BAD_DATA, BAD_DATA);
     
-    waddch(inWind, '(');//no leading parens in printOptions
-    printOptions(inWind);
+    //print out letter options
+    //waddch(inWind, '(');//no leading parens in printOptions
+    //printOptions(inWind);
+    
     userResponse = wgetch(inWind);
     userResponse = tolower(userResponse);
     

@@ -34,6 +34,7 @@ CSGameState::CSGameState()
     curs_set(0);//set cursor to be invisible
     start_color();
     
+    _playerMoveRect.setPoints(0, 0, PLAYER_MOVE_BOUND_RIGHT, PLAYER_MOVE_BOUND_BOTTOM);
     _theplayer.setIsPlayer(true);
     if(loadMonsterManual())
         printf("Monsters did not load. Is the file 'MonsterManual.txt' missing?\n");
@@ -153,24 +154,42 @@ void CSGameState::cleanUpGameState(void)
     _monsterManual.clear();
 }
 
-void CSGameState::slideGameWindow(CSPoint *inVect)
+void CSGameState::slideGameWindow(objReg inReg)
 {
     int     loop;
-    CSPoint dimVect;
+    CSPoint dimVect(0, 0), inVect(&dimVect, inReg);
     
     for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
     {
-        if((_gameWindRect.topLeft.getAxisPoint((axis)loop) > 1 && inVect->getAxisPoint((axis)loop) < 0) ||
-           (_gameWindRect.botRight.getAxisPoint((axis)loop) < _levelBounds.botRight.getAxisPoint((axis)loop) && inVect->getAxisPoint((axis)loop) > 0))
+        if((_gameWindRect.topLeft.getAxisPoint((axis)loop) > 1 && inVect.getAxisPoint((axis)loop) < 0) ||
+           (_gameWindRect.botRight.getAxisPoint((axis)loop) < _levelBounds.botRight.getAxisPoint((axis)loop) && inVect.getAxisPoint((axis)loop) > 0))
         {
-            dimVect.setAxisPoint((axis)loop, inVect->getAxisPoint((axis)loop));
+            dimVect.setAxisPoint((axis)loop, inVect.getAxisPoint((axis)loop));
             _gameWindRect.slideRect(&dimVect);
         }
         
         dimVect.setPoints(0, 0);
     }
     
-    printf("Game Window: %d, %d - %d, %d\n", _gameWindRect.topLeft.x, _gameWindRect.topLeft.y, _gameWindRect.botRight.x, _gameWindRect.botRight.y);
+    //printf("Game Window: %d, %d - %d, %d\n", _gameWindRect.topLeft.x, _gameWindRect.topLeft.y, _gameWindRect.botRight.x, _gameWindRect.botRight.y);
+}
+
+void CSGameState::slidePlayerMoveRect(objReg inReg)
+{
+    int     loop;
+    CSPoint dimVect(0, 0), inVect(&dimVect, inReg);
+    
+    for(loop = AXIS_HORIZ; loop <= AXIS_VERT; loop++)
+    {
+        if((_playerMoveRect.topLeft.getAxisPoint((axis)loop) > 1 && inVect.getAxisPoint((axis)loop) < 0) ||
+           (_playerMoveRect.botRight.getAxisPoint((axis)loop) < _levelBounds.botRight.getAxisPoint((axis)loop) && inVect.getAxisPoint((axis)loop) > 0))
+        {
+            dimVect.setAxisPoint((axis)loop, inVect.getAxisPoint((axis)loop));
+            _playerMoveRect.slideRect(&dimVect);
+        }
+        
+        dimVect.setPoints(0, 0);
+    }
 }
 
 void CSGameState::centerGameWindow(CSPoint *inPoint)
@@ -212,6 +231,45 @@ void CSGameState::centerGameWindow(CSPoint *inPoint)
     }
 }
 
+void CSGameState::centerPlayerMoveRect(CSPoint *inPoint)
+{
+    bool    topLeftAnchor = true;
+    
+    //center on in point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
+    
+    _playerMoveRect.topLeft.x =  inPoint->x - (PLAYER_MOVE_BOUND_RIGHT / 2);
+    if(_playerMoveRect.topLeft.x < 0)
+        _playerMoveRect.topLeft.x = 0;
+    else if(_playerMoveRect.botRight.x > _levelBounds.botRight.x)
+    {
+        _playerMoveRect.botRight.x = _levelBounds.botRight.x;
+        topLeftAnchor = false;
+    }
+    
+    _playerMoveRect.topLeft.y = inPoint->y - (PLAYER_MOVE_BOUND_BOTTOM / 2);
+    if(_playerMoveRect.topLeft.y < 0)
+        _playerMoveRect.topLeft.y = 0;
+    else if(_playerMoveRect.botRight.y > _levelBounds.botRight.y)
+    {
+        _playerMoveRect.botRight.y = _levelBounds.botRight.y;
+        topLeftAnchor = false;
+    }
+    
+    
+    //adjust other corner based on the corner we set
+    
+    if(topLeftAnchor)
+    {
+        _playerMoveRect.botRight.x = _playerMoveRect.topLeft.x + PLAYER_MOVE_BOUND_RIGHT;
+        _playerMoveRect.botRight.y = _playerMoveRect.topLeft.y + PLAYER_MOVE_BOUND_BOTTOM;
+    }
+    else
+    {
+        _playerMoveRect.topLeft.x = _playerMoveRect.botRight.x - PLAYER_MOVE_BOUND_RIGHT;
+        _playerMoveRect.topLeft.y = _playerMoveRect.botRight.y - PLAYER_MOVE_BOUND_BOTTOM;
+    }
+}
+
 void CSGameState::toggleRoomNums(void)
 {
     _printRoomNums = !_printRoomNums;
@@ -226,6 +284,11 @@ void CSGameState::toggleBreak(void)
 WINDOW* CSGameState::getGameWindow(void)
 {
     return _gameWind;
+}
+
+CSRect* CSGameState::getPlayerMoveRect(void)
+{
+    return &_playerMoveRect;
 }
 
 CSRect* CSGameState::getGameWindRect(void)

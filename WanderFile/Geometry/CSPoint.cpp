@@ -20,6 +20,44 @@ CSPoint::CSPoint(int inX, int inY)
     y = inY;
 }
 
+CSPoint::CSPoint(objReg inReg)
+{
+    x = 0;
+    y = 0;
+    
+    getVectfromReg(inReg);
+}
+
+CSPoint::CSPoint(CSPoint *inPoint, objReg inReg)
+{
+    x = inPoint->x;
+    y = inPoint->y;
+    
+    getVectfromReg(inReg);
+}
+
+void CSPoint::getVectfromReg(objReg inReg)
+{
+    switch (inReg)//convert the objReg into a newPoint based on inPoint
+    {
+        case REG_WALL_LEFT:
+            x--;
+            break;
+        case REG_WALL_TOP:
+            y--;
+            break;
+        case REG_WALL_RIGHT:
+            x++;
+            break;
+        case REG_WALL_BOT:
+            y++;
+            break;
+            
+        default:
+            break;
+    }
+}
+
 
 void CSPoint::setAxisPoint(axis inAxis, int inPoint)
 {

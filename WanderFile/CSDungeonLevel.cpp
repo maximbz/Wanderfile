@@ -61,7 +61,7 @@ void CSDungeonLevel::createDungeon(void)
             if(goodRoom)//if that also worked, add it to the room list
             {
                 _levelRooms.push_back(newRoom);
-                updateRoomNums();//turns on room nums
+                //updateRoomNums();//turns on room nums
                 //CSPoint   centerPoint;
                 //&newRoom->getRect()->getCenterPoint(centerPoint);
                 //_theGame->centerGameWindow(centerPoint);
@@ -93,6 +93,7 @@ void CSDungeonLevel::createDungeon(void)
     _theGame->getPlayer()->setLoc(&_startingStairs);
     _theGame->getPlayer()->setOwner(getRoomFromTile(&_startingStairs));
     _theGame->centerGameWindow(&_startingStairs);
+    _theGame->centerPlayerMoveRect(&_startingStairs);
     
     _theRandHand->clearRandomItems(RAND_DUNGEON);//clean up dungeon-creation
 }
@@ -896,26 +897,26 @@ void CSDungeonLevel::createMonsters(void)
 #pragma mark -
 #pragma mark Doers - GamePlay Functions
 
-void CSDungeonLevel::movePlayer(int inX, int inY)
+void CSDungeonLevel::movePlayer(objReg inReg)
 {
     bool        roomChange = false;
-    CSPoint     movementVect(inX, inY), newLoc;
+    CSPoint     newLoc(_theGame->getPlayer()->getLoc(), inReg);
     CSRoom      *movementRoom;
     
-    //list<CSRoom *>              roomsToUpdate;
-    roomsToUpdate.clear();
+    
+    list<CSRoom *>              roomsToUpdate;
     list<CSRoom *>::iterator    roomIter;
     list<CSDungObj *>::iterator objIter;
     
-    newLoc = *_theGame->getPlayer()->getLoc() + movementVect;
     movementRoom = getRoomFromTile(&newLoc);
     
-    _theGame->getPlayer()->moveCreature(&movementVect);//move the player
+    _theGame->getPlayer()->moveCreature(inReg);//move the player
     
-    //eventually create a rect around the player that doesn't move the entire window unless the player leaves the rect, like Mario camera logic
-    //if player is at the edge of its camera-move rect...
-    //slideGameWindow(&movementVect);
-    _theGame->centerGameWindow(_theGame->getPlayer()->getLoc());
+    if(!_theGame->getPlayerMoveRect()->doesRectContainPoint(&newLoc))
+    {
+        _theGame->slidePlayerMoveRect(inReg);
+        _theGame->slideGameWindow(inReg);
+    }
     
     //add the current room and all connected rooms to the list of rooms to update monsters in
     roomsToUpdate.push_back(movementRoom);

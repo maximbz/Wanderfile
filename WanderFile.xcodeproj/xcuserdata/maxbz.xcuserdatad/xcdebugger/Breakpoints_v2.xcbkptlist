@@ -10,7 +10,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WanderFile/CSDungObj.cpp"
-            timestampString = "588491731.143465"
+            timestampString = "588741972.044603"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "78"
@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WanderFile/WanderFile.h"
-            timestampString = "587878193.804217"
+            timestampString = "588741972.04466"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "98"
-            endingLineNumber = "98"
+            startingLineNumber = "101"
+            endingLineNumber = "101"
             landmarkName = "getFacingWall(objReg inWall)"
             landmarkType = "9">
          </BreakpointContent>
@@ -233,28 +233,12 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "WanderFile/CSCreature.cpp"
-            timestampString = "588393240.249154"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "113"
-            endingLineNumber = "113"
-            landmarkName = "CSCreature::updateObject(void)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
             filePath = "WanderFile/CSDungeonLevel.cpp"
-            timestampString = "588496369.720384"
+            timestampString = "588741972.045069"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "277"
-            endingLineNumber = "277"
+            startingLineNumber = "278"
+            endingLineNumber = "278"
             landmarkName = "CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)"
             landmarkType = "7">
          </BreakpointContent>

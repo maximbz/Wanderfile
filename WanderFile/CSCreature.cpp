@@ -50,26 +50,31 @@ void CSCreature::initCreature(void)
 }
 
 
-bool CSCreature::moveCreature(CSPoint *inVect)
+bool CSCreature::moveCreature(objReg inReg)
 {
     bool        roomChange = false;
-    CSPoint     newPoint = _objectLoc;
+    CSPoint     newPoint(&_objectLoc, inReg), regVector(inReg);
     CSRoom      *nextOwner = _owner;//assume that after this move, creature will still be owned by the same room
     
-    newPoint = newPoint + *inVect;
+    list<CSDungObj *>::iterator   objIter;
     
     if(!_owner->getRect()->doesRectContainPoint(&newPoint))//are we about to leave our current owner room?
-    {
-        roomChange = true;
-        nextOwner = _owner->getObjectAtTile(&_objectLoc)->getConnect()->getOwner();//get the room connected to the door we're currently standing on
-    }
+        for(objIter = _owner->getObjects()->begin(); objIter != _owner->getObjects()->end(); objIter++)
+        {
+            //in the extremely rare case that we're standing on a hall of length 1, both doors will be in the same locaiton, so we need to make sure we're passing the creature off to the correct connecting door, so we compare against the incoming region
+            if((*objIter)->getType() == OBJ_DOOR && (*objIter)->getRegion() == inReg && *((*objIter)->getLoc()) == _objectLoc)
+                nextOwner = (*objIter)->getConnect()->getOwner();//get the room connected to the door we're currently standing on
+        }
     
     if(nextOwner->isTilePassable(&newPoint))//make sure the creaure can move to the tile it's trying to, whether they're leaving a room or not
     {
-        if(roomChange)
+        if(_owner != nextOwner)
+        {
             setOwner(nextOwner);
+            roomChange = true;
+        }
         
-        slideObject(*inVect);
+        slideObject(regVector);
     }
     
     return roomChange;
@@ -107,31 +112,10 @@ void CSCreature::killCreature(void)
 
 bool CSCreature::updateObject(void)
 {
-    CSPoint moveVect(0,0);
+    //AI & creature behavior goes here!
+    //it suuure does...
     
-    if(_owner->getTheGame()->getBreakState())
-        moveVect = moveVect;
-    
-    switch (_theRandHand->getNumber(&_moveDir))
-    {
-        case REG_WALL_LEFT:
-            moveVect.x--;
-            break;
-        case REG_WALL_TOP:
-            moveVect.y--;
-            break;
-        case REG_WALL_RIGHT:
-            moveVect.x++;
-            break;
-        case REG_WALL_BOT:
-            moveVect.y++;
-            break;
-            
-        default:
-            break;
-    }
-    
-    return moveCreature(&moveVect);
+    return moveCreature((objReg)_theRandHand->getNumber(&_moveDir));
 }
 
 

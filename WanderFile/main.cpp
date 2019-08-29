@@ -83,7 +83,7 @@ int main(int argc, const char * argv[])
             //printf("%d\n", numDungeons);
             dungeon.printWindow();
             
-            //temp debug block to display player loc
+            /*temp debug block to display a list of which rooms update their monsters
             string  outputStr = "Updated Rooms: ";//"Player Movement: a-Left, d-Right, w-Up, s-Down."
             for(roomListIter = dungeon.roomsToUpdate.begin(); roomListIter != dungeon.roomsToUpdate.end(); roomListIter++)
             {
@@ -91,7 +91,7 @@ int main(int argc, const char * argv[])
                 outputStr.append(",");
             }
             
-            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputStr.c_str());
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputStr.c_str());*/
             mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "OR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit.\n");
             
             menuSelection.toggleCharOption(1, true);//turn main mode on
@@ -101,13 +101,13 @@ int main(int argc, const char * argv[])
             if(menuSelectMatrix.x == 0)
             {
                 if(menuSelectMatrix.y == 0)
-                    dungeon.movePlayer(-1, 0);
+                    dungeon.movePlayer(REG_WALL_LEFT);
                 if(menuSelectMatrix.y == 1)
-                    dungeon.movePlayer(1, 0);
+                    dungeon.movePlayer(REG_WALL_RIGHT);
                 if(menuSelectMatrix.y == 2)
-                    dungeon.movePlayer(0, -1);
+                    dungeon.movePlayer(REG_WALL_TOP);
                 if(menuSelectMatrix.y == 3)
-                    dungeon.movePlayer(0, 1);
+                    dungeon.movePlayer(REG_WALL_BOT);
             }
             
             //main menu commands

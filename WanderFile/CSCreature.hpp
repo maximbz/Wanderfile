@@ -36,7 +36,7 @@ public:
     CSCreature(CSPoint *, CSMonsterClass *, CSRoom *, CSRandomHandler *);
     void initCreature(void);
     
-    bool moveCreature(CSPoint *);
+    bool moveCreature(objReg);
     
     void setIsPlayer(bool);
     void setNullOwner(void);
