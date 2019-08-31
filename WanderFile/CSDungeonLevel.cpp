@@ -112,6 +112,8 @@ int CSDungeonLevel::saveDungeon(void)
         return 1;
     }
     
+    outputFile << _levelNum << "\n";
+    
     for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
         outputFile << (*listIter)->printRoomToFile();
     

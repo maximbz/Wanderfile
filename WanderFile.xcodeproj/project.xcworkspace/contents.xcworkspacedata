@@ -2,6 +2,12 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:WanderFile.xcodeproj">
+      location = "group:/Users/maxbz/Developer/Wanderfile/WanderFile/CSPlayerChoice.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:/Users/maxbz/Developer/Wanderfile/WanderFile/CSPlayerChoice.hpp">
+   </FileRef>
+   <FileRef
+      location = "self:">
    </FileRef>
 </Workspace>

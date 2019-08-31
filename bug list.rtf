@@ -8,8 +8,8 @@
 \f0\b\fs24 \cf0 \ul \ulc0 Bugs
 \f1\b0 \ulnone \
 \
-Hallways that are 1 tile wide have 2 doors on the same tile, so the hand-off of ownership as a creature moves through them is broken\'97it finds the first doorways on that tile and if it\'92s the wrong one it will say the creature is trying to move into a tile that\'92s outside of the connected room.\
-	is the best solution to this to check the direction the creature is trying to move, and make sure the door at that tile is the right kind of door?\
+When the player is up against the edge of the player move window, and they hit a wall, for one move toward the wall (meaning the player cannot move further), the PlayerMovementWindow still slides in the appropriate direction.\
+	could this be related to the player technically changing rooms when you press forward into a wall that\'92s in the room (when there\'92ve been glitched out rooms)?\
 
 \f0\b \ul \
 \
@@ -44,7 +44,10 @@ take in from file(s) on game load - create game objects from text file serializa
 \
 
 \f1\b0 \ulnone add an aggressiveness stat that determine how likely a monster is to move toward the player\
-If the monster isn\'92t aggressive, have a mode that it\'92s in, like \'93wander\'94, \'93rest\'94, \'93pace\'94, etc\
+	have a behavior mode that it\'92s in, which a high aggression overrides when the player is near\
+		like \'93wander\'94, \'93rest\'94, \'93pace in a room\'94, \'93protect treasure\'94, find tiny room, find giant room, etc, \
+	generally give them some sort of AI so they don\'92t literally move randomly\
+	add a move speed stat that decreases how often the update (if they\'92re slow)\
 \
 Improve menu (stats, levelnum, menu, help, quit)\
 	figure out how to stow screens in ncurses and then recall them, for sub menus\
