@@ -216,7 +216,7 @@
 		415D74371E38655C002AC908 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1020;
+				LastUpgradeCheck = 1100;
 				ORGANIZATIONNAME = "Maxim Boschert-Zielsdorf";
 				TargetAttributes = {
 					415D743E1E38655C002AC908 = {
@@ -383,6 +383,7 @@
 		415D74471E38655C002AC908 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				"FRAMEWORK_SEARCH_PATHS[arch=*]" = /usr/local/include/;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -392,6 +393,7 @@
 		415D74481E38655C002AC908 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				"FRAMEWORK_SEARCH_PATHS[arch=*]" = /usr/local/include/;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = "$(TARGET_NAME)";
