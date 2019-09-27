@@ -10,11 +10,12 @@
 #define CSDungObj_hpp
 
 #include <stdio.h>
-#include <vector>
+#include <list>
 #include "CSPoint.hpp"
 
 using namespace std;
 
+class CSDoorHandler;
 class CSRoom;
 
 class CSDungObj
@@ -34,6 +35,8 @@ protected:
 public:
     CSDungObj();
     CSDungObj(objType, objReg, CSPoint *, CSDungObj *, CSDungObj *, CSRoom *);
+    CSDungObj(CSRoom *, list<string> &, CSDoorHandler *);
+    string printObjectToFile(void);
     
     void setWasMoved(bool);
     void setChar(char);

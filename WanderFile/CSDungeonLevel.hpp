@@ -49,7 +49,7 @@ public:
     
     void createDungeon(void);
     int saveDungeon(void);
-    int loadDungeon(void);
+    int loadDungeon(string *);
     void deleteDungeon(void);
     
     void updateDungeonBounds(CSRoom *);

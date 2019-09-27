@@ -54,7 +54,14 @@ void CSDoorHandler::addDoor(CSDungObj *inDoor)
     _unconnectedLevelDoors.push_back(inDoor);
 }
 
-CSDungObj* CSDoorHandler::getNextDoor(void)
+void CSDoorHandler::addLoadingObj(CSDungObj *inObj, CSLine inConnectData)
+{
+    _unconnectedLevelDoors.push_back(inObj);
+    _loadingObjConnectData.push_back(inConnectData);
+    _numDoors++;
+}
+
+CSDungObj * CSDoorHandler::getNextDoor(void)
 {
     CSDungObj   *doorAtBack;
     
@@ -67,6 +74,16 @@ CSDungObj* CSDoorHandler::getNextDoor(void)
     _numDoors--;
     
     return doorAtBack;
+}
+
+CSLine CSDoorHandler::getNextConnectData(void)
+{
+    CSLine  dataAtBack(BAD_DATA,BAD_DATA,BAD_DATA);
+    
+    dataAtBack = _loadingObjConnectData.back();
+    _loadingObjConnectData.pop_back();
+    
+    return dataAtBack;
 }
 
 void CSDoorHandler::removeDoor(CSDungObj *inDoor)

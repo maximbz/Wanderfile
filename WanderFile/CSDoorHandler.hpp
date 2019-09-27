@@ -13,13 +13,14 @@
 #include <list>
 #include "WanderFile.h"
 #include "CSRandomHandler.hpp"
-//#include "CSRandomList.hpp"
+#include "CSLine.hpp"
 #include "CSDungObj.hpp"
 
 class CSDoorHandler
 {
 private:
     int                 _numDoors;
+    list<CSLine>        _loadingObjConnectData;//Type (0 = Child, 1 = Connect), RoomNum, ObjNum
     list<CSDungObj *>   _unconnectedLevelDoors;
     CSRandomHandler     *_theRandHand;
     CSRandomList        _numNewDoorsRandList;
@@ -30,7 +31,9 @@ public:
     void clear(void);
     
     void addDoor(CSDungObj *);
-    CSDungObj* getNextDoor(void);
+    void addLoadingObj(CSDungObj *, CSLine);
+    CSDungObj * getNextDoor(void);
+    CSLine getNextConnectData(void);
     void removeDoor(CSDungObj *);
     int getNewDoorQuantity(int);
     

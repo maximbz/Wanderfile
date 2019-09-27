@@ -11,7 +11,7 @@
 #include <ncurses.h>
 #include "WanderFile.h"
 #include "CSPlayerChoice.hpp"
-#include "RandomHandler/CSRandomHandler.hpp"
+#include "CSRandomHandler.hpp"
 #include "CSDoorHandler.hpp"
 #include "CSDungeonLevel.hpp"
 #include "CSGameState.hpp"
@@ -33,6 +33,7 @@ int main(int argc, const char * argv[])
     
     bool            gameLoop = true, printLoop;
     int             numDungeons = -1;
+    string          outputString;
     vector<char>    gameOptions, slideOptions, mainModeOptions;
     WINDOW          *menuWind;
     CSPoint         menuSelectMatrix;
@@ -71,28 +72,17 @@ int main(int argc, const char * argv[])
     //loop
     while(gameLoop)
     {
-        dungeon.createDungeon();
+        dungeon.loadDungeon(&outputString);
+        //dungeon.createDungeon();
         numDungeons++;
         printLoop = true;
         
-        //if(dungeon.saveDungeon())
-            //return 1;
-        
         while(printLoop)
         {
-            //printf("%d\n", numDungeons);
             dungeon.printWindow();
             
-            /*temp debug block to display a list of which rooms update their monsters
-            string  outputStr = "Updated Rooms: ";//"Player Movement: a-Left, d-Right, w-Up, s-Down."
-            for(roomListIter = dungeon.roomsToUpdate.begin(); roomListIter != dungeon.roomsToUpdate.end(); roomListIter++)
-            {
-                outputStr.append(to_string((*roomListIter)->getRoomNum()));
-                outputStr.append(",");
-            }
-            
-            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputStr.c_str());*/
-            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "OR: Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit.\n");
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputString.c_str());
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit.\n");
             
             menuSelection.toggleCharOption(1, true);//turn main mode on
             menuSelection.getUserCharAnswer(menuSelectMatrix, menuWind);
@@ -114,8 +104,6 @@ int main(int argc, const char * argv[])
             if(menuSelectMatrix.x == 1)
             {
                 if(menuSelectMatrix.y == 0)//quit
-                    printLoop = false;
-                if(menuSelectMatrix.y == 1)//new dungeon
                     dungeon.createDungeon();
             }
             

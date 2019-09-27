@@ -12,6 +12,8 @@
 
 CSRect::CSRect()
 {
+    topLeft.setPoints(BAD_DATA, BAD_DATA);
+    botRight.setPoints(BAD_DATA, BAD_DATA);
 }
 
 CSRect::CSRect(CSPoint *inTopLeft, CSPoint *inBotRight)

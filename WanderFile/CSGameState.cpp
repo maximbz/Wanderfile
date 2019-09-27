@@ -106,7 +106,7 @@ int CSGameState::loadMonsterManual(void)
         }
         
         //parse through fileData string and populate this new monster
-        stringstream    strToInt(valueString);
+        stringstream strToInt(valueString);
         strToInt >> intFromStr;
         
         if(keyString == "Char")

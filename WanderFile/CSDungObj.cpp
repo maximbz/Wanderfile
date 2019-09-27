@@ -6,8 +6,10 @@
 //  Copyright © 2016 Maxim Boschert-Zielsdorf. All rights reserved.
 //
 
+#include <sstream>
 #include "CSDungObj.hpp"
 #include "CSRoom.hpp"
+#include "CSLine.hpp"
 #include "CSAxis.hpp"
 
 CSDungObj::CSDungObj()
@@ -31,6 +33,148 @@ CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint *inLoc, CSDungObj 
     _owner = inOwner;
     
     _wasMoved = false;
+}
+
+CSDungObj::CSDungObj(CSRoom *inOwner, list<string> &inFileData, CSDoorHandler *inDoorHandler)
+{
+    bool        key;
+    int         loop, intFromStr, value[OBJ_ROOM_VALUES];
+    string      inputString, keyString, valueString, keyName[OBJ_ROOM_VALUES];
+    CSLine      connectData;
+    
+    list<string>::iterator    listIter;
+    
+    //set up the keys
+    keyName[0] = "ObjNum";
+    keyName[1] = "ObjType";
+    keyName[2] = "ObjReg";
+    keyName[3] = "ObjLocX";
+    keyName[4] = "ObjLocY";
+    keyName[5] = "ChRoom";
+    keyName[6] = "ChObj";
+    keyName[7] = "CoRoom";
+    keyName[8] = "CoObj";
+    keyName[9] = "ObjCheckSum";
+    for(loop = 0; loop < OBJ_ROOM_VALUES; loop++)
+        value[loop] = BAD_DATA;
+    
+    _owner = inOwner;
+    _parentObj = nullptr;
+    _childObj = nullptr;
+    _connect = nullptr;
+    
+    //each for loop is a line in fileData
+    for(listIter = inFileData.begin(); listIter != inFileData.end(); listIter++)
+    {
+        //set our shit up
+        inputString = *listIter;
+        keyString = "";
+        valueString = "";
+        key = true;
+        intFromStr = 0;
+        
+        //each for loop is a word on a line--parse through inputString string and populate key and value strings
+        for(loop = 0; loop < inputString.size(); loop++)
+        {
+            if(inputString[loop] == ';')
+                break;
+            else if(inputString[loop] == ':')
+                key = false;
+            else if(key)
+                keyString += inputString[loop];//add one char to the growing key string
+            else
+                valueString += inputString[loop];//add one char to the growing value string
+        }
+        
+        //if the last thing read was a ';', we don't want to read any further before creating out object
+        if(inputString[loop] == ';')
+        {
+            inFileData.pop_front();//delete the spacer (";") before jumping back up to the room
+            break;
+        }
+        
+        //parse through fileData string and populate this new monster
+        istringstream strToInt(valueString);
+        strToInt >> intFromStr;
+        
+        //search the keyName array and insert the value into the correct corresponding value index
+        for(loop = 0; loop < OBJ_ROOM_VALUES; loop++)
+            if(keyString == keyName[loop])
+            {
+                value[loop] = intFromStr;
+                inFileData.pop_front();//if we use this line, let's delete it and move on
+            }
+    }
+    
+    if(value[OBJ_ROOM_VALUES - 1] != BAD_DATA)//if we've entered all the necessary data
+    {
+        //set all the room data
+        _objNum = value[0];
+        _objectType = (objType)value[1];
+        _objectRegion = (objReg)value[2];
+        _objectLoc.setPoints(value[3], value[4]);
+        
+        //if the object has a child object or a connect object, let's add them to the Door Handler
+        if(value[5] != BAD_DATA)
+        {
+            connectData.setPerpLoc(CONNECT_CODE_CHILD);
+            connectData.setStart(value[5]);//child's roomNum
+            connectData.setEnd(value[6]);//child's objNum
+            inDoorHandler->addLoadingObj(this, connectData);
+        }
+        if(value[7] != BAD_DATA)
+        {
+            connectData.setPerpLoc(CONNECT_CODE_CONNECT);
+            connectData.setStart(value[7]);//connect's roomNum
+            connectData.setEnd(value[8]);//connect's objNum
+            inDoorHandler->addLoadingObj(this, connectData);
+        }
+        if(_objectType == OBJ_STAIRS_UP)
+        {
+            connectData.setPerpLoc(CONNECT_CODE_STAIRS);
+            connectData.setStart(_owner->getRoomNum());//owner's roomNum
+            connectData.setEnd(_objNum);//our objNum
+            inDoorHandler->addLoadingObj(this, connectData);
+        }
+    }
+}
+
+string CSDungObj::printObjectToFile(void)
+{
+    string outputString = "ObjNum:";
+    
+    outputString += (to_string(_objNum));
+    outputString.append("\nObjType:");
+    outputString.append(to_string(_objectType));
+    outputString.append("\nObjReg:");
+    outputString.append(to_string(_objectRegion));
+    outputString.append("\nObjLocX:");
+    outputString.append(to_string(_objectLoc.x));
+    outputString.append("\nObjLocY:");
+    outputString.append(to_string(_objectLoc.y));
+    
+    if(_childObj != nullptr)
+    {
+        outputString.append("\nChRoom:");
+        outputString.append(to_string(_childObj->getOwner()->getRoomNum()));
+        outputString.append("\nChObj:");
+        outputString.append(to_string(_childObj->getNum()));
+    }
+    
+    if(_connect != nullptr)
+    {
+        outputString.append("\nCoRoom:");
+        outputString.append(to_string(_connect->getOwner()->getRoomNum()));
+        outputString.append("\nCoObj:");
+        outputString.append(to_string(_connect->getNum()));
+    }
+    
+    //final checksum
+    outputString.append("\nObjCheckSum:");
+    outputString += (to_string(_objNum));
+    outputString.append("\n;");
+    
+    return outputString;
 }
 
 

@@ -12,12 +12,11 @@
 #include <stdio.h>
 #include <string>
 #include <list>
-#include "Geometry/CSPoint.hpp"
-#include "Geometry/CSRange.hpp"
+#include "CSPoint.hpp"
+#include "CSRange.hpp"
 #include "CSMonsterClass.hpp"
 #include "CSDungObj.hpp"
-#include "RandomHandler/CSRandomHandler.hpp"
-//#include "RandomHandler/CSRandomRange.cpp"
+#include "CSRandomHandler.hpp"
 
 using namespace std;
 

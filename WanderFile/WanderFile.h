@@ -45,6 +45,9 @@ const int   BAD_DATA = -69420911;//nice
 const int   RETURN_CODE_FALSE = 0;
 const int   RETURN_CODE_TRUE = 1;
 const int   RETURN_CODE_ABORT_GEN = 2;
+const int   CONNECT_CODE_CHILD = 0;
+const int   CONNECT_CODE_CONNECT = 1;
+const int   CONNECT_CODE_STAIRS = 2;
 
 const int   LEVEL_BOUND_RIGHT = 600;
 const int   LEVEL_BOUND_BOTTOM = 600;
@@ -55,6 +58,8 @@ const int   PLAYER_MOVE_BOUND_BOTTOM = 9;
 const int   MENU_BOUND_HEIGHT = 2;
 
 const int   NUM_ROOM_WALLS = 4;
+const int   NUM_ROOM_VALUES = 7;
+const int   OBJ_ROOM_VALUES = 10;
 const int   NUM_DOORS_MIN = 20;
 const float NUM_DOORS_LEVEL_RATE = 2;//rate at which doors increase per level
 const float DOOR_GEN_SLOW_POINT = .7;

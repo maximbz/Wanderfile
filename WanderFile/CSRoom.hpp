@@ -10,6 +10,7 @@
 #define CSRoom_hpp
 
 #include <list>
+#include <vector>
 #include "WanderFile.h"
 #include "CSRandomHandler.hpp"
 #include "CSDoorHandler.hpp"
@@ -43,7 +44,8 @@ private:
 public:    
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSPoint *, CSPoint *);
-    void roomInit(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand);
+    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, list<string> &);
+    void roomInit(CSGameState *, CSRandomHandler *, CSDoorHandler *);
     
     void setHallState(bool);
     void setVertHallState(bool);
@@ -82,6 +84,7 @@ public:
     int getRoomNum(void);
     CSRandomRange* getWallGenRanges(void);
     list<CSDungObj *>* getObjects(void);
+    CSDungObj * getObjectWithNum(int);
     CSRect* getRect(void);
     void getWallessRect(CSRect &);
     CSRoom* getRoomToConnect(void);

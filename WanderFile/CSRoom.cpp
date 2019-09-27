@@ -6,6 +6,8 @@
 //  Copyright © 2016 Maxim Boschert-Zielsdorf. All rights reserved.
 //
 
+#include <sstream>
+#include <iostream>
 #include "CSLine.hpp"
 #include "CSRoom.hpp"
 #include "CSRandomRange.hpp"
@@ -24,6 +26,97 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
     
     _roomRect.topLeft = *inTopLeft;
     _roomRect.botRight = *inBotRight;
+}
+
+CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, list<string> &inFileData)
+{
+    bool        key;
+    int         loop, intFromStr, value[NUM_ROOM_VALUES];
+    string      inputString, keyString, valueString, keyName[NUM_ROOM_VALUES];
+    CSDungObj   *newObj;
+    
+    list<string>::iterator    listIter;
+    
+    //set up the keys
+    keyName[0] = "Room";
+    keyName[1] = "Left";
+    keyName[2] = "Top";
+    keyName[3] = "Right";
+    keyName[4] = "Bottom";
+    keyName[5] = "Hall";
+    keyName[6] = "Vert";
+    for(loop = 0; loop < NUM_ROOM_VALUES; loop++)
+        value[loop] = BAD_DATA;
+    
+    roomInit(inGame, inRandHand, inDoorHand);
+    
+    //each for loop is a line in fileData
+    for(listIter = inFileData.begin(); listIter != inFileData.end(); listIter++)
+    {
+        //set our shit up
+        inputString = *listIter;
+        keyString = "";
+        valueString = "";
+        key = true;
+        intFromStr = 0;
+        
+        //each for loop is a word on a line--parse through inputString string and populate key and value strings
+        for(loop = 0; loop < inputString.size(); loop++)
+        {
+            if(inputString[loop] == ':')
+                key = false;
+            else if(key)
+                keyString += inputString[loop];//add one char to the growing key string
+            else
+                valueString += inputString[loop];//add one char to the growing value string
+        }
+        
+        //parse through fileData string and populate this new monster
+        istringstream strToInt(valueString);
+        strToInt >> intFromStr;
+        
+        //search the keyName array and insert the value into the correct corresponding value index
+        for(loop = 0; loop < NUM_ROOM_VALUES; loop++)
+            if(keyString == keyName[loop])
+            {
+                value[loop] = intFromStr;
+                inFileData.pop_front();//if we use this line, let's delete it
+            }
+        
+    }
+    
+    if(value[NUM_ROOM_VALUES - 1] != BAD_DATA)//if we've entered all the necessary data
+    {
+        //set all the room data
+        _roomNum = value[0];
+        _roomRect.setPoints(value[1], value[2], value[3], value[4]);
+        _isHall = value[5];
+        _vertHall = value[6];
+        
+        //start on DungObj's
+        listIter = inFileData.begin();
+        while(listIter != inFileData.end())
+        {
+            inputString = *listIter;
+            
+            if(inputString == ";")//we hit the end of an object
+            {
+                newObj = new CSDungObj(this, inFileData, inDoorHand);
+                addObject(newObj);
+                if(newObj->getType() == OBJ_DOOR)
+                    _numDoors++;//not sure this is necessary
+                
+                listIter = inFileData.begin();
+            }
+            else if(inputString == ".")//we hit the end of the room
+            {
+                inFileData.pop_front();//delete the spacer (".")
+                break;
+            }
+            else
+                listIter++;
+        }
+    }
 }
 
 void CSRoom::roomInit(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand)
@@ -593,20 +686,30 @@ string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
 
 string CSRoom::printRoomToFile(void)
 {
-    string  outputString = "Room";
+    string  outputString = "Room:";
+    list<CSDungObj *>::iterator listIter;
     
     outputString += to_string(_roomNum);
-    outputString += ":";
+    outputString += "\nLeft:";
     outputString += to_string(_roomRect.topLeft.x);
-    outputString += ",";
+    outputString += "\nTop:";
     outputString += to_string(_roomRect.topLeft.y);
-    outputString += ",";
+    outputString += "\nRight:";
     outputString += to_string(_roomRect.botRight.x);
-    outputString += ",";
+    outputString += "\nBottom:";
     outputString += to_string(_roomRect.botRight.y);
+    outputString += "\nHall:";
+    outputString += to_string(_isHall);
+    outputString += "\nVert:";
+    outputString += to_string(_vertHall);
     outputString += "\n";
     
-    
+    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    {
+        outputString += (*listIter)->printObjectToFile();
+        outputString += "\n";
+    }
+    outputString += ".\n";
     
     return outputString;
 }
@@ -808,6 +911,19 @@ CSRandomRange* CSRoom::getWallGenRanges(void)
 list<CSDungObj*>* CSRoom::getObjects(void)
 {
     return &_objects;
+}
+
+CSDungObj * CSRoom::getObjectWithNum(int inObjNum)
+{
+    list<CSDungObj *>::iterator listIter;
+    
+    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    {
+        if((*listIter)->getNum() == inObjNum)
+            return *listIter;
+    }
+    
+    return nullptr;
 }
 
 CSRect* CSRoom::getRect(void)

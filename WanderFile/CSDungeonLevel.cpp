@@ -6,7 +6,10 @@
 //  Copyright © 2016 Maxim Boschert-Zielsdorf. All rights reserved.
 //
 
+#include <string>
 #include <fstream>
+#include <sstream>
+#include <iostream>
 #include "CSDungeonLevel.hpp"
 #include "CSDungObj.hpp"
 #include "CSAxis.hpp"
@@ -92,10 +95,13 @@ void CSDungeonLevel::createDungeon(void)
     _theGame->getPlayer()->setIsPlayer(true);
     _theGame->getPlayer()->setLoc(&_startingStairs);
     _theGame->getPlayer()->setOwner(getRoomFromTile(&_startingStairs));
-    _theGame->centerGameWindow(&_startingStairs);
-    _theGame->centerPlayerMoveRect(&_startingStairs);
+    
+    saveDungeon();
     
     _theRandHand->clearRandomItems(RAND_DUNGEON);//clean up dungeon-creation
+    
+    _theGame->centerGameWindow(&_startingStairs);
+    _theGame->centerPlayerMoveRect(&_startingStairs);
 }
 
 int CSDungeonLevel::saveDungeon(void)
@@ -104,15 +110,13 @@ int CSDungeonLevel::saveDungeon(void)
     
     list<CSRoom *>::iterator    listIter;
     
-    outputFile.open(_fileName.c_str(), ios_base::app);
+    outputFile.open(_fileName.c_str(), ios_base::trunc);
     
     if(outputFile.fail())
     {
         perror(_fileName.c_str());
         return 1;
     }
-    
-    outputFile << _levelNum << "\n";
     
     for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
         outputFile << (*listIter)->printRoomToFile();
@@ -122,11 +126,19 @@ int CSDungeonLevel::saveDungeon(void)
     return 0;
 }
 
-int CSDungeonLevel::loadDungeon(void)
+int CSDungeonLevel::loadDungeon(string *inString)
 {
     ifstream    inputFile;
-    string      inputString, levelData = "";
+    string      inputString;
+    CSRoom      *newRoom;
+    CSDungObj   *objToConnect, *objToBeConnectedTo;
+    CSLine      connectData;
     
+    list<string>                fileData;
+    list<CSRoom *>::iterator    listIter;
+    
+    
+    //open the file and check for errors
     inputFile.open(_fileName);
     if(inputFile.fail())
     {
@@ -134,11 +146,53 @@ int CSDungeonLevel::loadDungeon(void)
         return 1;
     }
     
+    //pull each line of the file into stringVect
     while(getline(inputFile, inputString))
     {
-        levelData += inputString;
-        levelData += "\n";
+        fileData.push_back(inputString);
+        if(inputString == ".")//we finished a room
+        {
+            //create the room using the data we've pulled so far
+            newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand, fileData);
+            _levelRooms.push_back(newRoom);
+            
+            fileData.clear();//start us clean for the next room
+        }
     }
+    
+    while(_theDoorHand->getNumDoors() > 0)
+    {
+        //reduces doorCount
+        objToConnect = _theDoorHand->getNextDoor();
+        connectData = _theDoorHand->getNextConnectData();
+        
+        if(connectData.getPerpLoc() == CONNECT_CODE_STAIRS)
+            _startingStairs = *(objToConnect->getLoc());
+        
+        //finds the room listed in the connectData
+        for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
+        {
+            if(connectData.getStart() == (*listIter)->getRoomNum())
+            {
+                //gets the object listed in the connectData
+                objToBeConnectedTo = (*listIter)->getObjectWithNum(connectData.getEnd());
+                if(objToBeConnectedTo == nullptr)
+                    break;//somethings wrong
+                
+                //connects either child or connect--this will overwrite connections already made, but if we did everything right, it will overwrite with itself
+                if(connectData.getPerpLoc() == CONNECT_CODE_CHILD)
+                    objToConnect->setChild(objToBeConnectedTo);//counter-connects parent
+                else//CONNECT_CODE_CONNECT
+                    objToConnect->setConnect(objToBeConnectedTo);//counter-connects connect
+            }
+        }
+    }
+    
+    //set up "camera"
+    _dungeonBounds.setPoints((_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2), -(_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2));
+    
+    _theGame->centerGameWindow(&_startingStairs);
+    _theGame->centerPlayerMoveRect(&_startingStairs);
     
     return 0;
 }
@@ -938,20 +992,6 @@ void CSDungeonLevel::movePlayer(objReg inReg)
             }
 }
 
-/*bool CSDungeonLevel::checkForMonsterAtPoint(CSPoint *inPoint, CSDungObj *inObj)
-{
-    list<CSCreature *>::iterator    listIter;
-    
-    for(listIter = _levelMonsters.begin(); listIter != _levelMonsters.end(); listIter++)
-        if((*listIter)->getLoc() == inPoint)
-        {
-            inObj = (*listIter)->getCreatureObj();
-            return true;
-        }
-    
-    return false;
-}*/
-
 
 #pragma mark -
 #pragma mark Doers - Graphics Functions
@@ -978,8 +1018,6 @@ void CSDungeonLevel::printWindow(void)
             windowRooms.push_back(*listIter);
     
     //clear screen first
-    //for(loop = 0; loop < 80; loop++)
-        //printf("\n");
     werase(gameWind);
     //printf("12345678 112345678 212345678 312345678 412345678 512345678 612345678 712345678 812345678 912345678 0\n");//pseudo-grid
     
