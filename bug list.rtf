@@ -8,9 +8,15 @@
 \f0\b\fs24 \cf0 \ul \ulc0 Bugs
 \f1\b0 \ulnone \
 \
+After loadDungeon reconnects all doors, DoorHandler is empty, YET when you make a new dungeon, while the loaded dungeon is being deleted, DoorHandler's _numDoors variable ends up at 2. This results in createDungeon being unable to leave the while loop that makes new rooms.\
+	I manually set _numDoors to 0 in DoorHandler's clear method, but this should be unnecessary, so let's research what's causing the counter to get off track.\
+\
 When the player is up against the edge of the player move window, and they hit a wall, for one move toward the wall (meaning the player cannot move further), the PlayerMovementWindow still slides in the appropriate direction.\
 	could this be related to the player technically changing rooms when you press forward into a wall that\'92s in the room (when there\'92ve been glitched out rooms)?\
 
+\f0\b \ul \
+
+\f1\b0 \ulnone RandomHandler, DoorHandler, maybe GameState? Should all be static classes.
 \f0\b \ul \
 \
 Next Steps

@@ -19,6 +19,7 @@
 		415D74741E386610002AC908 /* CSRoomSorter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D746B1E386610002AC908 /* CSRoomSorter.cpp */; };
 		415D74771E3D524E002AC908 /* CSRect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74751E3D524E002AC908 /* CSRect.cpp */; };
 		415D747A1E3DD2DE002AC908 /* CSGameState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74781E3DD2DE002AC908 /* CSGameState.cpp */; };
+		4164FF3B234D2C2A00FDD267 /* CSFileLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4164FF39234D2C2A00FDD267 /* CSFileLoader.cpp */; };
 		416558F21EF3808800226674 /* CSRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416558F01EF3808800226674 /* CSRange.cpp */; };
 		416558F51EF5B12B00226674 /* CSDungObjSorter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416558F31EF5B12B00226674 /* CSDungObjSorter.cpp */; };
 		419561891F6DD14600B6A03B /* CSAxis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419561871F6DD14600B6A03B /* CSAxis.cpp */; };
@@ -67,6 +68,8 @@
 		415D74761E3D524E002AC908 /* CSRect.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSRect.hpp; sourceTree = "<group>"; };
 		415D74781E3DD2DE002AC908 /* CSGameState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSGameState.cpp; sourceTree = "<group>"; };
 		415D74791E3DD2DE002AC908 /* CSGameState.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSGameState.hpp; sourceTree = "<group>"; };
+		4164FF39234D2C2A00FDD267 /* CSFileLoader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CSFileLoader.cpp; sourceTree = "<group>"; };
+		4164FF3A234D2C2A00FDD267 /* CSFileLoader.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CSFileLoader.hpp; sourceTree = "<group>"; };
 		416558F01EF3808800226674 /* CSRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSRange.cpp; sourceTree = "<group>"; };
 		416558F11EF3808800226674 /* CSRange.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSRange.hpp; sourceTree = "<group>"; };
 		416558F31EF5B12B00226674 /* CSDungObjSorter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSDungObjSorter.cpp; sourceTree = "<group>"; };
@@ -116,13 +119,15 @@
 		415D74411E38655C002AC908 /* WanderFile */ = {
 			isa = PBXGroup;
 			children = (
+				415D746D1E386610002AC908 /* WanderFile.h */,
 				418BA03923074C0D00CC677B /* RandomHandler */,
 				418BA03823074BD600CC677B /* Sorters */,
 				418BA03A23074C2E00CC677B /* Geometry */,
-				415D746D1E386610002AC908 /* WanderFile.h */,
 				415D74421E38655C002AC908 /* main.cpp */,
 				4117F70121A21391007B0DE3 /* CSDoorHandler.hpp */,
 				4117F70021A21391007B0DE3 /* CSDoorHandler.cpp */,
+				4164FF3A234D2C2A00FDD267 /* CSFileLoader.hpp */,
+				4164FF39234D2C2A00FDD267 /* CSFileLoader.cpp */,
 				415D74791E3DD2DE002AC908 /* CSGameState.hpp */,
 				415D74781E3DD2DE002AC908 /* CSGameState.cpp */,
 				412537C0231A38DC000A2DE2 /* CSPlayerChoice.hpp */,
@@ -266,6 +271,7 @@
 				415D74431E38655C002AC908 /* main.cpp in Sources */,
 				415D746E1E386610002AC908 /* CSDungeonLevel.cpp in Sources */,
 				41B4254E2255CE5F00BFC5C6 /* CSCreature.cpp in Sources */,
+				4164FF3B234D2C2A00FDD267 /* CSFileLoader.cpp in Sources */,
 				419561891F6DD14600B6A03B /* CSAxis.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

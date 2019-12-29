@@ -9,6 +9,8 @@
 #ifndef RandomRooms_h
 #define RandomRooms_h
 
+#include <stdio.h>
+
 #pragma mark Constants
 
 enum randType//categories of random ranges and lists
@@ -58,8 +60,6 @@ const int   PLAYER_MOVE_BOUND_BOTTOM = 9;
 const int   MENU_BOUND_HEIGHT = 2;
 
 const int   NUM_ROOM_WALLS = 4;
-const int   NUM_ROOM_VALUES = 7;
-const int   OBJ_ROOM_VALUES = 10;
 const int   NUM_DOORS_MIN = 20;
 const float NUM_DOORS_LEVEL_RATE = 2;//rate at which doors increase per level
 const float DOOR_GEN_SLOW_POINT = .7;
@@ -83,6 +83,11 @@ const char  CLOSED_DOOR_CHAR = '+';
 const char  STAIRS_UP_CHAR = '<';
 const char  STAIRS_DOWN_CHAR = '>';
 const char  CHEST_CHAR = '=';
+
+const char  FILE_TERM_CHAR = ';';
+const char  FILE_DESCEND_CHAR = '/';
+const char  FILE_ASCEND_CHAR = '.';
+const char  FILE_NULL_CHAR = '-';
 
 
 #pragma mark -

@@ -42,6 +42,8 @@ void CSDoorHandler::clear(void)
     //erases and deletes all objects, removes the reference back to this CSRoom from all connected CSRoom's
     while(!_unconnectedLevelDoors.empty())
         _unconnectedLevelDoors.pop_back();
+    
+    _numDoors = 0;
 }
 
 

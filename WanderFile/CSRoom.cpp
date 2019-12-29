@@ -28,95 +28,44 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
     _roomRect.botRight = *inBotRight;
 }
 
-CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, list<string> &inFileData)
+CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSFileLoader *inFileLoader)//load room from file
 {
-    bool        key;
-    int         loop, intFromStr, value[NUM_ROOM_VALUES];
-    string      inputString, keyString, valueString, keyName[NUM_ROOM_VALUES];
+    int         left = BAD_DATA, top = BAD_DATA, right = BAD_DATA, bot = BAD_DATA, boolAsInt;
     CSDungObj   *newObj;
-    
-    list<string>::iterator    listIter;
-    
-    //set up the keys
-    keyName[0] = "Room";
-    keyName[1] = "Left";
-    keyName[2] = "Top";
-    keyName[3] = "Right";
-    keyName[4] = "Bottom";
-    keyName[5] = "Hall";
-    keyName[6] = "Vert";
-    for(loop = 0; loop < NUM_ROOM_VALUES; loop++)
-        value[loop] = BAD_DATA;
     
     roomInit(inGame, inRandHand, inDoorHand);
     
-    //each for loop is a line in fileData
-    for(listIter = inFileData.begin(); listIter != inFileData.end(); listIter++)
+    inFileLoader->addKeys(&_roomDataKey);
+   
+    //set all the room data
+    inFileLoader->getIntValueFromKey(&_roomDataKey[0], &_roomNum);
+    inFileLoader->getIntValueFromKey(&_roomDataKey[1], &left);
+    inFileLoader->getIntValueFromKey(&_roomDataKey[2], &top);
+    inFileLoader->getIntValueFromKey(&_roomDataKey[3], &right);
+    inFileLoader->getIntValueFromKey(&_roomDataKey[4], &bot);
+    _roomRect.setPoints(left, top, right, bot);
+    inFileLoader->getIntValueFromKey(&_roomDataKey[5], &boolAsInt);
+    _isHall = (bool)boolAsInt;
+    inFileLoader->getIntValueFromKey(&_roomDataKey[6], &boolAsInt);
+    _vertHall = (bool)boolAsInt;
+    
+    //start on DungObj's
+    if(inFileLoader->getCompleteState() == FILE_DESCEND_CHAR)
     {
-        //set our shit up
-        inputString = *listIter;
-        keyString = "";
-        valueString = "";
-        key = true;
-        intFromStr = 0;
+        inFileLoader->resetDictionary();//prep fileLoader for objects
         
-        //each for loop is a word on a line--parse through inputString string and populate key and value strings
-        for(loop = 0; loop < inputString.size(); loop++)
+        while(inFileLoader->getCompleteState() != FILE_ASCEND_CHAR)
         {
-            if(inputString[loop] == ':')
-                key = false;
-            else if(key)
-                keyString += inputString[loop];//add one char to the growing key string
-            else
-                valueString += inputString[loop];//add one char to the growing value string
+            inFileLoader->resetDictionary();//prep fileLoader for next object
+            
+            newObj = new CSDungObj(this, _theDoorHand, inFileLoader);
+            
+            _objects.push_back(newObj);
+            updateObjectNums();
         }
-        
-        //parse through fileData string and populate this new monster
-        istringstream strToInt(valueString);
-        strToInt >> intFromStr;
-        
-        //search the keyName array and insert the value into the correct corresponding value index
-        for(loop = 0; loop < NUM_ROOM_VALUES; loop++)
-            if(keyString == keyName[loop])
-            {
-                value[loop] = intFromStr;
-                inFileData.pop_front();//if we use this line, let's delete it
-            }
-        
     }
     
-    if(value[NUM_ROOM_VALUES - 1] != BAD_DATA)//if we've entered all the necessary data
-    {
-        //set all the room data
-        _roomNum = value[0];
-        _roomRect.setPoints(value[1], value[2], value[3], value[4]);
-        _isHall = value[5];
-        _vertHall = value[6];
-        
-        //start on DungObj's
-        listIter = inFileData.begin();
-        while(listIter != inFileData.end())
-        {
-            inputString = *listIter;
-            
-            if(inputString == ";")//we hit the end of an object
-            {
-                newObj = new CSDungObj(this, inFileData, inDoorHand);
-                addObject(newObj);
-                if(newObj->getType() == OBJ_DOOR)
-                    _numDoors++;//not sure this is necessary
-                
-                listIter = inFileData.begin();
-            }
-            else if(inputString == ".")//we hit the end of the room
-            {
-                inFileData.pop_front();//delete the spacer (".")
-                break;
-            }
-            else
-                listIter++;
-        }
-    }
+    inFileLoader->resetDictionary();//prep fileLoader for next room
 }
 
 void CSRoom::roomInit(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand)
@@ -129,6 +78,15 @@ void CSRoom::roomInit(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHa
     _roomNum = BAD_DATA;
     _numDoors = 0;
     _vertHall = false;
+    
+    //set up the keys
+    _roomDataKey.push_back("RoomNum");
+    _roomDataKey.push_back("Left");
+    _roomDataKey.push_back("Top");
+    _roomDataKey.push_back("Right");
+    _roomDataKey.push_back("Bottom");
+    _roomDataKey.push_back("Hall");
+    _roomDataKey.push_back("Vert");
 }
 
 
@@ -686,30 +644,60 @@ string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
 
 string CSRoom::printRoomToFile(void)
 {
-    string  outputString = "Room:";
+    string  outputString;
     list<CSDungObj *>::iterator listIter;
     
+    //print basic room info
+    outputString += _roomDataKey[0];
+    outputString += ":";
     outputString += to_string(_roomNum);
-    outputString += "\nLeft:";
+    outputString += "\n";
+    outputString += _roomDataKey[1];
+    outputString += ":";
     outputString += to_string(_roomRect.topLeft.x);
-    outputString += "\nTop:";
+    outputString += "\n";
+    outputString += _roomDataKey[2];
+    outputString += ":";
     outputString += to_string(_roomRect.topLeft.y);
-    outputString += "\nRight:";
+    outputString += "\n";
+    outputString += _roomDataKey[3];
+    outputString += ":";
     outputString += to_string(_roomRect.botRight.x);
-    outputString += "\nBottom:";
+    outputString += "\n";
+    outputString += _roomDataKey[4];
+    outputString += ":";
     outputString += to_string(_roomRect.botRight.y);
-    outputString += "\nHall:";
+    outputString += "\n";
+    outputString += _roomDataKey[5];
+    outputString += ":";
     outputString += to_string(_isHall);
-    outputString += "\nVert:";
+    outputString += "\n";
+    outputString += _roomDataKey[6];
+    outputString += ":";
     outputString += to_string(_vertHall);
     outputString += "\n";
     
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    //only print objects if there are any
+    if(_objects.size() > 0)
     {
-        outputString += (*listIter)->printObjectToFile();
+        outputString += FILE_DESCEND_CHAR;
+        outputString += "\n";
+        
+        for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+        {
+            outputString += (*listIter)->printObjectToFile();
+            if(*listIter == _objects.back())//we're done, so we're going back up
+                outputString += FILE_ASCEND_CHAR;
+            else//we have more objects
+                outputString += FILE_TERM_CHAR;
+            outputString += "\n";
+        }
+    }
+    else//print info to set up next room
+    {
+        outputString += FILE_TERM_CHAR;
         outputString += "\n";
     }
-    outputString += ".\n";
     
     return outputString;
 }

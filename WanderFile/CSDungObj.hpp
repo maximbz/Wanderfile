@@ -10,7 +10,9 @@
 #define CSDungObj_hpp
 
 #include <stdio.h>
+#include <vector>
 #include <list>
+#include "CSFileLoader.hpp"
 #include "CSPoint.hpp"
 
 using namespace std;
@@ -21,22 +23,23 @@ class CSRoom;
 class CSDungObj
 {
 protected:
-    bool        _wasMoved;
-    char        _objChar;//only used to override default (or with room numbers)
-    int         _objNum;
-    objType     _objectType;
-    objReg      _objectRegion;
-    CSPoint     _objectLoc;
-    CSDungObj   *_parentObj, *_childObj,//the parent of a chain of objects has a child connected to it: parent -> _connectTo -> child; parent -> _connectFrom -> child
-                *_connect;//doors connect to and from one another; there's no chain of command
-    CSRoom      *_owner;
+    bool            _wasMoved;
+    char            _objChar;//only used to override default (or with room numbers)
+    int             _objNum;
+    objType         _objectType;
+    objReg          _objectRegion;
+    vector<string>  _dungObjDataKey;
+    CSPoint         _objectLoc;
+    CSDungObj       *_parentObj, *_childObj,//the parent of a chain of objects has a child connected to it: parent -> _connectTo -> child; parent -> _connectFrom -> child
+                    *_connect;//doors connect to and from one another; there's no chain of command
+    CSRoom          *_owner;
     
+    void dataKeysInit(void);
     
 public:
     CSDungObj();
     CSDungObj(objType, objReg, CSPoint *, CSDungObj *, CSDungObj *, CSRoom *);
-    CSDungObj(CSRoom *, list<string> &, CSDoorHandler *);
-    string printObjectToFile(void);
+    CSDungObj(CSRoom *, CSDoorHandler *, CSFileLoader *);//load object from file
     
     void setWasMoved(bool);
     void setChar(char);
@@ -53,6 +56,7 @@ public:
     void removeConnect(void);
     void deleteObject(void);
     virtual bool updateObject(void);
+    string printObjectToFile(void);
     
     bool getWasMoved(void);
     char getChar(void);

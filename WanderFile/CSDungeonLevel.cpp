@@ -8,9 +8,8 @@
 
 #include <string>
 #include <fstream>
-#include <sstream>
-#include <iostream>
 #include "CSDungeonLevel.hpp"
+#include "CSFileLoader.hpp"
 #include "CSDungObj.hpp"
 #include "CSAxis.hpp"
 #include "CSPoint.hpp"
@@ -29,9 +28,10 @@ CSDungeonLevel::CSDungeonLevel(CSRandomHandler *inRandHand, CSGameState *inGame,
     _levelNum = inLevelNum;
     _maxNumDoors = NUM_DOORS_MIN + ((_levelNum - 1) * NUM_DOORS_LEVEL_RATE);
     
-    _fileName = "dungeonLevel";
-    _fileName += to_string(_levelNum);
-    _fileName += ".txt";
+    _fileName = "dungeonLevel" + to_string(_levelNum) + ".txt";
+    
+    //basic dungeon setup
+    _dungeonBounds.setPoints((_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2), -(_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2));
 }
 
 
@@ -45,7 +45,7 @@ void CSDungeonLevel::createDungeon(void)
     CSDungObj       *nextDoor;
     int             newDoorNumQty[4] = {0,0,0,0};
     
-    _dungeonBounds.setPoints((_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2), -(_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2));
+    deleteDungeon();//get rid of any pre-existing dungeon
     
     while(makeRooms)
     {
@@ -74,9 +74,6 @@ void CSDungeonLevel::createDungeon(void)
                 deleteRoom(newRoom);
         }
         
-        //clean up room-creating
-        _theRandHand->clearRandomItems(RAND_ROOM);
-        
         if(_theDoorHand->getNumDoors() == 0)//if we're out of unconnected doors...
         {
             if(_levelRooms.size() < _maxNumDoors)//but we haven't hit level min...
@@ -84,6 +81,8 @@ void CSDungeonLevel::createDungeon(void)
             else
                 makeRooms = false;//otherwise, we can leave the room creation loop
         }
+        
+        _theRandHand->clearRandomItems(RAND_ROOM);//clean up room-creating
     }
     
     //populate dungeon!
@@ -91,17 +90,15 @@ void CSDungeonLevel::createDungeon(void)
     createTreasure();
     createMonsters();
     
-    //make player happen
-    _theGame->getPlayer()->setIsPlayer(true);
+    //locate player
     _theGame->getPlayer()->setLoc(&_startingStairs);
     _theGame->getPlayer()->setOwner(getRoomFromTile(&_startingStairs));
     
-    saveDungeon();
-    
-    _theRandHand->clearRandomItems(RAND_DUNGEON);//clean up dungeon-creation
-    
+    //set up camera
     _theGame->centerGameWindow(&_startingStairs);
     _theGame->centerPlayerMoveRect(&_startingStairs);
+    
+    _theRandHand->clearRandomItems(RAND_DUNGEON);//clean up dungeon-creation
 }
 
 int CSDungeonLevel::saveDungeon(void)
@@ -128,36 +125,22 @@ int CSDungeonLevel::saveDungeon(void)
 
 int CSDungeonLevel::loadDungeon(string *inString)
 {
-    ifstream    inputFile;
-    string      inputString;
-    CSRoom      *newRoom;
-    CSDungObj   *objToConnect, *objToBeConnectedTo;
-    CSLine      connectData;
+    int             fileParseResult = 0;
+    CSFileLoader    dungeonFile(&_fileName, fileParseResult);
+    CSRoom          *newRoom;
+    CSDungObj       *objToConnect, *objToBeConnectedTo;
+    CSLine          connectData;
     
-    list<string>                fileData;
     list<CSRoom *>::iterator    listIter;
     
+    //get rid of any pre-existing dungeon
+    if(!_levelRooms.empty())
+        deleteDungeon();
     
-    //open the file and check for errors
-    inputFile.open(_fileName);
-    if(inputFile.fail())
+    while(!dungeonFile.isEmpty())
     {
-        perror(_fileName.c_str());
-        return 1;
-    }
-    
-    //pull each line of the file into stringVect
-    while(getline(inputFile, inputString))
-    {
-        fileData.push_back(inputString);
-        if(inputString == ".")//we finished a room
-        {
-            //create the room using the data we've pulled so far
-            newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand, fileData);
-            _levelRooms.push_back(newRoom);
-            
-            fileData.clear();//start us clean for the next room
-        }
+        newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand, &dungeonFile);
+        _levelRooms.push_back(newRoom);
     }
     
     while(_theDoorHand->getNumDoors() > 0)
@@ -187,10 +170,9 @@ int CSDungeonLevel::loadDungeon(string *inString)
             }
         }
     }
+    //updateRoomNums();//turns on room nums
     
     //set up "camera"
-    _dungeonBounds.setPoints((_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2), -(_theGame->getLevelBounds()->botRight.x / 2), (_theGame->getLevelBounds()->botRight.y / 2));
-    
     _theGame->centerGameWindow(&_startingStairs);
     _theGame->centerPlayerMoveRect(&_startingStairs);
     
@@ -199,8 +181,7 @@ int CSDungeonLevel::loadDungeon(string *inString)
 
 void CSDungeonLevel::deleteDungeon(void)
 {
-    list<CSRoom *>::iterator        roomListIter = _levelRooms.begin();
-    //list<CSCreature *>::iterator    monsterListIter = _levelMonsters.begin();
+    list<CSRoom *>::iterator    roomListIter = _levelRooms.begin();
     
     _theGame->getPlayer()->setNullOwner();
     
@@ -210,14 +191,8 @@ void CSDungeonLevel::deleteDungeon(void)
         roomListIter = _levelRooms.erase(roomListIter);//new iterator properly goes through the list, now with fewer entries
     }
     
-    /*while(monsterListIter != _levelMonsters.end())
-    {
-        //(*monsterListIter)->deleteMonster();
-        monsterListIter = _levelMonsters.erase(monsterListIter);//new iterator properly goes through the list, now with fewer entries
-    }*/
-    
+    //bounds are all set to first room on evey new dungeon, so we don't worry about _dungeonBounds or _outerRooms here
     _levelRooms.clear();
-    _dungeonBounds.setPoints(BAD_DATA, BAD_DATA, -BAD_DATA, -BAD_DATA);
     _theRandHand->clearRandomItems(RAND_DUNGEON);
     _theDoorHand->clear();
 }
@@ -283,6 +258,7 @@ void CSDungeonLevel::updateRoomNums(void)
 
 CSRoom* CSDungeonLevel::createFirstRoom(void)
 {
+    int             loop;
     CSPoint         newPoint;
     CSAxis          roomGenAxis;
     CSRoom          *newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand);
@@ -296,6 +272,7 @@ CSRoom* CSDungeonLevel::createFirstRoom(void)
     newPoint.x = (_theGame->getLevelBounds()->botRight.x / 2) - (_theRandHand->getNumber(&roomSizeGen) / 2);
     newPoint.y = (_theGame->getLevelBounds()->botRight.y / 2) - ((_theRandHand->getNumber(&roomSizeGen) / 2) / 2);//rooms look taller than they are because of ascii output, so we halve room height gens to make squarer looking rooms
     newRoom->getRect()->setTopLeft(&newPoint);
+    _dungeonBounds.setTopLeft(&newPoint);
     
     //random size for the seed room
     newPoint.x = _theRandHand->getNumber(&roomSizeGen);
@@ -303,12 +280,14 @@ CSRoom* CSDungeonLevel::createFirstRoom(void)
     newPoint.y = _theRandHand->getNumber(&roomSizeGen) / 2;//halve height due to asymmetry of ascii output
     newPoint.y += newRoom->getRect()->topLeft.y;
     newRoom->getRect()->setBotRight(&newPoint);
+    _dungeonBounds.setBotRight(&newPoint);
     
     //finishing touches
+    for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
+        _outerRooms[loop] = newRoom;
     newRoom->setHallState(false);
     newRoom->createNewDoor(REG_NULL);
     newRoom->setRoomNum((int)_levelRooms.size());
-    updateDungeonBounds(newRoom);
     
     return newRoom;
 }
@@ -943,7 +922,6 @@ void CSDungeonLevel::createMonsters(void)
         {
             //so we place it!
             CSCreature *newMonster = new CSCreature(&monsterLoc, newMonsterClass, monsterRoom, _theRandHand);
-            //_levelMonsters.push_back(newMonster);
             monsterRoom->addObject(newMonster);
         }
     }

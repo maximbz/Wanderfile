@@ -14,6 +14,7 @@
 #include "WanderFile.h"
 #include "CSRandomHandler.hpp"
 #include "CSDoorHandler.hpp"
+#include "CSFileLoader.hpp"
 #include "CSGameState.hpp"
 #include "CSRect.hpp"
 #include "CSRange.hpp"
@@ -34,18 +35,19 @@ private:
     CSRandomRange       _wallGenLoc[NUM_ROOM_WALLS];
     CSRect              _roomRect;
     list<CSDungObj*>    _objects;
+    vector<string>      _roomDataKey;
     CSDungObjSorter     _objectComparator;
     CSRoom              *_roomToConnect;
-
+    
+    void roomInit(CSGameState *, CSRandomHandler *, CSDoorHandler *);
+    char assumeChar(CSDungObj *, char);
     CSDungObj* createObject(objType, objReg, CSPoint *, CSDungObj *, CSDungObj *);
     CSDungObj* checkForObjectToDraw(CSPoint *);
-    char assumeChar(CSDungObj *, char);
     
 public:    
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSPoint *, CSPoint *);
-    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, list<string> &);
-    void roomInit(CSGameState *, CSRandomHandler *, CSDoorHandler *);
+    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSFileLoader *);//load room from file
     
     void setHallState(bool);
     void setVertHallState(bool);

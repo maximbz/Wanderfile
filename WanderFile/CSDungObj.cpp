@@ -12,12 +12,15 @@
 #include "CSLine.hpp"
 #include "CSAxis.hpp"
 
-CSDungObj::CSDungObj()
+CSDungObj::CSDungObj(void)
 {
     _parentObj = nullptr;
     _childObj = nullptr;
     _connect = nullptr;
     _owner = nullptr;
+    _wasMoved = false;
+    
+    dataKeysInit();
 }
 
 CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint *inLoc, CSDungObj *inParent, CSDungObj *inConnect, CSRoom *inOwner)
@@ -27,154 +30,78 @@ CSDungObj::CSDungObj(objType inType, objReg inRegion, CSPoint *inLoc, CSDungObj 
     if(inLoc != nullptr)
         _objectLoc = *inLoc;
     
+    _owner = inOwner;
     setParent(inParent);
     _childObj = nullptr;
     setConnect(inConnect);
-    _owner = inOwner;
-    
     _wasMoved = false;
+    
+    dataKeysInit();
 }
 
-CSDungObj::CSDungObj(CSRoom *inOwner, list<string> &inFileData, CSDoorHandler *inDoorHandler)
+CSDungObj::CSDungObj(CSRoom *inOwner, CSDoorHandler *inDoorHandler, CSFileLoader *inFileLoader)//load object from file
 {
-    bool        key;
-    int         loop, intFromStr, value[OBJ_ROOM_VALUES];
-    string      inputString, keyString, valueString, keyName[OBJ_ROOM_VALUES];
-    CSLine      connectData;
+    int         roomNum = BAD_DATA, objNum = BAD_DATA, objTypeAsInt = BAD_DATA, regAsInt;
+    CSPoint     objLoc;
+    CSLine      connectData;//we'll use a CSLine to hold the connect code, the roomNum, and the dungObjNum
     
     list<string>::iterator    listIter;
     
-    //set up the keys
-    keyName[0] = "ObjNum";
-    keyName[1] = "ObjType";
-    keyName[2] = "ObjReg";
-    keyName[3] = "ObjLocX";
-    keyName[4] = "ObjLocY";
-    keyName[5] = "ChRoom";
-    keyName[6] = "ChObj";
-    keyName[7] = "CoRoom";
-    keyName[8] = "CoObj";
-    keyName[9] = "ObjCheckSum";
-    for(loop = 0; loop < OBJ_ROOM_VALUES; loop++)
-        value[loop] = BAD_DATA;
-    
+    dataKeysInit();
     _owner = inOwner;
     _parentObj = nullptr;
     _childObj = nullptr;
     _connect = nullptr;
+    _wasMoved = false;
+    _objChar = 'c';//just give it something to overwrite the nonsense char it may start with
     
-    //each for loop is a line in fileData
-    for(listIter = inFileData.begin(); listIter != inFileData.end(); listIter++)
+    inFileLoader->addKeys(&_dungObjDataKey);
+    
+    //set all the room data
+    inFileLoader->getIntValueFromKey(&_dungObjDataKey[0], &_objNum);
+    inFileLoader->getIntValueFromKey(&_dungObjDataKey[1], &objTypeAsInt);
+    _objectType = (objType)objTypeAsInt;
+    inFileLoader->getIntValueFromKey(&_dungObjDataKey[2], &regAsInt);
+    _objectRegion = (objReg)regAsInt;
+    inFileLoader->getIntValueFromKey(&_dungObjDataKey[3], &objLoc.x);
+    inFileLoader->getIntValueFromKey(&_dungObjDataKey[4], &objLoc.y);
+    _objectLoc = objLoc;
+    
+    //if the object has a child object or a connect object, let's add them to the Door Handler
+    if(inFileLoader->getIntValueFromKey(&_dungObjDataKey[5], &roomNum))//if the data is there...
     {
-        //set our shit up
-        inputString = *listIter;
-        keyString = "";
-        valueString = "";
-        key = true;
-        intFromStr = 0;
-        
-        //each for loop is a word on a line--parse through inputString string and populate key and value strings
-        for(loop = 0; loop < inputString.size(); loop++)
-        {
-            if(inputString[loop] == ';')
-                break;
-            else if(inputString[loop] == ':')
-                key = false;
-            else if(key)
-                keyString += inputString[loop];//add one char to the growing key string
-            else
-                valueString += inputString[loop];//add one char to the growing value string
-        }
-        
-        //if the last thing read was a ';', we don't want to read any further before creating out object
-        if(inputString[loop] == ';')
-        {
-            inFileData.pop_front();//delete the spacer (";") before jumping back up to the room
-            break;
-        }
-        
-        //parse through fileData string and populate this new monster
-        istringstream strToInt(valueString);
-        strToInt >> intFromStr;
-        
-        //search the keyName array and insert the value into the correct corresponding value index
-        for(loop = 0; loop < OBJ_ROOM_VALUES; loop++)
-            if(keyString == keyName[loop])
-            {
-                value[loop] = intFromStr;
-                inFileData.pop_front();//if we use this line, let's delete it and move on
-            }
+        inFileLoader->getIntValueFromKey(&_dungObjDataKey[6], &objNum);
+        connectData.setPerpLoc(CONNECT_CODE_CHILD);
+        connectData.setLine(roomNum, objNum);
+        inDoorHandler->addLoadingObj(this, connectData);
     }
-    
-    if(value[OBJ_ROOM_VALUES - 1] != BAD_DATA)//if we've entered all the necessary data
+    if(inFileLoader->getIntValueFromKey(&_dungObjDataKey[7], &roomNum))//if the data is there...
     {
-        //set all the room data
-        _objNum = value[0];
-        _objectType = (objType)value[1];
-        _objectRegion = (objReg)value[2];
-        _objectLoc.setPoints(value[3], value[4]);
-        
-        //if the object has a child object or a connect object, let's add them to the Door Handler
-        if(value[5] != BAD_DATA)
-        {
-            connectData.setPerpLoc(CONNECT_CODE_CHILD);
-            connectData.setStart(value[5]);//child's roomNum
-            connectData.setEnd(value[6]);//child's objNum
-            inDoorHandler->addLoadingObj(this, connectData);
-        }
-        if(value[7] != BAD_DATA)
-        {
-            connectData.setPerpLoc(CONNECT_CODE_CONNECT);
-            connectData.setStart(value[7]);//connect's roomNum
-            connectData.setEnd(value[8]);//connect's objNum
-            inDoorHandler->addLoadingObj(this, connectData);
-        }
-        if(_objectType == OBJ_STAIRS_UP)
-        {
-            connectData.setPerpLoc(CONNECT_CODE_STAIRS);
-            connectData.setStart(_owner->getRoomNum());//owner's roomNum
-            connectData.setEnd(_objNum);//our objNum
-            inDoorHandler->addLoadingObj(this, connectData);
-        }
+        inFileLoader->getIntValueFromKey(&_dungObjDataKey[8], &objNum);
+        connectData.setPerpLoc(CONNECT_CODE_CONNECT);
+        connectData.setLine(roomNum, objNum);
+        inDoorHandler->addLoadingObj(this, connectData);
+    }
+    if(_objectType == OBJ_STAIRS_UP)
+    {
+        connectData.setPerpLoc(CONNECT_CODE_STAIRS);
+        connectData.setStart(_owner->getRoomNum());//owner's roomNum
+        connectData.setEnd(_objNum);//our objNum
+        inDoorHandler->addLoadingObj(this, connectData);
     }
 }
 
-string CSDungObj::printObjectToFile(void)
+void CSDungObj::dataKeysInit(void)
 {
-    string outputString = "ObjNum:";
-    
-    outputString += (to_string(_objNum));
-    outputString.append("\nObjType:");
-    outputString.append(to_string(_objectType));
-    outputString.append("\nObjReg:");
-    outputString.append(to_string(_objectRegion));
-    outputString.append("\nObjLocX:");
-    outputString.append(to_string(_objectLoc.x));
-    outputString.append("\nObjLocY:");
-    outputString.append(to_string(_objectLoc.y));
-    
-    if(_childObj != nullptr)
-    {
-        outputString.append("\nChRoom:");
-        outputString.append(to_string(_childObj->getOwner()->getRoomNum()));
-        outputString.append("\nChObj:");
-        outputString.append(to_string(_childObj->getNum()));
-    }
-    
-    if(_connect != nullptr)
-    {
-        outputString.append("\nCoRoom:");
-        outputString.append(to_string(_connect->getOwner()->getRoomNum()));
-        outputString.append("\nCoObj:");
-        outputString.append(to_string(_connect->getNum()));
-    }
-    
-    //final checksum
-    outputString.append("\nObjCheckSum:");
-    outputString += (to_string(_objNum));
-    outputString.append("\n;");
-    
-    return outputString;
+    _dungObjDataKey.push_back("ObjNum");
+    _dungObjDataKey.push_back("ObjType");
+    _dungObjDataKey.push_back("ObjReg");
+    _dungObjDataKey.push_back("ObjLocX");
+    _dungObjDataKey.push_back("ObjLocY");
+    _dungObjDataKey.push_back("ChRoom");
+    _dungObjDataKey.push_back("ChObj");
+    _dungObjDataKey.push_back("CoRoom");
+    _dungObjDataKey.push_back("CoObj");
 }
 
 
@@ -351,9 +278,61 @@ void CSDungObj::deleteObject(void)
     delete this;
 }
 
-bool CSDungObj::updateObject(void)
+bool CSDungObj::updateObject(void)//is overidden in CSCreature
 {
     return false;
+}
+
+string CSDungObj::printObjectToFile(void)
+{
+    string outputString;
+    
+    outputString += _dungObjDataKey[0];
+    outputString += ":";
+    outputString += (to_string(_objNum));
+    outputString += "\n";
+    outputString += _dungObjDataKey[1];
+    outputString += ":";
+    outputString.append(to_string(_objectType));
+    outputString += "\n";
+    outputString += _dungObjDataKey[2];
+    outputString += ":";
+    outputString.append(to_string(_objectRegion));
+    outputString += "\n";
+    outputString += _dungObjDataKey[3];
+    outputString += ":";
+    outputString.append(to_string(_objectLoc.x));
+    outputString += "\n";
+    outputString += _dungObjDataKey[4];
+    outputString += ":";
+    outputString.append(to_string(_objectLoc.y));
+    outputString += "\n";
+    
+    if(_childObj != nullptr)
+    {
+        outputString += _dungObjDataKey[5];
+        outputString += ":";
+        outputString.append(to_string(_childObj->getOwner()->getRoomNum()));
+        outputString += "\n";
+        outputString += _dungObjDataKey[6];
+        outputString += ":";
+        outputString.append(to_string(_childObj->getNum()));
+        outputString += "\n";
+    }
+    
+    if(_connect != nullptr)
+    {
+        outputString += _dungObjDataKey[7];
+        outputString += ":";
+        outputString.append(to_string(_connect->getOwner()->getRoomNum()));
+        outputString += "\n";
+        outputString += _dungObjDataKey[8];
+        outputString += ":";
+        outputString.append(to_string(_connect->getNum()));
+        outputString += "\n";
+    }
+    
+    return outputString;
 }
 
 

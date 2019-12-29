@@ -32,7 +32,7 @@ int main(int argc, const char * argv[])
     }
     
     bool            gameLoop = true, printLoop;
-    int             numDungeons = -1;
+    int             numDungeons = -1, loop;
     string          outputString;
     vector<char>    gameOptions, slideOptions, mainModeOptions;
     WINDOW          *menuWind;
@@ -61,6 +61,8 @@ int main(int argc, const char * argv[])
     slideOptions.push_back('s');
     
     mainModeOptions.push_back('n');
+    mainModeOptions.push_back('l');
+    mainModeOptions.push_back('v');
     
     gameOptions.push_back('b');
     gameOptions.push_back('q');
@@ -72,9 +74,6 @@ int main(int argc, const char * argv[])
     //loop
     while(gameLoop)
     {
-        dungeon.loadDungeon(&outputString);
-        //dungeon.createDungeon();
-        numDungeons++;
         printLoop = true;
         
         while(printLoop)
@@ -82,7 +81,7 @@ int main(int argc, const char * argv[])
             dungeon.printWindow();
             
             mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputString.c_str());
-            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "Create (N)ew dungeon, Toggle line (B)reak, or (Q)uit.\n");
+            mvwaddstr(menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "(L)oad dungeon, Create (N)ew dungeon, Sa(V)e current dungeon, Toggle line (B)reak, or (Q)uit?\n");
             
             menuSelection.toggleCharOption(1, true);//turn main mode on
             menuSelection.getUserCharAnswer(menuSelectMatrix, menuWind);
@@ -91,20 +90,42 @@ int main(int argc, const char * argv[])
             if(menuSelectMatrix.x == 0)
             {
                 if(menuSelectMatrix.y == 0)
+                    for(loop = 0; loop < 3; loop++)
+                        theGame.slideGameWindow(REG_WALL_LEFT);
+                if(menuSelectMatrix.y == 1)
+                    for(loop = 0; loop < 3; loop++)
+                        theGame.slideGameWindow(REG_WALL_RIGHT);
+                if(menuSelectMatrix.y == 2)
+                    for(loop = 0; loop < 3; loop++)
+                        theGame.slideGameWindow(REG_WALL_TOP);
+                if(menuSelectMatrix.y == 3)
+                    for(loop = 0; loop < 3; loop++)
+                        theGame.slideGameWindow(REG_WALL_BOT);
+                /*if(menuSelectMatrix.y == 0)
                     dungeon.movePlayer(REG_WALL_LEFT);
                 if(menuSelectMatrix.y == 1)
                     dungeon.movePlayer(REG_WALL_RIGHT);
                 if(menuSelectMatrix.y == 2)
                     dungeon.movePlayer(REG_WALL_TOP);
                 if(menuSelectMatrix.y == 3)
-                    dungeon.movePlayer(REG_WALL_BOT);
+                    dungeon.movePlayer(REG_WALL_BOT);*/
             }
             
             //main menu commands
             if(menuSelectMatrix.x == 1)
             {
-                if(menuSelectMatrix.y == 0)//quit
+                if(menuSelectMatrix.y == 0)
+                {
                     dungeon.createDungeon();
+                    numDungeons++;
+                }
+                if(menuSelectMatrix.y == 1)
+                {
+                    dungeon.loadDungeon(&outputString);
+                    numDungeons++;
+                }
+                if(menuSelectMatrix.y == 2)
+                    dungeon.saveDungeon();
             }
             
             //game commends
@@ -119,9 +140,10 @@ int main(int argc, const char * argv[])
                 }
             }
         }
+        
         dungeon.deleteDungeon();
     }
-    theGame.cleanUpGameState();
     
+    theGame.cleanUpGameState();
     return 0;
 }
