@@ -21,17 +21,17 @@ enum randType//categories of random ranges and lists
     RAND_MONSTER
 };
 
-enum objType//dungeon object types
+enum entType//entity types
 {
-    OBJ_DOOR,
-    OBJ_ROOM_NUM,
-    OBJ_STAIRS_UP,
-    OBJ_STAIRS_DOWN,
-    OBJ_TREASURE,
-    OBJ_CREATURE
+    ENT_DOOR,
+    ENT_ROOM_NUM,
+    ENT_STAIRS_UP,
+    ENT_STAIRS_DOWN,
+    ENT_TREASURE,
+    ENT_CREATURE
 };
 
-enum objReg//dungeon object regions
+enum entReg//entity regions
 {
     REG_NULL = -1,
     REG_WALL_LEFT,
@@ -47,9 +47,6 @@ const int   BAD_DATA = -69420911;//nice
 const int   RETURN_CODE_FALSE = 0;
 const int   RETURN_CODE_TRUE = 1;
 const int   RETURN_CODE_ABORT_GEN = 2;
-const int   CONNECT_CODE_CHILD = 0;
-const int   CONNECT_CODE_CONNECT = 1;
-const int   CONNECT_CODE_STAIRS = 2;
 
 const int   LEVEL_BOUND_RIGHT = 600;
 const int   LEVEL_BOUND_BOTTOM = 600;
@@ -67,6 +64,7 @@ const int   ONE_DOOR_CHANCES = 30;
 const int   NO_TREASURE_CHANCES = 30;
 const float MONSTER_RATE = .3;
 const int   MOVE_CHECK_DIST = 3;//how many rooms out monsters get to move/update
+const bool  ROOM_NUMS = false;//set to true to turn on room numbers
 
 //divide heights in half due to how ascii printing looks
 const int   ROOM_SIZE_MIN = 2;
@@ -93,7 +91,7 @@ const char  FILE_NULL_CHAR = '-';
 #pragma mark -
 #pragma mark Inline Functions
 
-inline objReg getFacingWall(objReg inWall)
+inline entReg getFacingWall(entReg inWall)
 {
     switch(inWall)
     {
@@ -112,7 +110,7 @@ inline objReg getFacingWall(objReg inWall)
     }
 }
 
-inline objReg getClockWall(objReg inWall)
+inline entReg getClockWall(entReg inWall)
 {
     switch(inWall)
     {
@@ -131,7 +129,7 @@ inline objReg getClockWall(objReg inWall)
     }
 }
 
-inline objReg getCountclockWall(objReg inWall)
+inline entReg getCountclockWall(entReg inWall)
 {
     switch(inWall)
     {
@@ -150,7 +148,7 @@ inline objReg getCountclockWall(objReg inWall)
     }
 }
 
-inline objReg getRegFromVect(int inX, int inY)
+inline entReg getRegFromVect(int inX, int inY)
 {
     if(inX > 0)
         return REG_WALL_RIGHT;
@@ -167,7 +165,7 @@ inline objReg getRegFromVect(int inX, int inY)
     return REG_NULL;
 }
 
-inline objReg getNextReg(objReg inReg)//rotate to next region for next for iter
+inline entReg getNextReg(entReg inReg)//rotate to next region for next for iter
 {
     int regCount;
     
@@ -177,7 +175,7 @@ inline objReg getNextReg(objReg inReg)//rotate to next region for next for iter
     if(regCount > (int)REG_WALL_BOT)//wraps wall-loop around
         regCount = (int)REG_WALL_LEFT;
     
-    return (objReg)regCount;
+    return (entReg)regCount;
 }
 
 #endif /* RandomRooms_h */

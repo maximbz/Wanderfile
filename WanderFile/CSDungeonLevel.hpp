@@ -37,8 +37,8 @@ private:
     
     //void indexRooms(list<CSRoom*>*);
     CSRoom* createFirstRoom(void);
-    bool createRoomGenRanges(CSDungObj *, CSRoom *);
-    bool createNewRoom(CSDungObj *, CSRoom *, int*);
+    bool createRoomGenRanges(CSEntity *, CSRoom *);
+    bool createNewRoom(CSEntity *, CSRoom *, int*);
     void createOuterDoor(void);
     void createStairs(void);
     void createTreasure(void);
@@ -60,8 +60,8 @@ public:
     void slideRoom(int, int, int);
     void addRoomsToList(list<CSRoom *> *, CSRoom *, int);
     
-    //bool checkForMonsterAtPoint(CSPoint *, CSDungObj *);
-    void movePlayer(objReg);
+    //bool checkForMonsterAtPoint(CSPoint *, CSEntity *);
+    void movePlayer(entReg);
     
     void printWindow();
     

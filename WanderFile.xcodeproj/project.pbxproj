@@ -11,7 +11,7 @@
 		412537C1231A38DC000A2DE2 /* CSPlayerChoice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 412537BF231A38DC000A2DE2 /* CSPlayerChoice.cpp */; };
 		415D74431E38655C002AC908 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74421E38655C002AC908 /* main.cpp */; };
 		415D746E1E386610002AC908 /* CSDungeonLevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D745F1E386610002AC908 /* CSDungeonLevel.cpp */; };
-		415D746F1E386610002AC908 /* CSDungObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74611E386610002AC908 /* CSDungObj.cpp */; };
+		415D746F1E386610002AC908 /* CSEntity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74611E386610002AC908 /* CSEntity.cpp */; };
 		415D74701E386610002AC908 /* CSPoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74631E386610002AC908 /* CSPoint.cpp */; };
 		415D74711E386610002AC908 /* CSRandomHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74651E386610002AC908 /* CSRandomHandler.cpp */; };
 		415D74721E386610002AC908 /* CSRandomRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74671E386610002AC908 /* CSRandomRange.cpp */; };
@@ -21,7 +21,7 @@
 		415D747A1E3DD2DE002AC908 /* CSGameState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 415D74781E3DD2DE002AC908 /* CSGameState.cpp */; };
 		4164FF3B234D2C2A00FDD267 /* CSFileLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4164FF39234D2C2A00FDD267 /* CSFileLoader.cpp */; };
 		416558F21EF3808800226674 /* CSRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416558F01EF3808800226674 /* CSRange.cpp */; };
-		416558F51EF5B12B00226674 /* CSDungObjSorter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416558F31EF5B12B00226674 /* CSDungObjSorter.cpp */; };
+		416558F51EF5B12B00226674 /* CSEntitySorter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 416558F31EF5B12B00226674 /* CSEntitySorter.cpp */; };
 		419561891F6DD14600B6A03B /* CSAxis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 419561871F6DD14600B6A03B /* CSAxis.cpp */; };
 		41A4A75F2169B9F3007B75A5 /* CSRandomList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41A4A75D2169B9F3007B75A5 /* CSRandomList.cpp */; };
 		41AB14EB229B3E5500D3B576 /* CSMonsterClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41AB14E9229B3E5500D3B576 /* CSMonsterClass.cpp */; };
@@ -51,8 +51,8 @@
 		415D74421E38655C002AC908 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		415D745F1E386610002AC908 /* CSDungeonLevel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSDungeonLevel.cpp; sourceTree = "<group>"; };
 		415D74601E386610002AC908 /* CSDungeonLevel.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSDungeonLevel.hpp; sourceTree = "<group>"; };
-		415D74611E386610002AC908 /* CSDungObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSDungObj.cpp; sourceTree = "<group>"; };
-		415D74621E386610002AC908 /* CSDungObj.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSDungObj.hpp; sourceTree = "<group>"; };
+		415D74611E386610002AC908 /* CSEntity.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSEntity.cpp; sourceTree = "<group>"; };
+		415D74621E386610002AC908 /* CSEntity.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSEntity.hpp; sourceTree = "<group>"; };
 		415D74631E386610002AC908 /* CSPoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSPoint.cpp; sourceTree = "<group>"; };
 		415D74641E386610002AC908 /* CSPoint.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSPoint.hpp; sourceTree = "<group>"; };
 		415D74651E386610002AC908 /* CSRandomHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSRandomHandler.cpp; sourceTree = "<group>"; };
@@ -72,8 +72,8 @@
 		4164FF3A234D2C2A00FDD267 /* CSFileLoader.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CSFileLoader.hpp; sourceTree = "<group>"; };
 		416558F01EF3808800226674 /* CSRange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSRange.cpp; sourceTree = "<group>"; };
 		416558F11EF3808800226674 /* CSRange.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSRange.hpp; sourceTree = "<group>"; };
-		416558F31EF5B12B00226674 /* CSDungObjSorter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSDungObjSorter.cpp; sourceTree = "<group>"; };
-		416558F41EF5B12B00226674 /* CSDungObjSorter.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSDungObjSorter.hpp; sourceTree = "<group>"; };
+		416558F31EF5B12B00226674 /* CSEntitySorter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSEntitySorter.cpp; sourceTree = "<group>"; };
+		416558F41EF5B12B00226674 /* CSEntitySorter.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSEntitySorter.hpp; sourceTree = "<group>"; };
 		419561871F6DD14600B6A03B /* CSAxis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSAxis.cpp; sourceTree = "<group>"; };
 		419561881F6DD14600B6A03B /* CSAxis.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CSAxis.hpp; sourceTree = "<group>"; };
 		41A4A75D2169B9F3007B75A5 /* CSRandomList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CSRandomList.cpp; sourceTree = "<group>"; };
@@ -138,8 +138,8 @@
 				415D745F1E386610002AC908 /* CSDungeonLevel.cpp */,
 				415D746A1E386610002AC908 /* CSRoom.hpp */,
 				415D74691E386610002AC908 /* CSRoom.cpp */,
-				415D74621E386610002AC908 /* CSDungObj.hpp */,
-				415D74611E386610002AC908 /* CSDungObj.cpp */,
+				415D74621E386610002AC908 /* CSEntity.hpp */,
+				415D74611E386610002AC908 /* CSEntity.cpp */,
 				41B4254D2255CE5F00BFC5C6 /* CSCreature.hpp */,
 				41B4254C2255CE5F00BFC5C6 /* CSCreature.cpp */,
 			);
@@ -151,8 +151,8 @@
 			children = (
 				415D746C1E386610002AC908 /* CSRoomSorter.hpp */,
 				415D746B1E386610002AC908 /* CSRoomSorter.cpp */,
-				416558F41EF5B12B00226674 /* CSDungObjSorter.hpp */,
-				416558F31EF5B12B00226674 /* CSDungObjSorter.cpp */,
+				416558F41EF5B12B00226674 /* CSEntitySorter.hpp */,
+				416558F31EF5B12B00226674 /* CSEntitySorter.cpp */,
 			);
 			path = Sorters;
 			sourceTree = "<group>";
@@ -263,8 +263,8 @@
 				415D74731E386610002AC908 /* CSRoom.cpp in Sources */,
 				41AB14EB229B3E5500D3B576 /* CSMonsterClass.cpp in Sources */,
 				415D74741E386610002AC908 /* CSRoomSorter.cpp in Sources */,
-				416558F51EF5B12B00226674 /* CSDungObjSorter.cpp in Sources */,
-				415D746F1E386610002AC908 /* CSDungObj.cpp in Sources */,
+				416558F51EF5B12B00226674 /* CSEntitySorter.cpp in Sources */,
+				415D746F1E386610002AC908 /* CSEntity.cpp in Sources */,
 				415D74711E386610002AC908 /* CSRandomHandler.cpp in Sources */,
 				41EF157F1F964ABE002AF88C /* CSLine.cpp in Sources */,
 				415D747A1E3DD2DE002AC908 /* CSGameState.cpp in Sources */,

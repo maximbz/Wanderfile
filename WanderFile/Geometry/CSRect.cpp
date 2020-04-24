@@ -80,7 +80,7 @@ void CSRect::setBotRight(int inRight, int inBot)
     calculateArea();
 }
 
-bool CSRect::setWallLoc(objReg inWall, int inLocPoint)
+bool CSRect::setWallLoc(entReg inWall, int inLocPoint)
 {
     //never let a rect's wall be set to the other side of its opposite wall--thus making the rect inverted.
     switch(inWall)
@@ -128,7 +128,7 @@ bool CSRect::setWallLoc(objReg inWall, int inLocPoint)
     }
 }
 
-void CSRect::setWallRange(objReg inWall, CSRange *inRange)
+void CSRect::setWallRange(entReg inWall, CSRange *inRange)
 {
     switch(inWall)
     {
@@ -193,7 +193,7 @@ bool CSRect::doesRectContainPoint(CSPoint *inPoint)
     return (inPoint->x >= topLeft.x && inPoint->x <= botRight.x) && (inPoint->y >= topLeft.y && inPoint->y <= botRight.y);
 }
 
-/*bool CSRect::doesWallContainPoint(objReg inReg, CSPoint *inPoint)
+/*bool CSRect::doesWallContainPoint(entReg inReg, CSPoint *inPoint)
 {
     CSAxis  wallAxis;
     
@@ -202,7 +202,7 @@ bool CSRect::doesRectContainPoint(CSPoint *inPoint)
     return inPoint->getAxisPoint(wallAxis.getPerpAxis()) == getWallLocPoint(inReg) && getWallRange(inReg).doesContain(inPoint->getAxisPoint(wallAxis.dim));
 }*/
 
-bool CSRect::doesRectContainWall(CSRect *inRect, objReg inReg)
+bool CSRect::doesRectContainWall(CSRect *inRect, entReg inReg)
 {
     int     wallLoc, clockWallLoc, countclockWallLoc;
     CSAxis  wallAxis;
@@ -288,7 +288,7 @@ CSPoint* CSRect::getCorner(direction inDir)
     }
 }*/
 
-int CSRect::getWallStartPoint(objReg inWall)
+int CSRect::getWallStartPoint(entReg inWall)
 {
     switch(inWall)
     {
@@ -304,7 +304,7 @@ int CSRect::getWallStartPoint(objReg inWall)
     }
 }
 
-int CSRect::getWallEndPoint(objReg inWall)
+int CSRect::getWallEndPoint(entReg inWall)
 {
     switch(inWall)
     {
@@ -320,7 +320,7 @@ int CSRect::getWallEndPoint(objReg inWall)
     }
 }
 
-int CSRect::getWallLocPoint(objReg inWall)
+int CSRect::getWallLocPoint(entReg inWall)
 {
     switch(inWall)
     {
@@ -338,7 +338,7 @@ int CSRect::getWallLocPoint(objReg inWall)
     }
 }
 
-void CSRect::getWallRange(objReg inWall, CSRange &inRange)
+void CSRect::getWallRange(entReg inWall, CSRange &inRange)
 {
     switch(inWall)
     {
@@ -358,7 +358,7 @@ void CSRect::getWallRange(objReg inWall, CSRange &inRange)
 
 void CSRect::getAxisRange(axis inAxis, CSRange &inRange)
 {
-    objReg  regFromDim;
+    entReg  regFromDim;
     
     switch(inAxis)
     {

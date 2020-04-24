@@ -12,39 +12,40 @@
 #include <stdio.h>
 #include <string>
 #include <list>
+#include <vector>
 #include "CSPoint.hpp"
 #include "CSRange.hpp"
 #include "CSMonsterClass.hpp"
-#include "CSDungObj.hpp"
+#include "CSEntity.hpp"
 #include "CSRandomHandler.hpp"
 
 using namespace std;
 
-class CSCreature : public CSDungObj
+class CSCreature : public CSEntity
 {
 private:
     bool            _player;
     int             _hp, _atk, _ac, _xp;
     string          _name;
+    vector<string>  _creatureDataKey;
     CSRandomHandler *_theRandHand;
     CSRandomRange   _moveDir;
     
+    void initCreature(void);
 public:
     CSCreature();
-    //CSCreature(bool, CSPoint *);
     CSCreature(CSPoint *, CSMonsterClass *, CSRoom *, CSRandomHandler *);
-    void initCreature(void);
-    
-    bool moveCreature(objReg);
+    CSCreature(CSRoom *, CSRandomHandler *, CSFileLoader *);//load entity from file
     
     void setIsPlayer(bool);
-    void setNullOwner(void);
     
+    bool moveCreature(entReg);
     void changeHP(int);
     void killCreature(void);
     bool doesPlayerHit(int);
-    bool updateObject(void);
+    bool updateEntity(void);
     int attackPlayer(void);
+    string printEntityToFile(void);
     
     bool getIsPlayer(void);
     int getXP(void);

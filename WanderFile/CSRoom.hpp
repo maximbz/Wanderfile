@@ -19,9 +19,9 @@
 #include "CSRect.hpp"
 #include "CSRange.hpp"
 #include "CSRandomRange.hpp"
-#include "CSDungObjSorter.hpp"
+#include "CSEntitySorter.hpp"
 
-class CSDungObj;
+class CSEntity;
 
 class CSRoom
 {
@@ -34,15 +34,15 @@ private:
     int                 _roomNum, _roomNumDigits, _numDoors;
     CSRandomRange       _wallGenLoc[NUM_ROOM_WALLS];
     CSRect              _roomRect;
-    list<CSDungObj*>    _objects;
+    list<CSEntity*>     _entities;
     vector<string>      _roomDataKey;
-    CSDungObjSorter     _objectComparator;
+    CSEntitySorter      _entComparitor;
     CSRoom              *_roomToConnect;
     
     void roomInit(CSGameState *, CSRandomHandler *, CSDoorHandler *);
-    char assumeChar(CSDungObj *, char);
-    CSDungObj* createObject(objType, objReg, CSPoint *, CSDungObj *, CSDungObj *);
-    CSDungObj* checkForObjectToDraw(CSPoint *);
+    char assumeChar(CSEntity *, char);
+    CSEntity* createEntity(entType, entReg, CSPoint *, CSEntity *, CSEntity *);
+    CSEntity* checkForEntityToDraw(CSPoint *);
     
 public:    
     CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
@@ -54,39 +54,39 @@ public:
     void setRoomNum(int);
     void setRoomToConnect(CSRoom *);
     
-    void createCoreDoor(objReg, CSPoint *, CSDungObj*);
-    void createNewDoor(objReg);
-    CSDungObj* createNewObject(objType);
-    void addObject(CSDungObj *);
-    void removeObject(CSDungObj *);
+    void createCoreDoor(entReg, CSPoint *, CSEntity*);
+    void createNewDoor(entReg);
+    CSEntity* createNewEntity(entType);
+    void addEntity(CSEntity *);
+    void removeEntity(CSEntity *);
     void removeConnection(CSRoom *);
     void deleteRoom(void);
-    void deleteObject(int);
-    void deleteObject(CSDungObj *);
+    void deleteEntity(int);
+    void deleteEntity(CSEntity *);
 
     int connectToRoom(void);
     void updateRoomNum(int);
-    void updateObjectNums(void);
+    void updateEntityNums(void);
     bool slideRoom(CSPoint *);
-    bool slideWall(objReg, int);
+    bool slideWall(entReg, int);
     
     string printRoomRow(CSRange *, int);
     string printRoomToFile(void);
     
-    CSDungObj* getUnconnectedDoor(void);
-    CSDungObj* getConnectedDoor(void);//only for hallways
-    CSDungObj* getDoorConnectedToRoom(CSRoom *);
-    CSDungObj* getObjectAtTile(CSPoint *);
+    CSEntity* getUnconnectedDoor(void);
+    CSEntity* getConnectedDoor(void);//only for hallways
+    CSEntity* getDoorConnectedToRoom(CSRoom *);
+    CSEntity* getEntityAtTile(CSPoint *);
     bool getGoodRoomPoint(CSPoint &, bool);
-    bool isWallPointFree(CSPoint *, objReg, CSDungObj *);
+    bool isWallPointFree(CSPoint *, entReg, CSEntity *);
     bool isTilePassable(CSPoint *);
     
     bool isHall(void);
     bool isVertHall(void);
     int getRoomNum(void);
     CSRandomRange* getWallGenRanges(void);
-    list<CSDungObj *>* getObjects(void);
-    CSDungObj * getObjectWithNum(int);
+    list<CSEntity *>* getEntities(void);
+    CSEntity * getEntityWithNum(int);
     CSRect* getRect(void);
     void getWallessRect(CSRect &);
     CSRoom* getRoomToConnect(void);

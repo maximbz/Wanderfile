@@ -11,7 +11,7 @@
 #include "CSLine.hpp"
 #include "CSRoom.hpp"
 #include "CSRandomRange.hpp"
-#include "CSDungObj.hpp"
+#include "CSEntity.hpp"
 
 #pragma mark Constructors
 
@@ -31,41 +31,42 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
 CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSFileLoader *inFileLoader)//load room from file
 {
     int         left = BAD_DATA, top = BAD_DATA, right = BAD_DATA, bot = BAD_DATA, boolAsInt;
-    CSDungObj   *newObj;
+    CSEntity   *newEntity;
     
     roomInit(inGame, inRandHand, inDoorHand);
     
-    inFileLoader->addKeys(&_roomDataKey);
+    inFileLoader->populateDictionary();
    
     //set all the room data
-    inFileLoader->getIntValueFromKey(&_roomDataKey[0], &_roomNum);
-    inFileLoader->getIntValueFromKey(&_roomDataKey[1], &left);
-    inFileLoader->getIntValueFromKey(&_roomDataKey[2], &top);
-    inFileLoader->getIntValueFromKey(&_roomDataKey[3], &right);
-    inFileLoader->getIntValueFromKey(&_roomDataKey[4], &bot);
+    inFileLoader->getIntValueFromKey(_roomDataKey[0], _roomNum);
+    inFileLoader->getIntValueFromKey(_roomDataKey[1], left);
+    inFileLoader->getIntValueFromKey(_roomDataKey[2], top);
+    inFileLoader->getIntValueFromKey(_roomDataKey[3], right);
+    inFileLoader->getIntValueFromKey(_roomDataKey[4], bot);
     _roomRect.setPoints(left, top, right, bot);
-    inFileLoader->getIntValueFromKey(&_roomDataKey[5], &boolAsInt);
+    inFileLoader->getIntValueFromKey(_roomDataKey[5], boolAsInt);
     _isHall = (bool)boolAsInt;
-    inFileLoader->getIntValueFromKey(&_roomDataKey[6], &boolAsInt);
+    inFileLoader->getIntValueFromKey(_roomDataKey[6], boolAsInt);
     _vertHall = (bool)boolAsInt;
     
-    //start on DungObj's
+    //start on Entities's
     if(inFileLoader->getCompleteState() == FILE_DESCEND_CHAR)
     {
-        inFileLoader->resetDictionary();//prep fileLoader for objects
-        
         while(inFileLoader->getCompleteState() != FILE_ASCEND_CHAR)
         {
-            inFileLoader->resetDictionary();//prep fileLoader for next object
+            inFileLoader->populateDictionary();
             
-            newObj = new CSDungObj(this, _theDoorHand, inFileLoader);
+            newEntity = new CSEntity(this, _theDoorHand, inFileLoader);
+            if(newEntity->getOwner() == nullptr)//check to see if the entity discovered that we should be making a creature instead
+            {
+                delete newEntity;
+                newEntity = new CSCreature(this, _theRandHand, inFileLoader);
+            }
             
-            _objects.push_back(newObj);
-            updateObjectNums();
+            _entities.push_back(newEntity);
+            updateEntityNums();
         }
     }
-    
-    inFileLoader->resetDictionary();//prep fileLoader for next room
 }
 
 void CSRoom::roomInit(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand)
@@ -118,37 +119,37 @@ void CSRoom::setRoomToConnect(CSRoom *inRoom)
 #pragma mark -
 #pragma mark Doers - Create/Delete Functions
 
-CSDungObj* CSRoom::createObject(objType inObjType, objReg inObjReg, CSPoint *inObjLoc, CSDungObj *inParent, CSDungObj *inCon)
+CSEntity* CSRoom::createEntity(entType inEntType, entReg inEntReg, CSPoint *inEntLoc, CSEntity *inParent, CSEntity *inCon)
 {
-    CSDungObj   *newObject = new CSDungObj(inObjType, inObjReg, inObjLoc, inParent, inCon, this);
+    CSEntity   *newEntity = new CSEntity(inEntType, inEntReg, inEntLoc, inParent, inCon, this);
     
-    _objects.push_back(newObject);
-    updateObjectNums();
+    _entities.push_back(newEntity);
+    updateEntityNums();
     
-    return newObject;
+    return newEntity;
 }
 
-void CSRoom::createCoreDoor(objReg inReg, CSPoint *inPoint, CSDungObj *inDoor)
+void CSRoom::createCoreDoor(entReg inReg, CSPoint *inPoint, CSEntity *inDoor)
 {
-    createObject(OBJ_DOOR, inReg, inPoint, nullptr, inDoor);
+    createEntity(ENT_DOOR, inReg, inPoint, nullptr, inDoor);
     _numDoors++;
 }
 
-void CSRoom::createNewDoor(objReg inReg)
+void CSRoom::createNewDoor(entReg inReg)
 {
     bool            goodDoorLoc;
-    objReg          nextDoorWall = REG_NULL;
+    entReg          nextDoorWall = REG_NULL;
     CSAxis          roomGenAxis;
     CSPoint         newPoint;
     CSRandomRange   roomSideGen(RAND_ROOM, REG_WALL_LEFT, REG_WALL_BOT);
     
-    list<CSDungObj *>::iterator objListIter;
+    list<CSEntity *>::iterator entIter;
     
     _theRandHand->addRandomRange(roomSideGen);//add the range to the randHand
     
     if(_isHall)//to the opposite wall for a hallway
     {
-        //if we're a hall, we always send in an objReg--the reg for this new door
+        //if we're a hall, we always send in an entReg--the reg for this new door
         roomGenAxis.setAxisFromWall(inReg);//set the dim to HORIZ or VERT and the dir to UP_LEFT or DOWN_RIGHT
         nextDoorWall = inReg;
         
@@ -160,12 +161,12 @@ void CSRoom::createNewDoor(objReg inReg)
         if(inReg == REG_NULL)//we don't care which wall, as long as it's not already with-door
             do
             {
-                nextDoorWall = (objReg)_theRandHand->getNumber(&roomSideGen);
+                nextDoorWall = (entReg)_theRandHand->getNumber(&roomSideGen);
                 goodDoorLoc = true;
                 
                 //make sure it's a wall that has no door, and that adding a door now won't create problems with very nearby rooms, in the next iteration -- in the future, same door walls should be okay, within reason, so we need to create some check for distance minimum between same door walls.
-                for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
-                    if(nextDoorWall == (*objListIter)->getRegion())
+                for(entIter = _entities.begin(); entIter != _entities.end(); entIter++)
+                    if(nextDoorWall == (*entIter)->getRegion())
                         goodDoorLoc = false;
             }
             while(!goodDoorLoc);
@@ -182,23 +183,23 @@ void CSRoom::createNewDoor(objReg inReg)
         newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber(&doorLocGen));
     }
     
-    _theDoorHand->addDoor(createObject(OBJ_DOOR, nextDoorWall, &newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
+    _theDoorHand->addDoor(createEntity(ENT_DOOR, nextDoorWall, &newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
     
     _theRandHand->clearRandomItems(RAND_ROOM);
     _numDoors++;
 }
 
-CSDungObj* CSRoom::createNewObject(objType inType)
+CSEntity* CSRoom::createNewEntity(entType inType)
 {
     bool            passable;
-    CSPoint         objectLoc;
+    CSPoint         entLoc;
     
     switch(inType)
     {
-        case OBJ_CREATURE:
+        case ENT_CREATURE:
             passable = true;
             break;
-        case OBJ_TREASURE:
+        case ENT_TREASURE:
             passable = false;
             break;
         default:
@@ -206,75 +207,79 @@ CSDungObj* CSRoom::createNewObject(objType inType)
             break;
     }
     
-    getGoodRoomPoint(objectLoc, passable);
+    getGoodRoomPoint(entLoc, passable);
     
-    return createObject(inType, REG_ROOM, &objectLoc, nullptr, nullptr);
+    return createEntity(inType, REG_ROOM, &entLoc, nullptr, nullptr);
 }
 
-void CSRoom::addObject(CSDungObj *inObj)//for objects (usually cxreatures) entering the room
+void CSRoom::addEntity( CSEntity *inEnt)//for entities (usually cxreatures) entering the room
 {
-    _objects.push_back(inObj);
+    if(inEnt->getOwner() != nullptr)
+        inEnt->getOwner()->removeEntity(inEnt);
+    inEnt->setOwner(this);
     
-    updateObjectNums();
+    _entities.push_back(inEnt);
+    
+    updateEntityNums();
 }
 
-void CSRoom::removeObject(CSDungObj *inObj)//for objects (usually monsters) leaving the room
+void CSRoom::removeEntity(CSEntity *inEnt)//for entities (usually monsters) leaving the room
 {
-    _objects.remove(inObj);
+    _entities.remove(inEnt);
     
-    updateObjectNums();
+    updateEntityNums();
 }
 
 void CSRoom::deleteRoom(void)
 {
-    list<CSDungObj *>::iterator     objectIter = _objects.begin();
+    list<CSEntity *>::iterator     entIter = _entities.begin();
     
-    //erases and deletes all objects, removes the reference back to this CSRoom from all connected CSRoom's
-    while(objectIter != _objects.end())
+    //erases and deletes all entities, removes the reference back to this CSRoom from all connected CSRoom's
+    while(entIter != _entities.end())
     {
         //if we're deleting a door, make sure to remove it from theDoorHand, then re-add the now-unconnected door.
-        if((*objectIter)->getType() == OBJ_DOOR)
+        if((*entIter)->getType() == ENT_DOOR)
         {
-            _theDoorHand->removeDoor(*objectIter);
-            if((*objectIter)->getConnect() != nullptr)
-                _theDoorHand->addDoor((*objectIter)->getConnect());
+            _theDoorHand->removeDoor(*entIter);
+            if((*entIter)->getConnect() != nullptr)
+                _theDoorHand->addDoor((*entIter)->getConnect());
         }
-        if((*objectIter)->getType() != OBJ_CREATURE)//creature objects are deleted by DungeonLevel
-            (*objectIter)->deleteObject();
-        objectIter = _objects.erase(objectIter);//new iterator properly goes through the list, now with fewer entries
+        if((*entIter)->getType() != ENT_CREATURE)//creature entities are deleted by DungeonLevel
+            (*entIter)->deleteEntity();
+        entIter = _entities.erase(entIter);//new iterator properly goes through the list, now with fewer entries
     }
     
     delete this;
 }
 
-void CSRoom::deleteObject(int inObjNum)
+void CSRoom::deleteEntity(int inEntNum)
 {
-    list<CSDungObj *>::iterator objectIter;
+    list<CSEntity *>::iterator entIter;
     
-    //goes through all objects looking for the incoming object number and has the otherdeleteObjects method delete it
-    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
-        if((*objectIter)->getNum() == inObjNum)
+    //goes through all entities looking for the incoming entities number and has the other deleteEntities method delete it
+    for(entIter = _entities.begin(); entIter != _entities.end(); entIter++)
+        if((*entIter)->getNum() == inEntNum)
         {
-            deleteObject(*objectIter);
+            deleteEntity(*entIter);
             return;
         }
 }
 
-void CSRoom::deleteObject(CSDungObj *inObj)
+void CSRoom::deleteEntity(CSEntity *inEnt)
 {
-    list<CSDungObj *>::iterator objectIter;
+    list<CSEntity *>::iterator entIter;
     
-    //goes through all objects looking for the incoming object and deletes it
-    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
-        if((*objectIter) == inObj)
+    //goes through all entities looking for the incoming entity and deletes it
+    for(entIter = _entities.begin(); entIter != _entities.end(); entIter++)
+        if((*entIter) == inEnt)
         {
-            if((*objectIter)->getType() == OBJ_DOOR)
-                _theDoorHand->removeDoor(*objectIter);
+            if((*entIter)->getType() == ENT_DOOR)
+                _theDoorHand->removeDoor(*entIter);
             
-            (*objectIter)->deleteObject();
-            _objects.erase(objectIter);
+            (*entIter)->deleteEntity();
+            _entities.erase(entIter);
             
-            updateObjectNums();//then re-numbers the remaining objects
+            updateEntityNums();//then re-numbers the remaining entities
             return;
         }
 }
@@ -287,12 +292,12 @@ int CSRoom::connectToRoom(void)
 {
     bool        goodConnect = false;
     int         loop;
-    objReg      wallToConnect, connectingWall;
+    entReg      wallToConnect, connectingWall;
     CSPoint     newDoorPoint, testPoint, tempPoint;
     CSLine      sharedOverlap;
     CSAxis      hallwayAxis;
     CSRoom      *connectedRoom;
-    CSDungObj   *unconnectedDoor, *doorToIgnore;
+    CSEntity    *unconnectedDoor, *doorToIgnore;
     
     unconnectedDoor = getUnconnectedDoor();
     wallToConnect = unconnectedDoor->getRegion();
@@ -352,7 +357,7 @@ int CSRoom::connectToRoom(void)
         return RETURN_CODE_ABORT_GEN;
     
     newDoorPoint.setAxisPoint(hallwayAxis.dim, _roomToConnect->getRect()->getWallLocPoint(connectingWall));//slide newDoorPoint into roomToConnect, where the new door might be created
-    _roomToConnect->createObject(OBJ_DOOR, connectingWall, &newDoorPoint, nullptr, unconnectedDoor);//now we've found a good spot for it, create a new door in _roomToConnect using newDoorPoint to match our unconnected door, and connect them to each other
+    _roomToConnect->createEntity(ENT_DOOR, connectingWall, &newDoorPoint, nullptr, unconnectedDoor);//now we've found a good spot for it, create a new door in _roomToConnect using newDoorPoint to match our unconnected door, and connect them to each other
     
     //we no longer have a room to connect to, or an unconnected door so let's reset our variables
     _theDoorHand->removeDoor(unconnectedDoor);
@@ -366,22 +371,22 @@ void CSRoom::updateRoomNum(int inNumDigits)
     char            newDigit;
     CSPoint         newDigitLoc;
     CSRect          wallessRect;
-    CSDungObj       *newRoomNum, *prevRoomNum = nullptr;
+    CSEntity        *newRoomNum, *prevRoomNum = nullptr;
     
-    list<CSDungObj *>::iterator  listIter = _objects.begin();
+    list<CSEntity *>::iterator  listIter = _entities.begin();
     
     if(inNumDigits == _roomNumDigits)
         return;
     
     getWallessRect(wallessRect);
     
-    //remove old room number objects
-    while(listIter != _objects.end())
+    //remove old room number entities
+    while(listIter != _entities.end())
     {
-        if((*listIter)->getType() == OBJ_ROOM_NUM)
+        if((*listIter)->getType() == ENT_ROOM_NUM)
         {
-            (*listIter)->deleteObject();
-            listIter = _objects.erase(listIter);
+            (*listIter)->deleteEntity();
+            listIter = _entities.erase(listIter);
         }
         else
             listIter++;
@@ -398,7 +403,7 @@ void CSRoom::updateRoomNum(int inNumDigits)
         powerResult = pow(10, loop - 1);
         newDigit = ((_roomNum / powerResult) % 10) + '0';//plus ascii offset
         
-        newRoomNum = createObject(OBJ_ROOM_NUM, REG_CORNER_TOP_LEFT, &newDigitLoc, prevRoomNum, nullptr);//creates one's place and connect it to ten's place
+        newRoomNum = createEntity(ENT_ROOM_NUM, REG_CORNER_TOP_LEFT, &newDigitLoc, prevRoomNum, nullptr);//creates one's place and connect it to ten's place
         newRoomNum->setChar(newDigit);
         
         prevRoomNum = newRoomNum;
@@ -406,32 +411,32 @@ void CSRoom::updateRoomNum(int inNumDigits)
 
 }
 
-void CSRoom::updateObjectNums(void)
+void CSRoom::updateEntityNums(void)
 {
     int count = 0;
     
-    list<CSDungObj*>::iterator  objectIter;
+    list<CSEntity*>::iterator  entIter;
     
-    _objects.sort(_objectComparator);
+    _entities.sort(_entComparitor);
     
-    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
+    for(entIter = _entities.begin(); entIter != _entities.end(); entIter++)
     {
-        (*objectIter)->setNum(count);
+        (*entIter)->setNum(count);
         count++;
     }
 }
 
 bool CSRoom::slideRoom(CSPoint *inVector)
 {
-    CSDungObj   *connectedDoor;
+    CSEntity   *connectedDoor;
     CSRect      oldRoomLoc;
     CSPoint     newLoc, newVect;
     CSAxis      slideAxis, roomAxis;
     bool        success = true;
     
-    vector<CSDungObj *>             slidDoors;
-    vector<CSDungObj *>::iterator   vectIter;
-    list<CSDungObj *>::iterator     listIter;
+    vector<CSEntity *>             slidDoors;
+    vector<CSEntity *>::iterator   vectIter;
+    list<CSEntity *>::iterator     listIter;
     
     if(_theGame->getBreakState())
         oldRoomLoc.calculateArea();//for debug only
@@ -443,10 +448,10 @@ bool CSRoom::slideRoom(CSPoint *inVector)
     }
     
     //loop through every door's connected door to see if it can be slid
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    for(listIter = _entities.begin(); listIter != _entities.end(); listIter++)
     {
         //ignore non-doors and non-connected doors
-        if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getConnect() == nullptr)
+        if((*listIter)->getType() != ENT_DOOR || (*listIter)->getConnect() == nullptr)
             continue;
         
         slideAxis.setAxisFromWall((*listIter)->getRegion());
@@ -483,14 +488,14 @@ bool CSRoom::slideRoom(CSPoint *inVector)
                 slideAxis.dim = AXIS_HORIZ;
         }
         
-        //also slide every object in the room except connected para room-doors
-        for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+        //also slide every entity in the room except connected para room-doors
+        for(listIter = _entities.begin(); listIter != _entities.end(); listIter++)
         {
             roomAxis.setAxisFromWall((*listIter)->getRegion());
             
             if(((_isHall || (!_isHall && roomAxis.dim != slideAxis.dim) || (*listIter)->getConnect() == nullptr)) &&
                !(*listIter)->getWasMoved())
-                (*listIter)->slideObject(*inVector);
+                (*listIter)->slideEntity(*inVector);
         }
     }
     else//but if any doors failed their slide, we undo what we have done
@@ -502,8 +507,8 @@ bool CSRoom::slideRoom(CSPoint *inVector)
             _roomRect = oldRoomLoc;//undo the room's slide
     }
     
-    //reset all objects', and their connects' _wasMoved to false;
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    //reset all entities', and their connects' _wasMoved to false;
+    for(listIter = _entities.begin(); listIter != _entities.end(); listIter++)
     {
         (*listIter)->setWasMoved(false);
         if((*listIter)->getConnect() != nullptr)
@@ -513,14 +518,14 @@ bool CSRoom::slideRoom(CSPoint *inVector)
     return success;
 }
 
-bool CSRoom::slideWall(objReg inWall, int inVector)
+bool CSRoom::slideWall(entReg inWall, int inVector)
 {
     int         newWallLoc = _roomRect.getWallLocPoint(inWall) + inVector, narrowest;
     CSAxis      wallAxis;
     CSRange     wallMovementRange;
     CSRect      newRoomRect;
     
-    list<CSDungObj*>::iterator  listIter;
+    list<CSEntity*>::iterator  listIter;
     
     //move the wall this door is on to the same spot
     newRoomRect = _roomRect;
@@ -536,9 +541,9 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
     wallAxis.setAxisFromWall(inWall);
     wallMovementRange.setRange(newRoomRect.getWallLocPoint(inWall), _roomRect.getWallLocPoint(inWall));
     
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    for(listIter = _entities.begin(); listIter != _entities.end(); listIter++)
     {
-        if((*listIter)->getType() != OBJ_DOOR || (*listIter)->getRegion() == inWall)
+        if((*listIter)->getType() != ENT_DOOR || (*listIter)->getRegion() == inWall)
             continue;
         
         //If there are, cancel the move
@@ -559,37 +564,37 @@ bool CSRoom::slideWall(objReg inWall, int inVector)
 #pragma mark -
 #pragma mark Doers - Graphics Functions
 
-char CSRoom::assumeChar(CSDungObj *inObj, char inChar)
+char CSRoom::assumeChar(CSEntity *inEnt, char inChar)
 {
-    if(inObj == nullptr)
+    if(inEnt == nullptr)
         return inChar;
     else
-        return inObj->getChar();
+        return inEnt->getChar();
 }
 
-CSDungObj* CSRoom::checkForObjectToDraw(CSPoint *inLoc)//finds and returns a creature or an object or nothing
+CSEntity* CSRoom::checkForEntityToDraw(CSPoint *inLoc)//finds and returns a creature or an entity or nothing
 {
-    CSDungObj   *objectToDraw = nullptr;
+    CSEntity   *entToDraw = nullptr;
     
-    list<CSDungObj *>           objectsInTile;
-    list<CSDungObj *>::iterator listIter;
+    list<CSEntity *>           entsInTile;
+    list<CSEntity *>::iterator listIter;
     
-    //if(*_theGame->getPlayer()->getLoc() == *inLoc)//player supercedes inanimate objects
+    //if(*_theGame->getPlayer()->getLoc() == *inLoc)//player supercedes inanimate entities
         //return _theGame->getPlayer();
     
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    for(listIter = _entities.begin(); listIter != _entities.end(); listIter++)
         if(*(*listIter)->getLoc() == *inLoc)
-            objectsInTile.push_back(*listIter);
+            entsInTile.push_back(*listIter);
     
-    //if both a creature and an object are found, make sure the creature supercedes the object
-    for(listIter = objectsInTile.begin(); listIter != objectsInTile.end(); listIter++)
+    //if both a creature and a non-creature entity are found, make sure the creature supercedes the non-creature
+    for(listIter = entsInTile.begin(); listIter != entsInTile.end(); listIter++)
     {
-        objectToDraw = *listIter;
-        if((*listIter)->getType() == OBJ_CREATURE)
+        entToDraw = *listIter;
+        if((*listIter)->getType() == ENT_CREATURE)
             break;
     }
     
-    return objectToDraw;//if nothing was found, this will be null
+    return entToDraw;//if nothing was found, this will be null
 }
 
 string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
@@ -617,25 +622,25 @@ string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
     //use rowToPrint to determine which horizontal line of the room to print
     if(rowToPrint == _roomRect.topLeft.y || rowToPrint == _roomRect.botRight.y)//print top or bottom wall
         for(tileToPrint.x = leftPrintBound; tileToPrint.x <= rightPrintBound; tileToPrint.x++)
-            printString += assumeChar(checkForObjectToDraw(&tileToPrint), WALL_CHAR);//send in the tile we wish to print and the char we assume to be there, checkForObjectToDraw will return the assumed tile or any overridden tile, based on room info, and assumeChar will find the correct char for that object. Finally, we append it to printString.
+            printString += assumeChar(checkForEntityToDraw(&tileToPrint), WALL_CHAR);//send in the tile we wish to print and the char we assume to be there, checkForEntityToDraw will return the assumed tile or any overridden tile, based on room info, and assumeChar will find the correct char for that entity. Finally, we append it to printString.
     else//print the left wall, guts of the room, and right wall
     {
         //print left wall/door
         if(_roomRect.getWidth() > 0 && printLeftWall)
         {
             tileToPrint.x = _roomRect.topLeft.x;
-            printString += assumeChar(checkForObjectToDraw(&tileToPrint), WALL_CHAR);
+            printString += assumeChar(checkForEntityToDraw(&tileToPrint), WALL_CHAR);
         }
         
-        //print floor and/or objects
+        //print floor and/or entities
         for(tileToPrint.x = leftPrintBound + printLeftWall; tileToPrint.x <= rightPrintBound - printRightWall; tileToPrint.x++)//inset by 1 on each side for the walls
-            printString += assumeChar(checkForObjectToDraw(&tileToPrint), FLOOR_CHAR);
+            printString += assumeChar(checkForEntityToDraw(&tileToPrint), FLOOR_CHAR);
         
         //print right wall/door
         if(_roomRect.getWidth() > 1 && printRightWall)//left wall and right wall
         {
             tileToPrint.x = _roomRect.botRight.x;
-            printString += assumeChar(checkForObjectToDraw(&tileToPrint), WALL_CHAR);
+            printString += assumeChar(checkForEntityToDraw(&tileToPrint), WALL_CHAR);
         }
     }
     
@@ -645,7 +650,7 @@ string CSRoom::printRoomRow(CSRange *printRange, int rowToPrint)
 string CSRoom::printRoomToFile(void)
 {
     string  outputString;
-    list<CSDungObj *>::iterator listIter;
+    list<CSEntity *>::iterator listIter;
     
     //print basic room info
     outputString += _roomDataKey[0];
@@ -677,18 +682,19 @@ string CSRoom::printRoomToFile(void)
     outputString += to_string(_vertHall);
     outputString += "\n";
     
-    //only print objects if there are any
-    if(_objects.size() > 0)
+    //only print entities if there are any
+    if(_entities.size() > 0)
     {
         outputString += FILE_DESCEND_CHAR;
         outputString += "\n";
         
-        for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+        for(listIter = _entities.begin(); listIter != _entities.end(); listIter++)
         {
-            outputString += (*listIter)->printObjectToFile();
-            if(*listIter == _objects.back())//we're done, so we're going back up
+            if(!(*listIter)->getIsPlayer())//the dungeon will take care of saving the player state
+                outputString += (*listIter)->printEntityToFile();
+            if(*listIter == _entities.back())//we're done, so we're going back up
                 outputString += FILE_ASCEND_CHAR;
-            else//we have more objects
+            else//we have more entities
                 outputString += FILE_TERM_CHAR;
             outputString += "\n";
         }
@@ -706,50 +712,50 @@ string CSRoom::printRoomToFile(void)
 #pragma mark -
 #pragma mark Complex Check Functions
 
-CSDungObj* CSRoom::getUnconnectedDoor(void)
+CSEntity* CSRoom::getUnconnectedDoor(void)
 {
-    list<CSDungObj *>::iterator objListIter;
+    list<CSEntity *>::iterator entListIter;
     
-    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
-        if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect() == nullptr)//this is a door & it should connect to our new room
-            return *objListIter;
+    for(entListIter = _entities.begin(); entListIter != _entities.end(); entListIter++)
+        if((*entListIter)->getType() == ENT_DOOR && (*entListIter)->getConnect() == nullptr)//this is a door & it should connect to our new room
+            return *entListIter;
     
     return nullptr;
 }
 
-CSDungObj* CSRoom::getConnectedDoor(void)
+CSEntity* CSRoom::getConnectedDoor(void)
 {
-    list<CSDungObj *>::iterator objListIter;
+    list<CSEntity *>::iterator entListIter;
     
-    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
-        if((*objListIter)->getType() == OBJ_DOOR && ((*objListIter)->getConnect() != nullptr))//this is a door & it should connect to our new room
-            return (*objListIter);
+    for(entListIter = _entities.begin(); entListIter != _entities.end(); entListIter++)
+        if((*entListIter)->getType() == ENT_DOOR && ((*entListIter)->getConnect() != nullptr))//this is a door & it should connect to our new room
+            return (*entListIter);
     
     return nullptr;
 }
 
-CSDungObj* CSRoom::getDoorConnectedToRoom(CSRoom *inRoom)
+CSEntity* CSRoom::getDoorConnectedToRoom(CSRoom *inRoom)
 {
-    list<CSDungObj *>::iterator objListIter;
+    list<CSEntity *>::iterator entListIter;
     
-    for(objListIter = _objects.begin(); objListIter != _objects.end(); objListIter++)
+    for(entListIter = _entities.begin(); entListIter != _entities.end(); entListIter++)
     {
-        if((*objListIter)->getConnect() == nullptr)
+        if((*entListIter)->getConnect() == nullptr)
             continue;
         
-        if((*objListIter)->getType() == OBJ_DOOR && (*objListIter)->getConnect()->getOwner() == inRoom)
-            return *objListIter;
+        if((*entListIter)->getType() == ENT_DOOR && (*entListIter)->getConnect()->getOwner() == inRoom)
+            return *entListIter;
     }
     
     return nullptr;
 }
 
-CSDungObj* CSRoom::getObjectAtTile(CSPoint *inTile)//finds and returns a CSDungObj, ignoring any creartures that might also be there
+CSEntity* CSRoom::getEntityAtTile(CSPoint *inTile)//finds and returns a CSEntity, ignoring any creartures that might also be there
 {
-    list<CSDungObj *>::iterator listIter;
+    list<CSEntity *>::iterator listIter;
     
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
-        if(*(*listIter)->getLoc() == *inTile && (*listIter)->getType() != OBJ_CREATURE && (*listIter)->getType() != OBJ_ROOM_NUM)
+    for(listIter = _entities.begin(); listIter != _entities.end(); listIter++)
+        if(*(*listIter)->getLoc() == *inTile && (*listIter)->getType() != ENT_CREATURE && (*listIter)->getType() != ENT_ROOM_NUM)
             return *listIter;
     
     return nullptr;
@@ -779,20 +785,20 @@ bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
             inPoint.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
         }
         
-        if(getObjectAtTile(&inPoint) == nullptr)//make sure no objects already exists at this location
+        if(getEntityAtTile(&inPoint) == nullptr)//make sure no entities already exists at this location
             goodLoc = true;
         
-        if(!isPassable)//if this object type is impassable...
+        if(!isPassable)//if this entity type is impassable...
         {
             //check the 4 adjacent tiles for doors
             for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
             {
-                adjacentAxis.setAxisFromWall((objReg)loop);
+                adjacentAxis.setAxisFromWall((entReg)loop);
                 adjacentLoc = inPoint;
                 adjacentLoc.slidePointViaAxis(adjacentAxis.dim, 1 * adjacentAxis.getDirOffset());
                 
-                if(getObjectAtTile(&adjacentLoc) != nullptr)
-                    if(getObjectAtTile(&adjacentLoc)->getType() == OBJ_DOOR)//we are next to a door
+                if(getEntityAtTile(&adjacentLoc) != nullptr)
+                    if(getEntityAtTile(&adjacentLoc)->getType() == ENT_DOOR)//we are next to a door
                     {
                         goodLoc = false;
                         break;
@@ -809,11 +815,11 @@ bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
     return true;
 }
 
-bool CSRoom::isWallPointFree(CSPoint *inPoint, objReg inWall, CSDungObj *doorToMove)
+bool CSRoom::isWallPointFree(CSPoint *inPoint, entReg inWall, CSEntity *doorToMove)
 {
     CSAxis  wallAxis;
     
-    list<CSDungObj*>::iterator  objectIter;
+    list<CSEntity*>::iterator  entIter;
     
     wallAxis.setAxisFromWall(inWall);
     
@@ -823,22 +829,22 @@ bool CSRoom::isWallPointFree(CSPoint *inPoint, objReg inWall, CSDungObj *doorToM
         return false;
     
     //check every door on inWall
-    for(objectIter = _objects.begin(); objectIter != _objects.end(); objectIter++)
+    for(entIter = _entities.begin(); entIter != _entities.end(); entIter++)
     {
-        int objectNum;
-        objectNum = (*objectIter)->getNum();
+        int entNum;
+        entNum = (*entIter)->getNum();
         
         //skip doors on other walls, non-doors, or the door we're moving that's leading to this wall check
-        if((*objectIter)->getType() != OBJ_DOOR || (*objectIter)->getRegion() != inWall || (*objectIter) == doorToMove)
+        if((*entIter)->getType() != ENT_DOOR || (*entIter)->getRegion() != inWall || (*entIter) == doorToMove)
             continue;
         
         //if inPoint is where inWall has a connected door
-        if(inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim))
+        if(inPoint->getAxisPoint(wallAxis.dim) == (*entIter)->getLoc()->getAxisPoint(wallAxis.dim))
             return false;
         
         //if inPoint aligns with one of the walls of a connected hallway
-        if(inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) - (HALL_SIZE / 2) ||
-           inPoint->getAxisPoint(wallAxis.dim) == (*objectIter)->getLoc()->getAxisPoint(wallAxis.dim) + (HALL_SIZE / 2))
+        if(inPoint->getAxisPoint(wallAxis.dim) == (*entIter)->getLoc()->getAxisPoint(wallAxis.dim) - (HALL_SIZE / 2) ||
+           inPoint->getAxisPoint(wallAxis.dim) == (*entIter)->getLoc()->getAxisPoint(wallAxis.dim) + (HALL_SIZE / 2))
             return false;
     }
     
@@ -849,18 +855,18 @@ bool CSRoom::isTilePassable(CSPoint *inTile)
 {
     bool        insideWalls;
     CSRect      wallessRect;
-    CSDungObj   *tileObj = nullptr;
+    CSEntity   *tileEnt = nullptr;
     
     //check whether there is a wall at the tile (if the new tile is in _roomRect but NOT in wallesRect)
     getWallessRect(wallessRect);
     insideWalls = wallessRect.doesRectContainPoint(inTile);
     
-    tileObj = checkForObjectToDraw(inTile);//check if there's an object or creature at this tile
-    if(tileObj != nullptr)//if there is, return whether that object is passable
+    tileEnt = checkForEntityToDraw(inTile);//check if there's an entity or creature at this tile
+    if(tileEnt != nullptr)//if there is, return whether that entity is passable
     {
-        if(tileObj->isPassable())
+        if(tileEnt->isPassable())
         {
-            if(tileObj->getType() == OBJ_ROOM_NUM)
+            if(tileEnt->getType() == ENT_ROOM_NUM)
                 return insideWalls;
             else
                 return true;
@@ -896,18 +902,18 @@ CSRandomRange* CSRoom::getWallGenRanges(void)
     return &_wallGenLoc[0];
 }
 
-list<CSDungObj*>* CSRoom::getObjects(void)
+list<CSEntity*>* CSRoom::getEntities(void)
 {
-    return &_objects;
+    return &_entities;
 }
 
-CSDungObj * CSRoom::getObjectWithNum(int inObjNum)
+CSEntity* CSRoom::getEntityWithNum(int inEntNum)
 {
-    list<CSDungObj *>::iterator listIter;
+    list<CSEntity *>::iterator listIter;
     
-    for(listIter = _objects.begin(); listIter != _objects.end(); listIter++)
+    for(listIter = _entities.begin(); listIter != _entities.end(); listIter++)
     {
-        if((*listIter)->getNum() == inObjNum)
+        if((*listIter)->getNum() == inEntNum)
             return *listIter;
     }
     
@@ -928,10 +934,10 @@ void CSRoom::getWallessRect(CSRect &inRect)
     
     for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
     {
-        wallAxis.setAxisFromWall((objReg)loop);
-        newWallLoc = inRect.getWallLocPoint((objReg)loop);
+        wallAxis.setAxisFromWall((entReg)loop);
+        newWallLoc = inRect.getWallLocPoint((entReg)loop);
         newWallLoc += 1 * wallAxis.getOppDirOffset();//increase on top/left, decreases on bot/right--thus always sliding in from wall
-        inRect.setWallLoc((objReg)loop, newWallLoc);
+        inRect.setWallLoc((entReg)loop, newWallLoc);
     }
 }
 

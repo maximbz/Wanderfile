@@ -19,9 +19,9 @@ public:
     
     CSPoint();
     CSPoint(int, int);
-    CSPoint(objReg);
-    CSPoint(CSPoint*, objReg);
-    void getVectfromReg(objReg);
+    CSPoint(entReg);
+    CSPoint(CSPoint*, entReg);
+    void getVectfromReg(entReg);
     
     void setAxisPoint(axis, int);//dynamic input of x or y
     void setPoints(int, int);

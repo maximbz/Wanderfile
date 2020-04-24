@@ -31,7 +31,7 @@ void CSAxis::setAxis(axis inDim, orientation incOrientation)
         dim = getPerpAxis();
 }
 
-void CSAxis::setAxisFromWall(objReg inWall)
+void CSAxis::setAxisFromWall(entReg inWall)
 {
     switch(inWall)
     {
@@ -109,7 +109,7 @@ int CSAxis::getAxisMod(int inLoc, orientation inOrientation)
     }
 }
 
-objReg CSAxis::getReg(void)
+entReg CSAxis::getReg(void)
 {
     if(dir == DIR_UP_LEFT)
     {
@@ -131,7 +131,7 @@ objReg CSAxis::getReg(void)
     return REG_NULL;
 }
 
-objReg CSAxis::getPerpReg(void)
+entReg CSAxis::getPerpReg(void)
 {
     if(dir == DIR_UP_LEFT)
     {
@@ -153,7 +153,7 @@ objReg CSAxis::getPerpReg(void)
     return REG_NULL;
 }
 
-axis CSAxis::getWallAxis(objReg inWall)
+axis CSAxis::getWallAxis(entReg inWall)
 {
     switch(inWall)
     {
@@ -169,7 +169,7 @@ axis CSAxis::getWallAxis(objReg inWall)
     }
 }
 
-direction CSAxis::getWallDir(objReg inWall)
+direction CSAxis::getWallDir(entReg inWall)
 {
     switch(inWall)
     {

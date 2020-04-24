@@ -33,9 +33,9 @@ public:
     int loadMonsterManual(void);
     void cleanUpGameState(void);
     
-    void slideGameWindow(objReg);
+    void slideGameWindow(entReg);
     void centerGameWindow(CSPoint *);
-    void slidePlayerMoveRect(objReg);
+    void slidePlayerMoveRect(entReg);
     void centerPlayerMoveRect(CSPoint *);
     void toggleRoomNums(void);
     void toggleBreak(void);

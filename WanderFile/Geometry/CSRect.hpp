@@ -34,15 +34,15 @@ public:
     void setBotRight(int, int);
     
     //dynamic (Irish) setters
-    bool setWallLoc(objReg, int);//set the point, or perpendicular axis, based on incomingWall
-    void setWallRange(objReg, CSRange *);//start and end points based on incomingWall
+    bool setWallLoc(entReg, int);//set the point, or perpendicular axis, based on incomingWall
+    void setWallRange(entReg, CSRange *);//start and end points based on incomingWall
     void setCorner(direction, CSPoint *);//topLeftor botRight
     
     void calculateArea(void);
     void slideRect(CSPoint *);
     bool doesRectContainPoint(CSPoint *);
-    //bool doesWallContainPoint(objReg, CSPoint *);
-    bool doesRectContainWall(CSRect *, objReg);
+    //bool doesWallContainPoint(entReg, CSPoint *);
+    bool doesRectContainWall(CSRect *, entReg);
     
     int getWidth(void);
     int getHeight(void);
@@ -51,10 +51,10 @@ public:
     
     //dynamic getters
     CSPoint* getCorner(direction);//topLeft or botRight from direction UP_LEFT or DOWN_RIGHT
-    int getWallStartPoint(objReg);//top or left
-    int getWallEndPoint(objReg);//bottom or right
-    int getWallLocPoint(objReg);//x or y of entire wall
-    void getWallRange(objReg, CSRange &);//start and end based on incomingWall
+    int getWallStartPoint(entReg);//top or left
+    int getWallEndPoint(entReg);//bottom or right
+    int getWallLocPoint(entReg);//x or y of entire wall
+    void getWallRange(entReg, CSRange &);//start and end based on incomingWall
     void getAxisRange(axis, CSRange &);//start and end based on incomingAxis
     
     //operators?!

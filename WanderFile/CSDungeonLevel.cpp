@@ -10,7 +10,7 @@
 #include <fstream>
 #include "CSDungeonLevel.hpp"
 #include "CSFileLoader.hpp"
-#include "CSDungObj.hpp"
+#include "CSEntity.hpp"
 #include "CSAxis.hpp"
 #include "CSPoint.hpp"
 #include "CSLine.hpp"
@@ -42,8 +42,11 @@ void CSDungeonLevel::createDungeon(void)
 {
     bool            goodRoom, makeRooms = true;
     CSRoom          *newRoom;
-    CSDungObj       *nextDoor;
-    int             newDoorNumQty[4] = {0,0,0,0};
+    CSEntity       *nextDoor;
+    int             loop, newDoorNumQty[NUM_ROOM_WALLS];
+    
+    for(loop = 0; loop < NUM_ROOM_WALLS; loop++)
+        newDoorNumQty[loop] = 0;
     
     deleteDungeon();//get rid of any pre-existing dungeon
     
@@ -64,7 +67,9 @@ void CSDungeonLevel::createDungeon(void)
             if(goodRoom)//if that also worked, add it to the room list
             {
                 _levelRooms.push_back(newRoom);
-                //updateRoomNums();//turns on room nums
+                if(ROOM_NUMS)
+                    updateRoomNums();
+                
                 //CSPoint   centerPoint;
                 //&newRoom->getRect()->getCenterPoint(centerPoint);
                 //_theGame->centerGameWindow(centerPoint);
@@ -86,13 +91,13 @@ void CSDungeonLevel::createDungeon(void)
     }
     
     //populate dungeon!
-    createStairs();//add stairs based on top-most and bottom-most rooms
+    createStairs();//add stairs based on top-most/bottom-most rooms or left-most/right-most rooms
     createTreasure();
     createMonsters();
     
     //locate player
     _theGame->getPlayer()->setLoc(&_startingStairs);
-    _theGame->getPlayer()->setOwner(getRoomFromTile(&_startingStairs));
+    getRoomFromTile(&_startingStairs)->addEntity(_theGame->getPlayer());//add player to the room it's in
     
     //set up camera
     _theGame->centerGameWindow(&_startingStairs);
@@ -104,9 +109,11 @@ void CSDungeonLevel::createDungeon(void)
 int CSDungeonLevel::saveDungeon(void)
 {
     ofstream    outputFile;
+    string      playerInfo;
     
     list<CSRoom *>::iterator    listIter;
     
+    //open and write to the file
     outputFile.open(_fileName.c_str(), ios_base::trunc);
     
     if(outputFile.fail())
@@ -115,7 +122,17 @@ int CSDungeonLevel::saveDungeon(void)
         return 1;
     }
     
-    for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
+    playerInfo = "PlayerLocX: ";
+    playerInfo += to_string(_theGame->getPlayer()->getLoc()->getAxisPoint(AXIS_HORIZ));
+    playerInfo += "\n";
+    playerInfo += "PlayerLocY: ";
+    playerInfo += to_string(_theGame->getPlayer()->getLoc()->getAxisPoint(AXIS_VERT));
+    playerInfo += "\n";
+    playerInfo += FILE_TERM_CHAR;
+    playerInfo += "\n";
+    outputFile << playerInfo;
+    
+    for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)//record all the room data
         outputFile << (*listIter)->printRoomToFile();
     
     outputFile.close();
@@ -126,10 +143,10 @@ int CSDungeonLevel::saveDungeon(void)
 int CSDungeonLevel::loadDungeon(string *inString)
 {
     int             fileParseResult = 0;
-    CSFileLoader    dungeonFile(&_fileName, fileParseResult);
+    CSPoint         newPlayerLoc, *connectData, *childData;
     CSRoom          *newRoom;
-    CSDungObj       *objToConnect, *objToBeConnectedTo;
-    CSLine          connectData;
+    CSEntity        *entToConnect, *entToConnectTo;
+    CSFileLoader    dungeonFile(&_fileName, fileParseResult);
     
     list<CSRoom *>::iterator    listIter;
     
@@ -137,44 +154,59 @@ int CSDungeonLevel::loadDungeon(string *inString)
     if(!_levelRooms.empty())
         deleteDungeon();
     
+    dungeonFile.populateDictionary();
+    dungeonFile.getIntValueFromKey("PlayerLocX", newPlayerLoc.x);
+    dungeonFile.getIntValueFromKey("PlayerLocY", newPlayerLoc.y);
+    _theGame->getPlayer()->setLoc(&newPlayerLoc);
+    
+    //unpack rooms
     while(!dungeonFile.isEmpty())
     {
         newRoom = new CSRoom(_theGame, _theRandHand, _theDoorHand, &dungeonFile);
         _levelRooms.push_back(newRoom);
     }
     
+    //unpack entity connections and children
     while(_theDoorHand->getNumDoors() > 0)
     {
         //reduces doorCount
-        objToConnect = _theDoorHand->getNextDoor();
-        connectData = _theDoorHand->getNextConnectData();
+        entToConnect = _theDoorHand->getNextDoor();
+        connectData = entToConnect->getLoadConnect();
+        childData = entToConnect->getLoadChild();
         
-        if(connectData.getPerpLoc() == CONNECT_CODE_STAIRS)
-            _startingStairs = *(objToConnect->getLoc());
-        
-        //finds the room listed in the connectData
+        //finds the room listed in connectData and/or childData
         for(listIter = _levelRooms.begin(); listIter != _levelRooms.end(); listIter++)
         {
-            if(connectData.getStart() == (*listIter)->getRoomNum())
-            {
-                //gets the object listed in the connectData
-                objToBeConnectedTo = (*listIter)->getObjectWithNum(connectData.getEnd());
-                if(objToBeConnectedTo == nullptr)
-                    break;//somethings wrong
-                
-                //connects either child or connect--this will overwrite connections already made, but if we did everything right, it will overwrite with itself
-                if(connectData.getPerpLoc() == CONNECT_CODE_CHILD)
-                    objToConnect->setChild(objToBeConnectedTo);//counter-connects parent
-                else//CONNECT_CODE_CONNECT
-                    objToConnect->setConnect(objToBeConnectedTo);//counter-connects connect
-            }
+            if(connectData != nullptr)
+                if(connectData->getAxisPoint(AXIS_HORIZ) == (*listIter)->getRoomNum())
+                {
+                    //gets the entity listed in the connectData
+                    entToConnectTo = (*listIter)->getEntityWithNum(connectData->getAxisPoint(AXIS_VERT));
+                    if(entToConnectTo == nullptr)
+                        break;//somethings wrong
+                    
+                    entToConnect->setConnect(entToConnectTo);//counter-connects connect
+                }
+            
+            if(childData != nullptr)
+                if(childData->getAxisPoint(AXIS_HORIZ) == (*listIter)->getRoomNum())
+                {
+                    //gets the entity listed in the connectData
+                    entToConnectTo = (*listIter)->getEntityWithNum(childData->getAxisPoint(AXIS_VERT));
+                    if(entToConnectTo == nullptr)
+                        break;//somethings wrong
+                    
+                    entToConnect->setChild(entToConnectTo);//counter-connects parent
+                }
         }
     }
-    //updateRoomNums();//turns on room nums
+    if(ROOM_NUMS)
+        updateRoomNums();
     
-    //set up "camera"
-    _theGame->centerGameWindow(&_startingStairs);
-    _theGame->centerPlayerMoveRect(&_startingStairs);
+    //add player and set up camera
+    getRoomFromTile(_theGame->getPlayer()->getLoc())->addEntity(_theGame->getPlayer());//add player to the room it's in
+    _theGame->centerGameWindow(_theGame->getPlayer()->getLoc());
+    _theGame->centerPlayerMoveRect(_theGame->getPlayer()->getLoc());
     
     return 0;
 }
@@ -182,8 +214,6 @@ int CSDungeonLevel::loadDungeon(string *inString)
 void CSDungeonLevel::deleteDungeon(void)
 {
     list<CSRoom *>::iterator    roomListIter = _levelRooms.begin();
-    
-    _theGame->getPlayer()->setNullOwner();
     
     while(roomListIter != _levelRooms.end())
     {
@@ -194,6 +224,7 @@ void CSDungeonLevel::deleteDungeon(void)
     //bounds are all set to first room on evey new dungeon, so we don't worry about _dungeonBounds or _outerRooms here
     _levelRooms.clear();
     _theRandHand->clearRandomItems(RAND_DUNGEON);
+    _theRandHand->clearRandomItems(RAND_MONSTER);
     _theDoorHand->clear();
 }
 
@@ -292,11 +323,11 @@ CSRoom* CSDungeonLevel::createFirstRoom(void)
     return newRoom;
 }
 
-bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
+bool CSDungeonLevel::createRoomGenRanges(CSEntity *inDoor, CSRoom *newRoom)
 {
     bool            roomIntersects[NUM_ROOM_WALLS];
     int             loop, roomToConnectDist = BAD_DATA;
-    objReg          newDoorWall = REG_NULL, loopReg, regToSlide[2];//includes a fallback reg
+    entReg          newDoorWall = REG_NULL, loopReg, regToSlide[2];//includes a fallback reg
     CSAxis          roomGenAxis, rangeRectAxis;
     CSPoint         newPoint, newDoorPoint;
     CSLine          distToRoom;
@@ -359,10 +390,10 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
         if(loop == (int)newDoorWall)//don't check the backward into newDoor
             continue;
         
-        rangeRectAxis.setAxisFromWall((objReg)loop);
-        _theGame->getLevelBounds()->getWallRange(getClockWall((objReg)loop), levelRange);
+        rangeRectAxis.setAxisFromWall((entReg)loop);
+        _theGame->getLevelBounds()->getWallRange(getClockWall((entReg)loop), levelRange);
         
-        if(!levelRange.doesContain(roomGenRect[(int)REG_ROOM_CORE].getWallLocPoint((objReg)loop)))//if the core rect is beyond level bounds...
+        if(!levelRange.doesContain(roomGenRect[(int)REG_ROOM_CORE].getWallLocPoint((entReg)loop)))//if the core rect is beyond level bounds...
         {
             //abort room gen--destroy this room and if this one wasn't a hallway, the previous one (and destroy the door that leads to that hallway)
             abortRoomGenPath(inRoom);
@@ -430,12 +461,12 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
         if(loop == (int)newDoorWall)//don't check the backward into newDoor
             continue;
         
-        rangeRectAxis.setAxisFromWall((objReg)loop);
-        _theGame->getLevelBounds()->getWallRange(getClockWall((objReg)loop), levelRange);
+        rangeRectAxis.setAxisFromWall((entReg)loop);
+        _theGame->getLevelBounds()->getWallRange(getClockWall((entReg)loop), levelRange);
         
         //any reg rects that are beyond level bounds, set back within level bounds
-        if(!levelRange.doesContain(roomGenRect[loop].getWallLocPoint((objReg)loop)))
-            roomGenRect[loop].setWallLoc((objReg)loop, _theGame->getLevelBounds()->getWallLocPoint((objReg)loop) - rangeRectAxis.getDirOffset());
+        if(!levelRange.doesContain(roomGenRect[loop].getWallLocPoint((entReg)loop)))
+            roomGenRect[loop].setWallLoc((entReg)loop, _theGame->getLevelBounds()->getWallLocPoint((entReg)loop) - rangeRectAxis.getDirOffset());
     }
     
     //check each room to see if it intersects with any of the three region rects. If it does, we pull that rect inward, to ensure the new room won't intersect any current rooms
@@ -452,9 +483,9 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
                 continue;
             
             //any reg rects that this room intersects, set true
-            if(roomGenRect[loop].doesRectContainWall((*roomListIter)->getRect(), getFacingWall((objReg)loop)))
+            if(roomGenRect[loop].doesRectContainWall((*roomListIter)->getRect(), getFacingWall((entReg)loop)))
             {
-                regToSlide[0] = (objReg)loop;//if only one reg intersects, we'll catch it here
+                regToSlide[0] = (entReg)loop;//if only one reg intersects, we'll catch it here
                 roomIntersects[loop] = true;//if multiple reg's intersect, we decide below, and overwrite the previous line
             }
         }
@@ -508,7 +539,7 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
         if(loop == (int)newDoorWall)
             continue;
         
-        loopReg = (objReg)loop;
+        loopReg = (entReg)loop;
         newRoom->getWallGenRanges()[loop].setRangeMin(roomGenRect[loop].getWallLocPoint(getFacingWall(loopReg)));//inner wall
         newRoom->getWallGenRanges()[loop].setRangeMax(roomGenRect[loop].getWallLocPoint(loopReg));//outer wall
         newRoom->getWallGenRanges()[loop].setRandType(RAND_DUNGEON);
@@ -519,18 +550,18 @@ bool CSDungeonLevel::createRoomGenRanges(CSDungObj *inDoor, CSRoom *newRoom)
     return true;
 }
 
-bool CSDungeonLevel::createNewRoom(CSDungObj *inDoor, CSRoom *newRoom, int* newNumDoorQty)
+bool CSDungeonLevel::createNewRoom(CSEntity *inDoor, CSRoom *newRoom, int* newNumDoorQty)
 {
     bool            connectToRoom = false;
     int             loop, newRandNum, connectToRoomReturnCode;
-    objReg          newDoorWall = REG_NULL;
+    entReg          newDoorWall = REG_NULL;
     CSAxis          roomGenAxis;
     CSPoint         newPoint, newDoorPoint;
     CSRoom          *inRoom = inDoor->getOwner();
     CSRandomRange   hallLengthGen(RAND_DUNGEON, ROOM_SIZE_MIN, HALL_LENGTH_MAX);
     
     list<CSRoom *>::iterator            roomListIter;
-    list<CSDungObj *>::iterator         objListIter;
+    list<CSEntity *>::iterator          entIter;
     vector<CSRandomRange*>::iterator    wallLocGenIter;
 
     /*Setup*/
@@ -644,9 +675,9 @@ void CSDungeonLevel::abortRoomGenPath(CSRoom *inRoom)
 {
     bool        isHall;
     CSRoom      *prevRoom;
-    CSDungObj   *pathDoor = nullptr;
+    CSEntity    *pathDoor = nullptr;
     
-    list<CSDungObj *>::iterator   objectIter;
+    list<CSEntity *>::iterator   entIter;
     
     //if connectToRoom sent in newRoom, the assumed logic must be flipped
     isHall = inRoom->isHall();
@@ -660,14 +691,14 @@ void CSDungeonLevel::abortRoomGenPath(CSRoom *inRoom)
         prevRoom = inRoom->getConnectedDoor()->getConnect()->getOwner();
         
         //find the door on the other side of the inRoom hallway
-        for(objectIter = prevRoom->getObjects()->begin(); objectIter != prevRoom->getObjects()->end(); objectIter++)
+        for(entIter = prevRoom->getEntities()->begin(); entIter != prevRoom->getEntities()->end(); entIter++)
         {
-            if((*objectIter)->getType() != OBJ_DOOR)
+            if((*entIter)->getType() != ENT_DOOR)
                 continue;
             
-            if((*objectIter) == inRoom->getConnectedDoor()->getConnect())//if this door is the one that connects back to inRoom
+            if((*entIter) == inRoom->getConnectedDoor()->getConnect())//if this door is the one that connects back to inRoom
             {
-                pathDoor = *objectIter;
+                pathDoor = *entIter;
                 break;
             }
         }
@@ -676,7 +707,7 @@ void CSDungeonLevel::abortRoomGenPath(CSRoom *inRoom)
             deleteRoom(inRoom);
     }
     
-    pathDoor->getOwner()->deleteObject(pathDoor);
+    pathDoor->getOwner()->deleteEntity(pathDoor);
     
     //createDungeon() will handle the deletion of newRoom
 }
@@ -684,7 +715,7 @@ void CSDungeonLevel::abortRoomGenPath(CSRoom *inRoom)
 void CSDungeonLevel::replaceDoor(void)
 {
     CSRoom      *newestRoom;
-    CSDungObj   *doorToDelete;
+    CSEntity   *doorToDelete;
     
     newestRoom = _levelRooms.back();
     doorToDelete = newestRoom->getUnconnectedDoor();
@@ -693,27 +724,27 @@ void CSDungeonLevel::replaceDoor(void)
         return;
     
     //out with the old, in with the new!
-    newestRoom->deleteObject(doorToDelete);
+    newestRoom->deleteEntity(doorToDelete);
     newestRoom->createNewDoor(REG_NULL);
 }
 
 void CSDungeonLevel::createOuterDoor(void)
 {
     int     loop, closestDistToCenter = _theGame->getLevelBounds()->botRight.x * _theGame->getLevelBounds()->botRight.y;
-    objReg  closestRegToCenter = REG_WALL_LEFT;
+    entReg  closestRegToCenter = REG_WALL_LEFT;
     CSAxis  loopAxis;
     CSPoint levelCenter(_theGame->getLevelBounds()->botRight.x / 2, _theGame->getLevelBounds()->botRight.y / 2);
     CSLine  centerToEdge;
     
     for(loop = REG_WALL_LEFT; loop <= REG_WALL_BOT; loop++)
     {
-        loopAxis.setAxisFromWall((objReg)loop);
-        centerToEdge.setLine(levelCenter.getAxisPoint(loopAxis.dim), _dungeonBounds.getWallLocPoint((objReg)loop));
+        loopAxis.setAxisFromWall((entReg)loop);
+        centerToEdge.setLine(levelCenter.getAxisPoint(loopAxis.dim), _dungeonBounds.getWallLocPoint((entReg)loop));
         
         if(centerToEdge.getSize() < closestDistToCenter)
         {
             closestDistToCenter = centerToEdge.getSize();
-            closestRegToCenter = (objReg)loop;
+            closestRegToCenter = (entReg)loop;
         }
     }
     
@@ -724,10 +755,10 @@ void CSDungeonLevel::deleteRoom(CSRoom *inRoom)
 {
     int         lowestRoomNum = (int)_levelRooms.size();
     CSRoom      *roomToDelete = nullptr, *doorToDeleteOwner = nullptr, *lastRoom = nullptr;
-    CSDungObj   *doorToDelete = nullptr;
+    CSEntity   *doorToDelete = nullptr;
     
     list<CSRoom *>::iterator    roomIter;
-    list<CSDungObj *>::iterator objectIter;
+    list<CSEntity *>::iterator entIter;
     
     //if no room was sent in, assume we want to delete the most recently made room
     if(inRoom == nullptr)
@@ -743,16 +774,16 @@ void CSDungeonLevel::deleteRoom(CSRoom *inRoom)
         //if this room connects back into the dungeon, we want to delete the door that does this connect-back, since that door will never spawn a new room
         if(roomToDelete->getUnconnectedDoor() == nullptr)
         {
-            for(objectIter = roomToDelete->getObjects()->begin(); objectIter != roomToDelete->getObjects()->end(); objectIter++)
-                if((*objectIter)->getType() == OBJ_DOOR && (*objectIter)->getConnect()->getOwner()->getRoomNum() < lowestRoomNum)
+            for(entIter = roomToDelete->getEntities()->begin(); entIter != roomToDelete->getEntities()->end(); entIter++)
+                if((*entIter)->getType() == ENT_DOOR && (*entIter)->getConnect()->getOwner()->getRoomNum() < lowestRoomNum)
                 {
-                    lowestRoomNum = (*objectIter)->getConnect()->getOwner()->getRoomNum();//go through all connected doors and find the earliest connected room
-                    doorToDeleteOwner = (*objectIter)->getConnect()->getOwner();
-                    doorToDelete = (*objectIter)->getConnect();
+                    lowestRoomNum = (*entIter)->getConnect()->getOwner()->getRoomNum();//go through all connected doors and find the earliest connected room
+                    doorToDeleteOwner = (*entIter)->getConnect()->getOwner();
+                    doorToDelete = (*entIter)->getConnect();
                 }
             
             if(doorToDelete != nullptr)
-                doorToDeleteOwner->deleteObject(doorToDelete);
+                doorToDeleteOwner->deleteEntity(doorToDelete);
         }
         
         if(_levelRooms.size() > 0)//if we still have some rooms, let's center the game window on the now-last room
@@ -785,15 +816,15 @@ void CSDungeonLevel::addRoomsToList(list<CSRoom *> *roomList, CSRoom *startingRo
     CSRoom  *newRoom;
     
     list<CSRoom *>::iterator    roomIter;
-    list<CSDungObj *>::iterator objIter;
+    list<CSEntity *>::iterator  entIter;
     
     numRoomsOut--;
     
-    for(objIter = startingRoom->getObjects()->begin(); objIter != startingRoom->getObjects()->end(); objIter++)
-        if((*objIter)->getType() == OBJ_DOOR)//it's a door
+    for(entIter = startingRoom->getEntities()->begin(); entIter != startingRoom->getEntities()->end(); entIter++)
+        if((*entIter)->getType() == ENT_DOOR)//it's a door
         {
             alreadyAdded = false;
-            newRoom = (*objIter)->getConnect()->getOwner();
+            newRoom = (*entIter)->getConnect()->getOwner();
             
             for(roomIter = roomList->begin(); roomIter != roomList->end(); roomIter++)//check our growing list
                 if(newRoom == (*roomIter))//is this new room already in there?
@@ -821,10 +852,10 @@ void CSDungeonLevel::createStairs(void)
     _theRandHand->addRandomRange(orientationSelector);
     _theRandHand->addRandomRange(sideSelector);
     
-    CSAxis          stairsOrientation((axis)_theRandHand->getNumber(&orientationSelector), (direction)_theRandHand->getNumber(&sideSelector));
+    CSAxis  stairsOrientation((axis)_theRandHand->getNumber(&orientationSelector), (direction)_theRandHand->getNumber(&sideSelector));
     
-    _startingStairs = *_outerRooms[stairsOrientation.getReg()]->createNewObject(OBJ_STAIRS_UP)->getLoc();
-    _outerRooms[getFacingWall(stairsOrientation.getReg())]->createNewObject(OBJ_STAIRS_DOWN);
+    _startingStairs = *_outerRooms[stairsOrientation.getReg()]->createNewEntity(ENT_STAIRS_UP)->getLoc();
+    _outerRooms[getFacingWall(stairsOrientation.getReg())]->createNewEntity(ENT_STAIRS_DOWN);
 }
 
 void CSDungeonLevel::createTreasure(void)
@@ -863,7 +894,7 @@ void CSDungeonLevel::createTreasure(void)
             subLoopTotal = _theRandHand->getNumber(&numNewTreasure);
         
         for(subLoop = 0; subLoop < subLoopTotal; subLoop++)//make that many treasure chests
-            (*listIter)->createNewObject(OBJ_TREASURE);
+            (*listIter)->createNewEntity(ENT_TREASURE);
     }
 }
 
@@ -922,7 +953,7 @@ void CSDungeonLevel::createMonsters(void)
         {
             //so we place it!
             CSCreature *newMonster = new CSCreature(&monsterLoc, newMonsterClass, monsterRoom, _theRandHand);
-            monsterRoom->addObject(newMonster);
+            monsterRoom->addEntity(newMonster);
         }
     }
 }
@@ -931,7 +962,7 @@ void CSDungeonLevel::createMonsters(void)
 #pragma mark -
 #pragma mark Doers - GamePlay Functions
 
-void CSDungeonLevel::movePlayer(objReg inReg)
+void CSDungeonLevel::movePlayer(entReg inReg)
 {
     bool        roomChange = false;
     CSPoint     newLoc(_theGame->getPlayer()->getLoc(), inReg);
@@ -940,7 +971,7 @@ void CSDungeonLevel::movePlayer(objReg inReg)
     
     list<CSRoom *>              roomsToUpdate;
     list<CSRoom *>::iterator    roomIter;
-    list<CSDungObj *>::iterator objIter;
+    list<CSEntity *>::iterator  entIter;
     
     movementRoom = getRoomFromTile(&newLoc);
     
@@ -961,10 +992,10 @@ void CSDungeonLevel::movePlayer(objReg inReg)
     
     //for every room we want to update monsters in
     for(roomIter = roomsToUpdate.begin(); roomIter != roomsToUpdate.end(); roomIter++)
-        for(objIter = (*roomIter)->getObjects()->begin(); objIter != (*roomIter)->getObjects()->end(); objIter++)//for every monster in that room
-            if((*objIter)->getType() == OBJ_CREATURE && !(*objIter)->getIsPlayer())
+        for(entIter = (*roomIter)->getEntities()->begin(); entIter != (*roomIter)->getEntities()->end(); entIter++)//for every monster in that room
+            if((*entIter)->getType() == ENT_CREATURE && !(*entIter)->getIsPlayer())
             {
-                roomChange = (*objIter)->updateObject();
+                roomChange = (*entIter)->updateEntity();
                 if(roomChange)
                     break;
             }

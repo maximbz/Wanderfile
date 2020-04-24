@@ -39,7 +39,7 @@ CSDoorHandler::CSDoorHandler(CSRandomHandler *inRandHand)
 
 void CSDoorHandler::clear(void)
 {
-    //erases and deletes all objects, removes the reference back to this CSRoom from all connected CSRoom's
+    //erases and deletes all entities, removes the reference back to this CSRoom from all connected CSRoom's
     while(!_unconnectedLevelDoors.empty())
         _unconnectedLevelDoors.pop_back();
     
@@ -47,25 +47,24 @@ void CSDoorHandler::clear(void)
 }
 
 
-void CSDoorHandler::addDoor(CSDungObj *inDoor)
+void CSDoorHandler::addDoor(CSEntity *inDoor)
 {
-    if(inDoor->getType() != OBJ_DOOR)
+    if(inDoor->getType() != ENT_DOOR)
         return;
     
     _numDoors++;
     _unconnectedLevelDoors.push_back(inDoor);
 }
 
-void CSDoorHandler::addLoadingObj(CSDungObj *inObj, CSLine inConnectData)
+void CSDoorHandler::addLoadingEnt(CSEntity *inEnt)
 {
-    _unconnectedLevelDoors.push_back(inObj);
-    _loadingObjConnectData.push_back(inConnectData);
+    _unconnectedLevelDoors.push_back(inEnt);
     _numDoors++;
 }
 
-CSDungObj * CSDoorHandler::getNextDoor(void)
+CSEntity * CSDoorHandler::getNextDoor(void)
 {
-    CSDungObj   *doorAtBack;
+    CSEntity   *doorAtBack;
     
     if(_unconnectedLevelDoors.size() == 0)//we are out of doors!
         return nullptr;
@@ -78,19 +77,9 @@ CSDungObj * CSDoorHandler::getNextDoor(void)
     return doorAtBack;
 }
 
-CSLine CSDoorHandler::getNextConnectData(void)
+void CSDoorHandler::removeDoor(CSEntity *inDoor)
 {
-    CSLine  dataAtBack(BAD_DATA,BAD_DATA,BAD_DATA);
-    
-    dataAtBack = _loadingObjConnectData.back();
-    _loadingObjConnectData.pop_back();
-    
-    return dataAtBack;
-}
-
-void CSDoorHandler::removeDoor(CSDungObj *inDoor)
-{
-    list<CSDungObj*>::iterator doorIter;
+    list<CSEntity*>::iterator doorIter;
     
     //used when aborting room gen paths, we remove the incoming door from the list
     for(doorIter = _unconnectedLevelDoors.begin(); doorIter != _unconnectedLevelDoors.end(); doorIter++)

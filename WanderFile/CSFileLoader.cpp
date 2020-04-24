@@ -55,7 +55,9 @@ void CSFileLoader::populateDictionary(void)
     string      inputString, keyString, valueString;
     
     list<string>::iterator          listIter;
-    map<string, string>::iterator mapIter;
+    
+    _dictionary.clear();
+    _completeState = FILE_NULL_CHAR;
     
     //each for-loop is a line in _fileData
     for(listIter = _fileData.begin(); listIter != _fileData.end(); listIter++)
@@ -86,13 +88,9 @@ void CSFileLoader::populateDictionary(void)
         numLinesRead++;//whether a file char or a new key-value pair, we need to record it, so we can delete it later
         
         if(_completeState == FILE_NULL_CHAR)//we have a normal key-value pair
-        {
-            mapIter = _dictionary.find(keyString);
-            if(mapIter != _dictionary.end())
-                mapIter->second = valueString;
-        }
+            _dictionary.insert(pair<string, string>(keyString, valueString));
         else
-            break;//stop pulling from _fileData, or we'll start overwriting values in _dictionary
+            break;//stop pulling from _fileData, or we'll screw up the next guy
     }
     
     //now that we've populated _dictionary, we can remove those lines from _fileData
@@ -102,36 +100,17 @@ void CSFileLoader::populateDictionary(void)
         _empty = true;
 }
 
-
-void CSFileLoader::addKeys(vector<string> *inKeys)
+bool CSFileLoader::getIntValueFromKey(string inKey, int &outValue)
 {
-    vector<string>::iterator  vectIter;
-    
-    //iterate through all the incoming strings and add their addresses to the back of _keys
-    for(vectIter = inKeys->begin(); vectIter != inKeys->end(); vectIter++)
-        _dictionary.insert(pair<string, string>(*vectIter, ""));
-    
-    populateDictionary();
-}
-
-void CSFileLoader::resetDictionary(void)
-{
-    _dictionary.clear();
-    _completeState = FILE_NULL_CHAR;
-}
-
-
-bool CSFileLoader::getIntValueFromKey(string *inKey, int *outValue)
-{
-    string  stirngToConvert;
+    string  stringToConvert;
     map<string, string>::iterator  mapIter;
     
-    mapIter = _dictionary.find(*inKey);
+    mapIter = _dictionary.find(inKey);
     if(mapIter != _dictionary.end())
     {
-        stirngToConvert = mapIter->second;
-        istringstream strToInt(stirngToConvert);
-        strToInt >> *outValue;
+        stringToConvert = mapIter->second;
+        istringstream strToInt(stringToConvert);
+        strToInt >> outValue;
         
         return true;
     }
@@ -139,14 +118,14 @@ bool CSFileLoader::getIntValueFromKey(string *inKey, int *outValue)
     return false;
 }
 
-bool CSFileLoader::getStringValueFromKey(string *inKey, string *outValue)
+bool CSFileLoader::getStringValueFromKey(string inKey, string &outValue)
 {
     map<string, string>::iterator  mapIter;
     
-    mapIter = _dictionary.find(*inKey);
+    mapIter = _dictionary.find(inKey);
     if(mapIter != _dictionary.end())
     {
-        outValue = &(mapIter->second);
+        outValue = mapIter->second;
         
         return true;
     }

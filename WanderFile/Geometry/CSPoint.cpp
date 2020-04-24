@@ -20,7 +20,7 @@ CSPoint::CSPoint(int inX, int inY)
     y = inY;
 }
 
-CSPoint::CSPoint(objReg inReg)
+CSPoint::CSPoint(entReg inReg)
 {
     x = 0;
     y = 0;
@@ -28,7 +28,7 @@ CSPoint::CSPoint(objReg inReg)
     getVectfromReg(inReg);
 }
 
-CSPoint::CSPoint(CSPoint *inPoint, objReg inReg)
+CSPoint::CSPoint(CSPoint *inPoint, entReg inReg)
 {
     x = inPoint->x;
     y = inPoint->y;
@@ -36,9 +36,9 @@ CSPoint::CSPoint(CSPoint *inPoint, objReg inReg)
     getVectfromReg(inReg);
 }
 
-void CSPoint::getVectfromReg(objReg inReg)
+void CSPoint::getVectfromReg(entReg inReg)
 {
-    switch (inReg)//convert the objReg into a newPoint based on inPoint
+    switch (inReg)//convert the entReg into a newPoint based on inPoint
     {
         case REG_WALL_LEFT:
             x--;

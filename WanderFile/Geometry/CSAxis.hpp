@@ -43,15 +43,15 @@ public:
     CSAxis(axis, direction);
     
     void setAxis(axis, orientation);
-    void setAxisFromWall(objReg);//sets Dir as well
+    void setAxisFromWall(entReg);//sets Dir as well
     void setDir(direction, orientation);
     
     axis getPerpAxis(void);
     int getAxisMod(int, orientation);
-    objReg getReg(void);
-    objReg getPerpReg(void);
-    axis getWallAxis(objReg);
-    direction getWallDir(objReg);
+    entReg getReg(void);
+    entReg getPerpReg(void);
+    axis getWallAxis(entReg);
+    direction getWallDir(entReg);
     
     direction getOppDir(void);
     int getDirOffset(void);

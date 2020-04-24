@@ -40,6 +40,10 @@ CSGameState::CSGameState()
         printf("Monsters did not load. Is the file 'MonsterManual.txt' missing?\n");
 }
 
+
+#pragma mark -
+#pragma mark Doers - Init Functions
+
 void CSGameState::setGameWindow(CSRect inRect)
 {
     _gameWindRect = inRect;
@@ -154,7 +158,11 @@ void CSGameState::cleanUpGameState(void)
     _monsterManual.clear();
 }
 
-void CSGameState::slideGameWindow(objReg inReg)
+
+#pragma mark -
+#pragma mark Doers - Doers
+
+void CSGameState::slideGameWindow(entReg inReg)
 {
     int     loop;
     CSPoint dimVect(0, 0), inVect(&dimVect, inReg);
@@ -174,7 +182,7 @@ void CSGameState::slideGameWindow(objReg inReg)
     //printf("Game Window: %d, %d - %d, %d\n", _gameWindRect.topLeft.x, _gameWindRect.topLeft.y, _gameWindRect.botRight.x, _gameWindRect.botRight.y);
 }
 
-void CSGameState::slidePlayerMoveRect(objReg inReg)
+void CSGameState::slidePlayerMoveRect(entReg inReg)
 {
     int     loop;
     CSPoint dimVect(0, 0), inVect(&dimVect, inReg);
@@ -280,6 +288,9 @@ void CSGameState::toggleBreak(void)
     _breakForDebug = !_breakForDebug;
 }
 
+
+#pragma mark -
+#pragma mark Doers - Getters
 
 WINDOW* CSGameState::getGameWindow(void)
 {

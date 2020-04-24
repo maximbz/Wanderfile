@@ -28,17 +28,15 @@ private:
     
     
     int inputFileData(void);//gets file into _fileData
-    void populateDictionary(void);//loops through _fileData
     
 public:
     CSFileLoader();
     CSFileLoader(string *, int);
     
-    void addKeys(vector<string> *);
-    void resetDictionary(void);
+    void populateDictionary(void);//loops through a section of _fileData
     
-    bool getIntValueFromKey(string *, int *);
-    bool getStringValueFromKey(string *, string *);
+    bool getIntValueFromKey(string, int &);
+    bool getStringValueFromKey(string, string &);
     char getCompleteState(void);
     bool isEmpty(void);
 };

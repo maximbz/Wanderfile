@@ -32,7 +32,7 @@ int main(int argc, const char * argv[])
     }
     
     bool            gameLoop = true, printLoop;
-    int             numDungeons = -1, loop;
+    int             numDungeons = -1;
     string          outputString;
     vector<char>    gameOptions, slideOptions, mainModeOptions;
     WINDOW          *menuWind;
@@ -89,7 +89,7 @@ int main(int argc, const char * argv[])
             //directions
             if(menuSelectMatrix.x == 0)
             {
-                if(menuSelectMatrix.y == 0)
+                /*if(menuSelectMatrix.y == 0)
                     for(loop = 0; loop < 3; loop++)
                         theGame.slideGameWindow(REG_WALL_LEFT);
                 if(menuSelectMatrix.y == 1)
@@ -100,15 +100,15 @@ int main(int argc, const char * argv[])
                         theGame.slideGameWindow(REG_WALL_TOP);
                 if(menuSelectMatrix.y == 3)
                     for(loop = 0; loop < 3; loop++)
-                        theGame.slideGameWindow(REG_WALL_BOT);
-                /*if(menuSelectMatrix.y == 0)
+                        theGame.slideGameWindow(REG_WALL_BOT);*/
+                if(menuSelectMatrix.y == 0)
                     dungeon.movePlayer(REG_WALL_LEFT);
                 if(menuSelectMatrix.y == 1)
                     dungeon.movePlayer(REG_WALL_RIGHT);
                 if(menuSelectMatrix.y == 2)
                     dungeon.movePlayer(REG_WALL_TOP);
                 if(menuSelectMatrix.y == 3)
-                    dungeon.movePlayer(REG_WALL_BOT);*/
+                    dungeon.movePlayer(REG_WALL_BOT);
             }
             
             //main menu commands
@@ -132,7 +132,12 @@ int main(int argc, const char * argv[])
             if(menuSelectMatrix.x == 2)
             {
                 if(menuSelectMatrix.y == 0)//toggle line break
+                {
                     theGame.toggleBreak();
+                    
+                    if(theGame.getBreakState() == true)
+                        numDungeons = numDungeons;
+                }
                 if(menuSelectMatrix.y == 1)//quit
                 {
                     gameLoop = false;
