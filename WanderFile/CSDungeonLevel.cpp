@@ -226,6 +226,7 @@ void CSDungeonLevel::deleteDungeon(void)
     _theRandHand->clearRandomItems(RAND_DUNGEON);
     _theRandHand->clearRandomItems(RAND_MONSTER);
     _theDoorHand->clear();
+    _theGame->getPlayer()->setOwner(nullptr);
 }
 
 #pragma mark -
