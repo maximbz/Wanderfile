@@ -123,7 +123,7 @@ CSEntity* CSRoom::createEntity(entType inEntType, entReg inEntReg, CSPoint *inEn
 {
     CSEntity   *newEntity = new CSEntity(inEntType, inEntReg, inEntLoc, inParent, inCon, this);
     
-    _entities.push_back(newEntity);
+    //_entities.push_back(newEntity);//this happens in the entity creation
     updateEntityNums();
     
     return newEntity;

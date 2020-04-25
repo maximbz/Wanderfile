@@ -40,10 +40,10 @@ CSDungeonLevel::CSDungeonLevel(CSRandomHandler *inRandHand, CSGameState *inGame,
 
 void CSDungeonLevel::createDungeon(void)
 {
-    bool            goodRoom, makeRooms = true;
-    CSRoom          *newRoom;
-    CSEntity       *nextDoor;
-    int             loop, newDoorNumQty[NUM_ROOM_WALLS];
+    bool        goodRoom, makeRooms = true;
+    CSRoom      *newRoom;
+    CSEntity    *nextDoor;
+    int         loop, newDoorNumQty[NUM_ROOM_WALLS];
     
     for(loop = 0; loop < NUM_ROOM_WALLS; loop++)
         newDoorNumQty[loop] = 0;
@@ -70,7 +70,7 @@ void CSDungeonLevel::createDungeon(void)
                 if(ROOM_NUMS)
                     updateRoomNums();
                 
-                //CSPoint   centerPoint;
+                //CSPoint   centerPoint;//to watch rooms as they're generated
                 //&newRoom->getRect()->getCenterPoint(centerPoint);
                 //_theGame->centerGameWindow(centerPoint);
                 //printWindow();
@@ -952,8 +952,7 @@ void CSDungeonLevel::createMonsters(void)
         if(newMonsterClass != nullptr)//we've randomly selected a monster class and a monster location
         {
             //so we place it!
-            CSCreature *newMonster = new CSCreature(&monsterLoc, newMonsterClass, monsterRoom, _theRandHand);
-            monsterRoom->addEntity(newMonster);
+            new CSCreature(&monsterLoc, newMonsterClass, monsterRoom, _theRandHand);
         }
     }
 }

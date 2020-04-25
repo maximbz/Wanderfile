@@ -12,14 +12,17 @@
 
 CSCreature::CSCreature(void)
 {
-    initCreature();
+    //this method is only used for creating the player, so no other initializaiton is required
+    _entityType = ENT_CREATURE;
+    _entityRegion = REG_ROOM;
 }
 
 CSCreature::CSCreature(CSPoint *inLoc, CSMonsterClass *inMonsterClass, CSRoom *inRoom, CSRandomHandler *inRandHand)
 {
     _owner = inRoom;
+    if(_owner != nullptr)
+        _owner->addEntity(this);
     
-    initCreature();
     setChar(inMonsterClass->getChar());
     _hp = inMonsterClass->getHP();
     _atk = inMonsterClass->getAtk();
@@ -29,10 +32,8 @@ CSCreature::CSCreature(CSPoint *inLoc, CSMonsterClass *inMonsterClass, CSRoom *i
     _entLoc = *inLoc;
     
     _theRandHand = inRandHand;
-    _moveDir.setRandType(RAND_MONSTER);
-    _moveDir.setRangeMax(REG_WALL_LEFT);
-    _moveDir.setRangeMin(REG_WALL_BOT);
-    _theRandHand->addRandomRange(_moveDir);
+    
+    initCreature();
 }
 
 CSCreature::CSCreature(CSRoom *inRoom, CSRandomHandler *inRandHand, CSFileLoader *inFileLoader)//load entity from file
@@ -79,6 +80,11 @@ void CSCreature::initCreature(void)
     _creatureDataKey.push_back("XP");
     _creatureDataKey.push_back("Name");
     _creatureDataKey.push_back("Char");
+    
+    _moveDir.setRandType(RAND_MONSTER);
+    _moveDir.setRangeMax(REG_WALL_LEFT);
+    _moveDir.setRangeMin(REG_WALL_BOT);
+    _theRandHand->addRandomRange(_moveDir);
 }
 
 

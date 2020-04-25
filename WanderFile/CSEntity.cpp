@@ -29,8 +29,9 @@ CSEntity::CSEntity(entType inType, entReg inRegion, CSPoint *inLoc, CSEntity *in
     _entityRegion = inRegion;
     if(inLoc != nullptr)
         _entLoc = *inLoc;
-    
     _owner = inOwner;
+    if(_owner != nullptr)
+        _owner->addEntity(this);
     setParent(inParent);
     _childEnt = nullptr;
     setConnect(inConnect);
