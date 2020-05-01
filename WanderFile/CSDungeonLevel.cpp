@@ -965,9 +965,8 @@ void CSDungeonLevel::createMonsters(void)
 void CSDungeonLevel::movePlayer(entReg inReg)
 {
     bool        roomChange = false;
-    CSPoint     newLoc(_theGame->getPlayer()->getLoc(), inReg);
+    CSPoint     oldLoc = *_theGame->getPlayer()->getLoc(), newLoc(_theGame->getPlayer()->getLoc(), inReg);
     CSRoom      *movementRoom;
-    
     
     list<CSRoom *>              roomsToUpdate;
     list<CSRoom *>::iterator    roomIter;
@@ -977,7 +976,7 @@ void CSDungeonLevel::movePlayer(entReg inReg)
     
     _theGame->getPlayer()->moveCreature(inReg);//move the player
     
-    if(!_theGame->getPlayerMoveRect()->doesRectContainPoint(&newLoc))
+    if((!_theGame->getPlayerMoveRect()->doesRectContainPoint(&newLoc)) && oldLoc != *_theGame->getPlayer()->getLoc())
     {
         _theGame->slidePlayerMoveRect(inReg);
         _theGame->slideGameWindow(inReg);

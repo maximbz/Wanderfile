@@ -39,9 +39,11 @@ int main(int argc, const char * argv[])
     CSPoint         menuSelectMatrix;
     CSRange         roomNumRange;
     CSPlayerChoice  menuSelection;
-    CSRandomHandler theRandHand;
-    CSDoorHandler   theDoorHand(&theRandHand);
-    CSGameState     theGame;
+    
+    static CSRandomHandler theRandHand;
+    static CSDoorHandler   theDoorHand(&theRandHand);
+    static CSGameState     theGame;
+    
     CSDungeonLevel  dungeon(&theRandHand, &theGame, &theDoorHand, 1);
     
     list<CSRoom *>::iterator    roomListIter;
