@@ -10,7 +10,13 @@
 #include "CSDoorHandler.hpp"
 #include "CSRoom.hpp"
 
-CSDoorHandler::CSDoorHandler(CSRandomHandler *inRandHand)
+CSDoorHandler::CSDoorHandler(void)
+{
+    
+}
+
+
+void CSDoorHandler::addRandomHandler(CSRandomHandler *inRandHand)
 {
     int         loop, subLoop, subLoopTotal;
     vector<int> newDoorOddsList;
@@ -36,14 +42,12 @@ CSDoorHandler::CSDoorHandler(CSRandomHandler *inRandHand)
     _theRandHand->addRandomRange(_newDoorRandRange);
 }
 
-
 void CSDoorHandler::clear(void)
 {
     //erases and deletes all entities, removes the reference back to this CSRoom from all connected CSRoom's
     while(!_unconnectedLevelDoors.empty())
         _unconnectedLevelDoors.pop_back();
 }
-
 
 void CSDoorHandler::addDoor(CSEntity *inDoor)
 {

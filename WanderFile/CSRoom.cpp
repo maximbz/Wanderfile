@@ -8,32 +8,34 @@
 
 #include <sstream>
 #include <iostream>
+#include "CSGameState.hpp"
 #include "CSLine.hpp"
-#include "CSRoom.hpp"
 #include "CSRandomRange.hpp"
+#include "CSRoom.hpp"
 #include "CSEntity.hpp"
+#include "CSCreature.hpp"
 
 #pragma mark Constructors
 
-CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand)
+CSRoom::CSRoom(CSGameState *inGame)
 {
-    roomInit(inGame, inRandHand, inDoorHand);
+    roomInit(inGame);
 }
 
-CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSPoint *inTopLeft, CSPoint *inBotRight)
+CSRoom::CSRoom(CSGameState *inGame, CSPoint *inTopLeft, CSPoint *inBotRight)
 {
-    roomInit(inGame, inRandHand, inDoorHand);
+    roomInit(inGame);
     
     _roomRect.topLeft = *inTopLeft;
     _roomRect.botRight = *inBotRight;
 }
 
-CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand, CSFileLoader *inFileLoader)//load room from file
+CSRoom::CSRoom(CSGameState *inGame, CSFileLoader *inFileLoader)//load room from file
 {
     int         left = BAD_DATA, top = BAD_DATA, right = BAD_DATA, bot = BAD_DATA, boolAsInt;
     CSEntity   *newEntity;
     
-    roomInit(inGame, inRandHand, inDoorHand);
+    roomInit(inGame);
     
     inFileLoader->populateDictionary();
    
@@ -56,11 +58,11 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
         {
             inFileLoader->populateDictionary();
             
-            newEntity = new CSEntity(this, _theDoorHand, inFileLoader);
+            newEntity = new CSEntity(_theGame, this, inFileLoader);
             if(newEntity->getOwner() == nullptr)//check to see if the entity discovered that we should be making a creature instead
             {
                 delete newEntity;
-                newEntity = new CSCreature(this, _theRandHand, inFileLoader);
+                newEntity = new CSCreature(_theGame, this, inFileLoader);
             }
             
             _entities.push_back(newEntity);
@@ -69,11 +71,9 @@ CSRoom::CSRoom(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *
     }
 }
 
-void CSRoom::roomInit(CSGameState *inGame, CSRandomHandler *inRandHand, CSDoorHandler *inDoorHand)
+void CSRoom::roomInit(CSGameState *inGame)
 {
     _theGame = inGame;
-    _theRandHand = inRandHand;
-    _theDoorHand = inDoorHand;
     _roomNumDigits = 0;
     _roomToConnect = nullptr;
     _roomNum = BAD_DATA;
@@ -121,7 +121,7 @@ void CSRoom::setRoomToConnect(CSRoom *inRoom)
 
 CSEntity* CSRoom::createEntity(entType inEntType, entReg inEntReg, CSPoint *inEntLoc, CSEntity *inParent, CSEntity *inCon)
 {
-    CSEntity   *newEntity = new CSEntity(inEntType, inEntReg, inEntLoc, inParent, inCon, this);
+    CSEntity   *newEntity = new CSEntity(_theGame, inEntType, inEntReg, inEntLoc, inParent, inCon, this);
     
     //_entities.push_back(newEntity);//this happens in the entity creation
     updateEntityNums();
@@ -145,7 +145,7 @@ void CSRoom::createNewDoor(entReg inReg)
     
     list<CSEntity *>::iterator entIter;
     
-    _theRandHand->addRandomRange(roomSideGen);//add the range to the randHand
+    _theGame->theRandHand.addRandomRange(roomSideGen);//add the range to the randHand
     
     if(_isHall)//to the opposite wall for a hallway
     {
@@ -161,7 +161,7 @@ void CSRoom::createNewDoor(entReg inReg)
         if(inReg == REG_NULL)//we don't care which wall, as long as it's not already with-door
             do
             {
-                nextDoorWall = (entReg)_theRandHand->getNumber(&roomSideGen);
+                nextDoorWall = (entReg)_theGame->theRandHand.getNumber(&roomSideGen);
                 goodDoorLoc = true;
                 
                 //make sure it's a wall that has no door, and that adding a door now won't create problems with very nearby rooms, in the next iteration -- in the future, same door walls should be okay, within reason, so we need to create some check for distance minimum between same door walls.
@@ -175,17 +175,17 @@ void CSRoom::createNewDoor(entReg inReg)
         
         //dynamically set the door loc to be along the chosen wall at a random point
         CSRandomRange   doorLocGen(RAND_ROOM, _roomRect.getWallStartPoint(nextDoorWall) + 1, _roomRect.getWallEndPoint(nextDoorWall) - 1);//offsets keep doors from appearing in corners
-        _theRandHand->addRandomRange(doorLocGen);
+        _theGame->theRandHand.addRandomRange(doorLocGen);
         
         //dynamically set the door's loc in the wall
         roomGenAxis.setAxisFromWall(nextDoorWall);
         newPoint.setAxisPoint(roomGenAxis.getPerpAxis(), _roomRect.getWallLocPoint(nextDoorWall));
-        newPoint.setAxisPoint(roomGenAxis.dim, _theRandHand->getNumber(&doorLocGen));
+        newPoint.setAxisPoint(roomGenAxis.dim, _theGame->theRandHand.getNumber(&doorLocGen));
     }
     
-    _theDoorHand->addDoor(createEntity(ENT_DOOR, nextDoorWall, &newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
+    _theGame->theDoorHand.addDoor(createEntity(ENT_DOOR, nextDoorWall, &newPoint, nullptr, nullptr));//make the next door for the next room, because we don't have the door yet
     
-    _theRandHand->clearRandomItems(RAND_ROOM);
+    _theGame->theRandHand.clearRandomItems(RAND_ROOM);
     _numDoors++;
 }
 
@@ -240,9 +240,9 @@ void CSRoom::deleteRoom(void)
         //if we're deleting a door, make sure to remove it from theDoorHand, then re-add the now-unconnected door.
         if((*entIter)->getType() == ENT_DOOR)
         {
-            _theDoorHand->removeDoor(*entIter);
+            _theGame->theDoorHand.removeDoor(*entIter);
             if((*entIter)->getConnect() != nullptr)
-                _theDoorHand->addDoor((*entIter)->getConnect());
+                _theGame->theDoorHand.addDoor((*entIter)->getConnect());
         }
         if((*entIter)->getType() != ENT_CREATURE)//creature entities are deleted by DungeonLevel
             (*entIter)->deleteEntity();
@@ -274,7 +274,7 @@ void CSRoom::deleteEntity(CSEntity *inEnt)
         if((*entIter) == inEnt)
         {
             if((*entIter)->getType() == ENT_DOOR)
-                _theDoorHand->removeDoor(*entIter);
+                _theGame->theDoorHand.removeDoor(*entIter);
             
             (*entIter)->deleteEntity();
             _entities.erase(entIter);
@@ -360,7 +360,7 @@ int CSRoom::connectToRoom(void)
     _roomToConnect->createEntity(ENT_DOOR, connectingWall, &newDoorPoint, nullptr, unconnectedDoor);//now we've found a good spot for it, create a new door in _roomToConnect using newDoorPoint to match our unconnected door, and connect them to each other
     
     //we no longer have a room to connect to, or an unconnected door so let's reset our variables
-    _theDoorHand->removeDoor(unconnectedDoor);
+    _theGame->theDoorHand.removeDoor(unconnectedDoor);
     _roomToConnect = nullptr;
     return RETURN_CODE_TRUE;
 }
@@ -780,9 +780,9 @@ bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
         {
             wallessRect.getAxisRange((axis)loop, dimRange);
             dimLocPoint.setRange(dimRange);
-            _theRandHand->addRandomRange(dimLocPoint);
+            _theGame->theRandHand.addRandomRange(dimLocPoint);
             
-            inPoint.setAxisPoint((axis)loop, _theRandHand->getNumber(&dimLocPoint));//set the loc point to a random point in the room
+            inPoint.setAxisPoint((axis)loop, _theGame->theRandHand.getNumber(&dimLocPoint));//set the loc point to a random point in the room
         }
         
         if(getEntityAtTile(&inPoint) == nullptr)//make sure no entities already exists at this location
@@ -811,7 +811,7 @@ bool CSRoom::getGoodRoomPoint(CSPoint &inPoint, bool isPassable)
             return false;
     }
     
-    _theRandHand->clearRandomItems(RAND_ROOM);
+    _theGame->theRandHand.clearRandomItems(RAND_ROOM);
     return true;
 }
 
@@ -949,10 +949,4 @@ CSRoom* CSRoom::getRoomToConnect(void)
 int CSRoom::getNumDoors(void)
 {
     return _numDoors;
-}
-
-
-CSGameState* CSRoom::getTheGame(void)
-{
-    return _theGame;
 }

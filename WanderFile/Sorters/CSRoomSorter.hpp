@@ -11,7 +11,9 @@
 
 #include <stdio.h>
 #include "WanderFile.h"
-#include "CSRoom.hpp"
+
+
+class CSRoom;
 
 class CSRoomSorter
 {

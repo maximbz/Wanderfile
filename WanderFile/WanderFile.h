@@ -6,8 +6,8 @@
 //  Copyright © 2016 Maxim Boschert-Zielsdorf. All rights reserved.
 //
 
-#ifndef RandomRooms_h
-#define RandomRooms_h
+#ifndef WanderFild_h
+#define WanderFild_h
 
 #include <stdio.h>
 

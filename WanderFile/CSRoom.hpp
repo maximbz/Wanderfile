@@ -12,23 +12,20 @@
 #include <list>
 #include <vector>
 #include "WanderFile.h"
-#include "CSRandomHandler.hpp"
-#include "CSDoorHandler.hpp"
 #include "CSFileLoader.hpp"
-#include "CSGameState.hpp"
+#include "CSEntitySorter.hpp"
 #include "CSRect.hpp"
 #include "CSRange.hpp"
 #include "CSRandomRange.hpp"
-#include "CSEntitySorter.hpp"
 
+class CSGameState;
 class CSEntity;
+
 
 class CSRoom
 {
 private:
-    CSGameState         *_theGame;
-    CSRandomHandler     *_theRandHand;
-    CSDoorHandler       *_theDoorHand;
+    CSGameState        *_theGame;
     
     bool                _isHall, _vertHall;
     int                 _roomNum, _roomNumDigits, _numDoors;
@@ -39,15 +36,15 @@ private:
     CSEntitySorter      _entComparitor;
     CSRoom              *_roomToConnect;
     
-    void roomInit(CSGameState *, CSRandomHandler *, CSDoorHandler *);
+    void roomInit(CSGameState *);
     char assumeChar(CSEntity *, char);
     CSEntity* createEntity(entType, entReg, CSPoint *, CSEntity *, CSEntity *);
     CSEntity* checkForEntityToDraw(CSPoint *);
     
 public:    
-    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *);
-    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSPoint *, CSPoint *);
-    CSRoom(CSGameState *, CSRandomHandler *, CSDoorHandler *, CSFileLoader *);//load room from file
+    CSRoom(CSGameState *);
+    CSRoom(CSGameState *, CSPoint *, CSPoint *);
+    CSRoom(CSGameState *, CSFileLoader *);//load room from file
     
     void setHallState(bool);
     void setVertHallState(bool);
@@ -77,21 +74,20 @@ public:
     CSEntity* getConnectedDoor(void);//only for hallways
     CSEntity* getDoorConnectedToRoom(CSRoom *);
     CSEntity* getEntityAtTile(CSPoint *);
+    CSEntity* getEntityWithNum(int);
     bool getGoodRoomPoint(CSPoint &, bool);
     bool isWallPointFree(CSPoint *, entReg, CSEntity *);
     bool isTilePassable(CSPoint *);
+    void getWallessRect(CSRect &);
+    CSRoom* getRoomToConnect(void);
     
     bool isHall(void);
     bool isVertHall(void);
     int getRoomNum(void);
+    CSRect* getRect(void);
+    int getNumDoors(void);
     CSRandomRange* getWallGenRanges(void);
     list<CSEntity *>* getEntities(void);
-    CSEntity * getEntityWithNum(int);
-    CSRect* getRect(void);
-    void getWallessRect(CSRect &);
-    CSRoom* getRoomToConnect(void);
-    int getNumDoors(void);
-    CSGameState* getTheGame(void);
 };
 
 #endif /* CSRoom_hpp */

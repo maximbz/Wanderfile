@@ -10,18 +10,16 @@
 #include "CSRoom.hpp"
 #include "CSGameState.hpp"
 
-CSCreature::CSCreature(void)
+CSCreature::CSCreature()
 {
     //this method is only used for creating the player, so no other initializaiton is required
     _entityType = ENT_CREATURE;
     _entityRegion = REG_ROOM;
 }
 
-CSCreature::CSCreature(CSPoint *inLoc, CSMonsterClass *inMonsterClass, CSRoom *inRoom, CSRandomHandler *inRandHand)
+CSCreature::CSCreature(CSGameState *inGame, CSPoint *inLoc, CSMonsterClass *inMonsterClass, CSRoom *inRoom)
 {
-    _owner = inRoom;
-    if(_owner != nullptr)
-        _owner->addEntity(this);
+    _theGame = inGame;
     
     setChar(inMonsterClass->getChar());
     _hp = inMonsterClass->getHP();
@@ -31,19 +29,21 @@ CSCreature::CSCreature(CSPoint *inLoc, CSMonsterClass *inMonsterClass, CSRoom *i
     _name = inMonsterClass->getName();
     _entLoc = *inLoc;
     
-    _theRandHand = inRandHand;
-    
     initCreature();
+    
+    _owner = inRoom;
+    if(_owner != nullptr)
+        _owner->addEntity(this);
 }
 
-CSCreature::CSCreature(CSRoom *inRoom, CSRandomHandler *inRandHand, CSFileLoader *inFileLoader)//load entity from file
+CSCreature::CSCreature(CSGameState *inGame, CSRoom *inRoom, CSFileLoader *inFileLoader)//load entity from file
 {
     int     entTypeAsInt, regAsInt;
     string  charAsString;
     CSPoint entLoc;
     
+    _theGame = inGame;
     _owner = inRoom;
-    _theRandHand = inRandHand;
     
     initCreature();
     dataKeysInit();
@@ -84,15 +84,16 @@ void CSCreature::initCreature(void)
     _moveDir.setRandType(RAND_MONSTER);
     _moveDir.setRangeMax(REG_WALL_LEFT);
     _moveDir.setRangeMin(REG_WALL_BOT);
-    _theRandHand->addRandomRange(_moveDir);
+    _theGame->theRandHand.addRandomRange(_moveDir);
 }
 
 
 #pragma mark -
 #pragma mark Setters
 
-void CSCreature::setIsPlayer(bool inPlayer)
+void CSCreature::setIsPlayer(bool inPlayer, CSGameState *inGame)
 {
+    _theGame = inGame;
     _player = inPlayer;
     
     if(_player)
@@ -195,7 +196,7 @@ bool CSCreature::updateEntity(void)
     //AI & creature behavior goes here!
     //it suuure does...
     
-    return moveCreature((entReg)_theRandHand->getNumber(&_moveDir));
+    return moveCreature((entReg)_theGame->theRandHand.getNumber(&_moveDir));
 }
 
 

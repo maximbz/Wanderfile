@@ -16,14 +16,17 @@
 #include "CSPoint.hpp"
 #include "CSLine.hpp"
 
-using namespace std;
-
+class CSGameState;
 class CSDoorHandler;
 class CSRoom;
+
+using namespace std;
+
 
 class CSEntity
 {
 protected:
+    CSGameState    *_theGame;
     bool            _wasMoved;
     char            _entChar;//only used to override default (or with room numbers)
     int             _entNum;
@@ -31,16 +34,16 @@ protected:
     entReg          _entityRegion;
     vector<string>  _entDataKey;
     CSPoint         _entLoc, _loadConnect, _loadChild;//_load points tell roomNum and entNum of connects and children to a loading dungeonLevel
-    CSEntity        *_parentEnt, *_childEnt,//the parent of a chain of entities has a child connected to it: parent -> _connectTo -> child; parent -> _connectFrom ->                   child
+    CSEntity        *_parentEnt, *_childEnt,//the parent of a chain of entities has a child connected to it: parent -> _connectTo -> child; parent -> _connectFrom -> child
                     *_connect;//doors connect to and from one another; there's no chain of command
     CSRoom          *_owner;
     
     void dataKeysInit(void);
     
 public:
-    CSEntity();
-    CSEntity(entType, entReg, CSPoint *, CSEntity *, CSEntity *, CSRoom *);
-    CSEntity(CSRoom *, CSDoorHandler *, CSFileLoader *);//load entity from file
+    CSEntity(void);
+    CSEntity(CSGameState *, entType, entReg, CSPoint *, CSEntity *, CSEntity *, CSRoom *);
+    CSEntity(CSGameState *, CSRoom *, CSFileLoader *);//load entity from file
     
     void setWasMoved(bool);
     void setChar(char);

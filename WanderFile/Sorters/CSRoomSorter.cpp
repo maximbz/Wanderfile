@@ -7,6 +7,7 @@
 //
 
 #include "CSRoomSorter.hpp"
+#include "CSRoom.hpp"
 
 CSRoomSorter::CSRoomSorter()
 {

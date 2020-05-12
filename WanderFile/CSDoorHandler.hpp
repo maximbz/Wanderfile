@@ -15,6 +15,7 @@
 #include "CSRandomHandler.hpp"
 #include "CSEntity.hpp"
 
+
 class CSDoorHandler
 {
 private:
@@ -25,9 +26,10 @@ private:
     CSRandomRange       _newDoorRandRange;
     
 public:
-    CSDoorHandler(CSRandomHandler *);
-    void clear(void);
+    CSDoorHandler(void);
     
+    void addRandomHandler(CSRandomHandler *);
+    void clear(void);
     void addDoor(CSEntity *);
     void addLoadingEnt(CSEntity *);
     CSEntity* getNextDoor(void);

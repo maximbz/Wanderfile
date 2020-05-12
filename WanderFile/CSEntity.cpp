@@ -8,6 +8,7 @@
 
 #include <sstream>
 #include "CSEntity.hpp"
+#include "CSGameState.hpp"
 #include "CSRoom.hpp"
 #include "CSLine.hpp"
 #include "CSAxis.hpp"
@@ -23,8 +24,9 @@ CSEntity::CSEntity(void)
     dataKeysInit();
 }
 
-CSEntity::CSEntity(entType inType, entReg inRegion, CSPoint *inLoc, CSEntity *inParent, CSEntity *inConnect, CSRoom *inOwner)
+CSEntity::CSEntity(CSGameState *inGame, entType inType, entReg inRegion, CSPoint *inLoc, CSEntity *inParent, CSEntity *inConnect, CSRoom *inOwner)
 {
+    _theGame = inGame;
     _entityType = inType;
     _entityRegion = inRegion;
     if(inLoc != nullptr)
@@ -40,7 +42,7 @@ CSEntity::CSEntity(entType inType, entReg inRegion, CSPoint *inLoc, CSEntity *in
     dataKeysInit();
 }
 
-CSEntity::CSEntity(CSRoom *inOwner, CSDoorHandler *inDoorHandler, CSFileLoader *inFileLoader)//load entity from file
+CSEntity::CSEntity(CSGameState *inGame, CSRoom *inOwner, CSFileLoader *inFileLoader)//load entity from file
 {
     bool        connectionToMake = false;
     int         roomNumTest = BAD_DATA, entNum = BAD_DATA, entTypeAsInt = BAD_DATA, regAsInt;
@@ -50,6 +52,8 @@ CSEntity::CSEntity(CSRoom *inOwner, CSDoorHandler *inDoorHandler, CSFileLoader *
     list<string>::iterator    listIter;
     
     dataKeysInit();
+    
+    _theGame = inGame;
     _owner = inOwner;
     _parentEnt = nullptr;
     _childEnt = nullptr;
@@ -90,7 +94,7 @@ CSEntity::CSEntity(CSRoom *inOwner, CSDoorHandler *inDoorHandler, CSFileLoader *
     }
     
     if(connectionToMake)
-        inDoorHandler->addLoadingEnt(this);
+        _theGame->theDoorHand.addLoadingEnt(this);
 }
 
 void CSEntity::dataKeysInit(void)
@@ -358,17 +362,9 @@ char CSEntity::getChar(void)
             return _entChar;
         case ENT_CREATURE:
             return _entChar;
-        case ENT_DOOR:
-            return OPEN_DOOR_CHAR;
-        case ENT_STAIRS_UP:
-            return STAIRS_UP_CHAR;
-        case ENT_STAIRS_DOWN:
-            return STAIRS_DOWN_CHAR;
-        case ENT_TREASURE:
-            return CHEST_CHAR;
             
         default:
-            return EMPTY_CHAR;
+            return _theGame->theBeHand.getChar(_entityType);
     }
 }
 
@@ -379,24 +375,7 @@ entType CSEntity::getType(void)
 
 bool CSEntity::isPassable(void)
 {
-    switch(_entityType)
-    {
-        case ENT_ROOM_NUM:
-            return true;
-        case ENT_CREATURE:
-            return false;
-        case ENT_DOOR:
-            return true;
-        case ENT_STAIRS_UP:
-            return true;
-        case ENT_STAIRS_DOWN:
-            return true;
-        case ENT_TREASURE:
-            return false;
-        
-        default:
-            return true;
-    }
+    return _theGame->theBeHand.isPassable(_entityType);
 }
 
 entReg CSEntity::getRegion(void)

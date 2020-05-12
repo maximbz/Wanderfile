@@ -11,22 +11,19 @@
 
 #include <list>
 #include "WanderFile.h"
-#include "CSGameState.hpp"
-#include "CSRandomHandler.hpp"
-#include "CSDoorHandler.hpp"
 #include "CSRandomRange.hpp"
 #include "CSRoom.hpp"
 #include "CSRoomSorter.hpp"
+
+class CSGameState;
 
 
 class CSDungeonLevel
 {
 private:
-    CSRandomHandler     *_theRandHand;
-    CSDoorHandler       *_theDoorHand;
-    CSGameState         *_theGame;
+    CSGameState        *_theGame;
     
-    int                 _levelNum, _maxNumDoors;
+    int                 _maxNumDoors;
     string              _fileName;
     CSPoint             _startingStairs;
     CSRect              _dungeonBounds;
@@ -45,9 +42,10 @@ private:
     void createMonsters(void);
     
 public:
-    CSDungeonLevel(CSRandomHandler *, CSGameState *, CSDoorHandler *, int);
+    CSDungeonLevel(void);
+    void dungeonLevelInit(CSGameState *);
     
-    void createDungeon(void);
+    void createDungeon(int);
     int saveDungeon(void);
     int loadDungeon(string *);
     void deleteDungeon(void);
@@ -60,13 +58,11 @@ public:
     void slideRoom(int, int, int);
     void addRoomsToList(list<CSRoom *> *, CSRoom *, int);
     
-    //bool checkForMonsterAtPoint(CSPoint *, CSEntity *);
-    void movePlayer(entReg);
+    void updateRooms(CSPoint *);
     
     void printWindow();
     
     CSRoom* getRoomFromTile(CSPoint *);
-    int getLevelNumber(void);
     int getNumRooms(void);
 };
 

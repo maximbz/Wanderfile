@@ -13,11 +13,12 @@
 #include <string>
 #include <list>
 #include <vector>
+#include "CSMonsterClass.hpp"
 #include "CSPoint.hpp"
 #include "CSRange.hpp"
-#include "CSMonsterClass.hpp"
+#include "CSRandomRange.hpp"
 #include "CSEntity.hpp"
-#include "CSRandomHandler.hpp"
+
 
 using namespace std;
 
@@ -28,16 +29,15 @@ private:
     int             _hp, _atk, _ac, _xp;
     string          _name;
     vector<string>  _creatureDataKey;
-    CSRandomHandler *_theRandHand;
     CSRandomRange   _moveDir;
     
     void initCreature(void);
 public:
-    CSCreature();
-    CSCreature(CSPoint *, CSMonsterClass *, CSRoom *, CSRandomHandler *);
-    CSCreature(CSRoom *, CSRandomHandler *, CSFileLoader *);//load entity from file
+    CSCreature(void);
+    CSCreature(CSGameState *, CSPoint *, CSMonsterClass *, CSRoom *);
+    CSCreature(CSGameState *, CSRoom *, CSFileLoader *);//load entity from file
     
-    void setIsPlayer(bool);
+    void setIsPlayer(bool, CSGameState *);
     
     bool moveCreature(entReg);
     void changeHP(int);

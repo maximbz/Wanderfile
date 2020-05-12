@@ -13,30 +13,48 @@
 #include <list>
 #include <ncurses.h>
 #include "CSRect.hpp"
+#include "CSRandomHandler.hpp"
+#include "CSDoorHandler.hpp"
+#include "CSBehaviorHandler.hpp"
+#include "CSPlayerChoice.hpp"
 #include "CSMonsterClass.hpp"
+#include "CSDungeonLevel.hpp"
 #include "CSCreature.hpp"
+
 
 class CSGameState
 {
 private:
-    bool        _printRoomNums, _breakForDebug;
-    CSRect      _playerMoveRect, _gameWindRect, _levelBounds;
-    CSCreature  _theplayer;
-    WINDOW      *_gameWind;
+    bool            _printRoomNums, _breakForDebug;
+    int             _levelNum;
+    WINDOW          *_menuWind, *_gameWind;
+    CSRect          _playerMoveRect, _gameWindRect, _levelBounds;
+    vector<char>    _gameOptions, _slideOptions, _mainModeOptions;
+    CSPoint         _menuSelectMatrix;
+    CSPlayerChoice  _menuSelection;
+    CSCreature      _thePlayer;
+    CSDungeonLevel  _theDungeon;
     
     list<CSMonsterClass *>   _monsterManual;
     
 public:
-    CSGameState();
+    //public handlers are quicker to access
+    CSRandomHandler      theRandHand;
+    CSDoorHandler        theDoorHand;
+    CSBehaviorHandler    theBeHand;
+    
+    CSGameState(void);
     
     void setGameWindow(CSRect);
     int loadMonsterManual(void);
     void cleanUpGameState(void);
     
+    bool gameLoop(void);
     void slideGameWindow(entReg);
     void centerGameWindow(CSPoint *);
     void slidePlayerMoveRect(entReg);
     void centerPlayerMoveRect(CSPoint *);
+    void movePlayer(entReg);
     void toggleRoomNums(void);
     void toggleBreak(void);
     
@@ -44,6 +62,7 @@ public:
     CSRect* getPlayerMoveRect(void);
     CSRect* getGameWindRect(void);
     CSRect* getLevelBounds(void);
+    int getLevelNum(void);
     bool getRoomNumsState(void);
     bool getBreakState(void);
     CSCreature* getPlayer(void);

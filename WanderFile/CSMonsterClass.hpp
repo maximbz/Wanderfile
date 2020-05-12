@@ -13,6 +13,7 @@
 #include <string>
 #include "CSRange.hpp"
 
+
 using namespace std;
 
 class CSMonsterClass

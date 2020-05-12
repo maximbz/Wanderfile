@@ -9,24 +9,49 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <ncurses.h>
 #include "CSGameState.hpp"
 #include "WanderFile.h"
 #include "CSRange.hpp"
+#include "CSDungeonLevel.hpp"
 
 using namespace std;
 
-CSGameState::CSGameState()
+CSGameState::CSGameState(void)
 {
+    theDoorHand.addRandomHandler(&theRandHand);
+    
+    //set up menus
+    _slideOptions.push_back('a');
+    _slideOptions.push_back('d');
+    _slideOptions.push_back('w');
+    _slideOptions.push_back('s');
+    
+    _mainModeOptions.push_back('n');
+    _mainModeOptions.push_back('l');
+    _mainModeOptions.push_back('v');
+    
+    _gameOptions.push_back('b');
+    _gameOptions.push_back('q');
+    
+    _menuSelection.addCharVect(&_slideOptions);
+    _menuSelection.addCharVect(&_mainModeOptions);
+    _menuSelection.addCharVect(&_gameOptions);
+    
+    //set up gameplay
     _printRoomNums = true;//false
     _breakForDebug = false;
+    _levelNum = 1;
     
     _levelBounds.setPoints(0, 0, LEVEL_BOUND_RIGHT, LEVEL_BOUND_BOTTOM);
-    
     _gameWindRect.setPoints((LEVEL_BOUND_RIGHT / 2) - (WINDOW_BOUND_RIGHT / 2) + 1, (LEVEL_BOUND_BOTTOM / 2) - (WINDOW_BOUND_BOTTOM / 2) + 1,
                             (LEVEL_BOUND_RIGHT / 2) + (WINDOW_BOUND_RIGHT / 2), (LEVEL_BOUND_BOTTOM / 2) + (WINDOW_BOUND_BOTTOM / 2));
     
+    //set up windows
     _gameWind = newwin(_gameWindRect.getHeight(), _gameWindRect.getWidth(), 1, 1);
     _gameWind = initscr();//initializes terminal to use ncurses
+    _menuWind = newwin(MENU_BOUND_HEIGHT, _gameWindRect.getWidth(), _gameWindRect.getHeight() + 1, 0);
+    _menuWind = initscr();//initializes terminal to use ncurses
     cbreak();//disable the buffering of typed characters by the TTY driver and get a character-at-a-time input
     noecho();//keeps typed keys from automatically echoing to terminal
     clear();
@@ -35,9 +60,11 @@ CSGameState::CSGameState()
     start_color();
     
     _playerMoveRect.setPoints(0, 0, PLAYER_MOVE_BOUND_RIGHT, PLAYER_MOVE_BOUND_BOTTOM);
-    _theplayer.setIsPlayer(true);
+    _thePlayer.setIsPlayer(true, this);
     if(loadMonsterManual())
         printf("Monsters did not load. Is the file 'MonsterManual.txt' missing?\n");
+    
+    _theDungeon.dungeonLevelInit(this);
 }
 
 
@@ -162,6 +189,67 @@ void CSGameState::cleanUpGameState(void)
 #pragma mark -
 #pragma mark Doers - Doers
 
+bool CSGameState::gameLoop(void)
+{
+    bool    gameLoop = true, playLoop = true;
+    string  outputString;
+    
+    while(playLoop)
+    {
+        _theDungeon.printWindow();
+        
+        mvwaddstr(_menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputString.c_str());
+        mvwaddstr(_menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "(L)oad dungeon, Create (N)ew dungeon, Sa(V)e current dungeon, Toggle line (B)reak, or (Q)uit?\n");
+        
+        _menuSelection.toggleCharOption(1, true);//turn main mode on
+        _menuSelection.getUserCharAnswer(_menuSelectMatrix, _menuWind);
+        
+        //directions
+        if(_menuSelectMatrix.x == 0)
+        {
+            if(_menuSelectMatrix.y == 0)
+                movePlayer(REG_WALL_LEFT);
+            if(_menuSelectMatrix.y == 1)
+                movePlayer(REG_WALL_RIGHT);
+            if(_menuSelectMatrix.y == 2)
+                movePlayer(REG_WALL_TOP);
+            if(_menuSelectMatrix.y == 3)
+                movePlayer(REG_WALL_BOT);
+        }
+        
+        //main menu commands
+        if(_menuSelectMatrix.x == 1)
+        {
+            if(_menuSelectMatrix.y == 0)
+                _theDungeon.createDungeon(_levelNum);
+            if(_menuSelectMatrix.y == 1)
+                _theDungeon.loadDungeon(&outputString);
+            if(_menuSelectMatrix.y == 2)
+                _theDungeon.saveDungeon();
+        }
+        
+        //game commends
+        if(_menuSelectMatrix.x == 2)
+        {
+            if(_menuSelectMatrix.y == 0)//toggle line break
+            {
+                toggleBreak();
+                
+                if(_breakForDebug == true)
+                    gameLoop = true;
+            }
+            if(_menuSelectMatrix.y == 1)//quit
+            {
+                gameLoop = false;
+                playLoop = false;
+            }
+        }
+    }
+    
+    _theDungeon.deleteDungeon();
+    return gameLoop;
+}
+
 void CSGameState::slideGameWindow(entReg inReg)
 {
     int     loop;
@@ -278,6 +366,21 @@ void CSGameState::centerPlayerMoveRect(CSPoint *inPoint)
     }
 }
 
+void CSGameState::movePlayer(entReg inReg)
+{
+    CSPoint     oldLoc = *_thePlayer.getLoc(), newLoc(_thePlayer.getLoc(), inReg);
+    
+    _thePlayer.moveCreature(inReg);//move the player
+    
+    if((!getPlayerMoveRect()->doesRectContainPoint(&newLoc)) && oldLoc != *_thePlayer.getLoc())
+    {
+        slidePlayerMoveRect(inReg);
+        slideGameWindow(inReg);
+    }
+    
+    _theDungeon.updateRooms(_thePlayer.getLoc());
+}
+
 void CSGameState::toggleRoomNums(void)
 {
     _printRoomNums = !_printRoomNums;
@@ -312,6 +415,11 @@ CSRect* CSGameState::getLevelBounds(void)
     return &_levelBounds;
 }
 
+int CSGameState::getLevelNum(void)
+{
+    return _levelNum;
+}
+
 bool CSGameState::getRoomNumsState(void)
 {
     return _printRoomNums;
@@ -324,7 +432,7 @@ bool CSGameState::getBreakState(void)
 
 CSCreature* CSGameState::getPlayer(void)
 {
-    return &_theplayer;
+    return &_thePlayer;
 }
 
 int CSGameState::getLevelMonsterManual(int inLevel, list<CSMonsterClass *> &inMonsterList)
