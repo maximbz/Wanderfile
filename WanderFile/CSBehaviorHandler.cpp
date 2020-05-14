@@ -7,10 +7,32 @@
 //
 
 #include "CSBehaviorHandler.hpp"
+#include "CSGameState.hpp"
+#include "CSEntity.hpp"
 
 CSBehaviorHandler::CSBehaviorHandler(void)
 {
     
+}
+
+void CSBehaviorHandler::behaviorHandlerInit(CSGameState *inGame)
+{
+    _theGame = inGame;
+}
+
+
+void CSBehaviorHandler::adjacentBehavior(CSEntity *inEnt)
+{
+    switch(inEnt->getType())
+    {
+        case ENT_TREASURE:
+            _theGame->gainTreasure();
+            inEnt->getOwner()->deleteEntity(inEnt->getNum());
+            break;
+            
+        default:
+            break;
+    }
 }
 
 

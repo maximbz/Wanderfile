@@ -60,6 +60,8 @@ public:
     void removeConnect(void);
     void deleteEntity(void);
     virtual bool updateEntity(void);
+    void activateAdjacent(void);
+    void activateOverlap(void);
     virtual string printEntityToFile(void);
     
     bool getWasMoved(void);

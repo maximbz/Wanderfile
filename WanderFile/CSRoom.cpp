@@ -872,7 +872,10 @@ bool CSRoom::isTilePassable(CSPoint *inTile)
                 return true;
         }
         else
+        {
+            tileEnt->activateAdjacent();
             return false;
+        }
     }
     else
         return insideWalls;

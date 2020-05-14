@@ -287,6 +287,15 @@ bool CSEntity::updateEntity(void)//is overidden in CSCreature
     return false;
 }
 
+void CSEntity::activateAdjacent(void)
+{
+    _theGame->theBeHand.adjacentBehavior(this);
+}
+
+void CSEntity::activateOverlap(void)
+{
+}
+
 string CSEntity::printEntityToFile(void)
 {
     string outputString;

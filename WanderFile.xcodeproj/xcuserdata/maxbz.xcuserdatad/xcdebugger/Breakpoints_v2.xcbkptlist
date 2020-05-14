@@ -218,8 +218,8 @@
             filePath = "WanderFile/CSDungeonLevel.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "345"
-            endingLineNumber = "345"
+            startingLineNumber = "346"
+            endingLineNumber = "346"
             landmarkName = "CSDungeonLevel::createRoomGenRanges(inDoor, newRoom)"
             landmarkType = "7">
          </BreakpointContent>
@@ -307,15 +307,15 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "0DE03F47-09B6-4DBB-8C3D-445D2D6CED66"
+            uuid = "3B810D60-EFE3-4142-9F31-DEF52F553B16"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WanderFile/CSGameState.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "239"
-            endingLineNumber = "239"
+            startingLineNumber = "339"
+            endingLineNumber = "339"
             landmarkName = "CSGameState::gameLoop()"
             landmarkType = "7">
          </BreakpointContent>

@@ -12,12 +12,21 @@
 #include <stdio.h>
 #include "WanderFile.h"
 
+class CSGameState;
+class CSEntity;
+
 
 class CSBehaviorHandler
 {
-public:
+private:
+    CSGameState *_theGame;
     
+public:
     CSBehaviorHandler(void);
+    void behaviorHandlerInit(CSGameState *);
+    
+    void adjacentBehavior(CSEntity *);
+    void overlapBehavior(CSEntity *);
     
     char getChar(entType);
     bool isPassable(entType);

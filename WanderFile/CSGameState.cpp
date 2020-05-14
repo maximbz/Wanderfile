@@ -38,6 +38,8 @@ CSGameState::CSGameState(void)
     _menuSelection.addCharVect(&_mainModeOptions);
     _menuSelection.addCharVect(&_gameOptions);
     
+    _menuMessage = "";
+    
     //set up gameplay
     _printRoomNums = true;//false
     _breakForDebug = false;
@@ -65,6 +67,7 @@ CSGameState::CSGameState(void)
         printf("Monsters did not load. Is the file 'MonsterManual.txt' missing?\n");
     
     _theDungeon.dungeonLevelInit(this);
+    theBeHand.behaviorHandlerInit(this);
 }
 
 
@@ -189,6 +192,95 @@ void CSGameState::cleanUpGameState(void)
 #pragma mark -
 #pragma mark Doers - Doers
 
+void CSGameState::centerGameWindow(CSPoint *inPoint)
+{
+    bool    topLeftAnchor = true;
+    
+    //center on in point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
+    
+    _gameWindRect.topLeft.x =  inPoint->x - (WINDOW_BOUND_RIGHT / 2);
+    if(_gameWindRect.topLeft.x < 0)
+        _gameWindRect.topLeft.x = 0;
+    else if(_gameWindRect.botRight.x > _levelBounds.botRight.x)
+    {
+        _gameWindRect.botRight.x = _levelBounds.botRight.x;
+        topLeftAnchor = false;
+    }
+    
+    _gameWindRect.topLeft.y = inPoint->y - (WINDOW_BOUND_BOTTOM / 2);
+    if(_gameWindRect.topLeft.y < 0)
+        _gameWindRect.topLeft.y = 0;
+    else if(_gameWindRect.botRight.y > _levelBounds.botRight.y)
+    {
+        _gameWindRect.botRight.y = _levelBounds.botRight.y;
+        topLeftAnchor = false;
+    }
+    
+    
+    //adjust other corner based on the corner we set
+    
+    if(topLeftAnchor)
+    {
+        _gameWindRect.botRight.x = _gameWindRect.topLeft.x + WINDOW_BOUND_RIGHT;
+        _gameWindRect.botRight.y = _gameWindRect.topLeft.y + WINDOW_BOUND_BOTTOM;
+    }
+    else
+    {
+        _gameWindRect.topLeft.x = _gameWindRect.botRight.x - WINDOW_BOUND_RIGHT;
+        _gameWindRect.topLeft.y = _gameWindRect.botRight.y - WINDOW_BOUND_BOTTOM;
+    }
+}
+
+void CSGameState::centerPlayerMoveRect(CSPoint *inPoint)
+{
+    bool    topLeftAnchor = true;
+    
+    //center on in point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
+    
+    _playerMoveRect.topLeft.x =  inPoint->x - (PLAYER_MOVE_BOUND_RIGHT / 2);
+    if(_playerMoveRect.topLeft.x < 0)
+        _playerMoveRect.topLeft.x = 0;
+    else if(_playerMoveRect.botRight.x > _levelBounds.botRight.x)
+    {
+        _playerMoveRect.botRight.x = _levelBounds.botRight.x;
+        topLeftAnchor = false;
+    }
+    
+    _playerMoveRect.topLeft.y = inPoint->y - (PLAYER_MOVE_BOUND_BOTTOM / 2);
+    if(_playerMoveRect.topLeft.y < 0)
+        _playerMoveRect.topLeft.y = 0;
+    else if(_playerMoveRect.botRight.y > _levelBounds.botRight.y)
+    {
+        _playerMoveRect.botRight.y = _levelBounds.botRight.y;
+        topLeftAnchor = false;
+    }
+    
+    
+    //adjust other corner based on the corner we set
+    
+    if(topLeftAnchor)
+    {
+        _playerMoveRect.botRight.x = _playerMoveRect.topLeft.x + PLAYER_MOVE_BOUND_RIGHT;
+        _playerMoveRect.botRight.y = _playerMoveRect.topLeft.y + PLAYER_MOVE_BOUND_BOTTOM;
+    }
+    else
+    {
+        _playerMoveRect.topLeft.x = _playerMoveRect.botRight.x - PLAYER_MOVE_BOUND_RIGHT;
+        _playerMoveRect.topLeft.y = _playerMoveRect.botRight.y - PLAYER_MOVE_BOUND_BOTTOM;
+    }
+}
+
+void CSGameState::toggleRoomNums(void)
+{
+    _printRoomNums = !_printRoomNums;
+}
+
+void CSGameState::toggleBreak(void)
+{
+    _breakForDebug = !_breakForDebug;
+}
+
+
 bool CSGameState::gameLoop(void)
 {
     bool    gameLoop = true, playLoop = true;
@@ -198,8 +290,16 @@ bool CSGameState::gameLoop(void)
     {
         _theDungeon.printWindow();
         
-        mvwaddstr(_menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputString.c_str());
-        mvwaddstr(_menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "(L)oad dungeon, Create (N)ew dungeon, Sa(V)e current dungeon, Toggle line (B)reak, or (Q)uit?\n");
+        if(_menuMessage != "")
+        {
+            mvwaddstr(_menuWind, WINDOW_BOUND_BOTTOM + 2, 35, _menuMessage.c_str());
+            _menuMessage = "";
+        }
+        else
+        {
+            mvwaddstr(_menuWind, WINDOW_BOUND_BOTTOM + 1, 0, outputString.c_str());
+            mvwaddstr(_menuWind, WINDOW_BOUND_BOTTOM + 2, 0, "(L)oad dungeon, Create (N)ew dungeon, Sa(V)e current dungeon, Toggle line (B)reak, or (Q)uit?\n");
+        }
         
         _menuSelection.toggleCharOption(1, true);//turn main mode on
         _menuSelection.getUserCharAnswer(_menuSelectMatrix, _menuWind);
@@ -288,84 +388,6 @@ void CSGameState::slidePlayerMoveRect(entReg inReg)
     }
 }
 
-void CSGameState::centerGameWindow(CSPoint *inPoint)
-{
-    bool    topLeftAnchor = true;
-    
-    //center on in point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
-    
-    _gameWindRect.topLeft.x =  inPoint->x - (WINDOW_BOUND_RIGHT / 2);
-    if(_gameWindRect.topLeft.x < 0)
-        _gameWindRect.topLeft.x = 0;
-    else if(_gameWindRect.botRight.x > _levelBounds.botRight.x)
-    {
-        _gameWindRect.botRight.x = _levelBounds.botRight.x;
-        topLeftAnchor = false;
-    }
-    
-    _gameWindRect.topLeft.y = inPoint->y - (WINDOW_BOUND_BOTTOM / 2);
-    if(_gameWindRect.topLeft.y < 0)
-        _gameWindRect.topLeft.y = 0;
-    else if(_gameWindRect.botRight.y > _levelBounds.botRight.y)
-    {
-        _gameWindRect.botRight.y = _levelBounds.botRight.y;
-        topLeftAnchor = false;
-    }
-    
-    
-    //adjust other corner based on the corner we set
-    
-    if(topLeftAnchor)
-    {
-        _gameWindRect.botRight.x = _gameWindRect.topLeft.x + WINDOW_BOUND_RIGHT;
-        _gameWindRect.botRight.y = _gameWindRect.topLeft.y + WINDOW_BOUND_BOTTOM;
-    }
-    else
-    {
-        _gameWindRect.topLeft.x = _gameWindRect.botRight.x - WINDOW_BOUND_RIGHT;
-        _gameWindRect.topLeft.y = _gameWindRect.botRight.y - WINDOW_BOUND_BOTTOM;
-    }
-}
-
-void CSGameState::centerPlayerMoveRect(CSPoint *inPoint)
-{
-    bool    topLeftAnchor = true;
-    
-    //center on in point. If that puts gameWindow outside of LEVEL_BOUNDS, set gameWindow to LEVEL_BOUNDS
-    
-    _playerMoveRect.topLeft.x =  inPoint->x - (PLAYER_MOVE_BOUND_RIGHT / 2);
-    if(_playerMoveRect.topLeft.x < 0)
-        _playerMoveRect.topLeft.x = 0;
-    else if(_playerMoveRect.botRight.x > _levelBounds.botRight.x)
-    {
-        _playerMoveRect.botRight.x = _levelBounds.botRight.x;
-        topLeftAnchor = false;
-    }
-    
-    _playerMoveRect.topLeft.y = inPoint->y - (PLAYER_MOVE_BOUND_BOTTOM / 2);
-    if(_playerMoveRect.topLeft.y < 0)
-        _playerMoveRect.topLeft.y = 0;
-    else if(_playerMoveRect.botRight.y > _levelBounds.botRight.y)
-    {
-        _playerMoveRect.botRight.y = _levelBounds.botRight.y;
-        topLeftAnchor = false;
-    }
-    
-    
-    //adjust other corner based on the corner we set
-    
-    if(topLeftAnchor)
-    {
-        _playerMoveRect.botRight.x = _playerMoveRect.topLeft.x + PLAYER_MOVE_BOUND_RIGHT;
-        _playerMoveRect.botRight.y = _playerMoveRect.topLeft.y + PLAYER_MOVE_BOUND_BOTTOM;
-    }
-    else
-    {
-        _playerMoveRect.topLeft.x = _playerMoveRect.botRight.x - PLAYER_MOVE_BOUND_RIGHT;
-        _playerMoveRect.topLeft.y = _playerMoveRect.botRight.y - PLAYER_MOVE_BOUND_BOTTOM;
-    }
-}
-
 void CSGameState::movePlayer(entReg inReg)
 {
     CSPoint     oldLoc = *_thePlayer.getLoc(), newLoc(_thePlayer.getLoc(), inReg);
@@ -381,14 +403,9 @@ void CSGameState::movePlayer(entReg inReg)
     _theDungeon.updateRooms(_thePlayer.getLoc());
 }
 
-void CSGameState::toggleRoomNums(void)
+void CSGameState::gainTreasure(void)
 {
-    _printRoomNums = !_printRoomNums;
-}
-
-void CSGameState::toggleBreak(void)
-{
-    _breakForDebug = !_breakForDebug;
+    _menuMessage = "Treasure Get!";
 }
 
 

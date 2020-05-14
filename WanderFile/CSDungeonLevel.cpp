@@ -222,6 +222,7 @@ void CSDungeonLevel::deleteDungeon(void)
         (*roomListIter)->deleteRoom();
         roomListIter = _levelRooms.erase(roomListIter);//new iterator properly goes through the list, now with fewer entries
     }
+    _theGame->theDoorHand.clear();//as rooms are deleted, sometimes a single door is left in theDoorHand...
     
     //bounds are all set to first room on evey new dungeon, so we don't worry about _dungeonBounds or _outerRooms here
     _levelRooms.clear();

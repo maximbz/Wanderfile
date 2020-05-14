@@ -28,6 +28,7 @@ private:
     bool            _printRoomNums, _breakForDebug;
     int             _levelNum;
     WINDOW          *_menuWind, *_gameWind;
+    string          _menuMessage;
     CSRect          _playerMoveRect, _gameWindRect, _levelBounds;
     vector<char>    _gameOptions, _slideOptions, _mainModeOptions;
     CSPoint         _menuSelectMatrix;
@@ -49,14 +50,16 @@ public:
     int loadMonsterManual(void);
     void cleanUpGameState(void);
     
-    bool gameLoop(void);
-    void slideGameWindow(entReg);
     void centerGameWindow(CSPoint *);
-    void slidePlayerMoveRect(entReg);
     void centerPlayerMoveRect(CSPoint *);
-    void movePlayer(entReg);
     void toggleRoomNums(void);
     void toggleBreak(void);
+    
+    bool gameLoop(void);
+    void slideGameWindow(entReg);
+    void slidePlayerMoveRect(entReg);
+    void movePlayer(entReg);
+    void gainTreasure(void);
     
     WINDOW* getGameWindow(void);
     CSRect* getPlayerMoveRect(void);
